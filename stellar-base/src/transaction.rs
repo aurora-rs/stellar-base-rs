@@ -639,7 +639,7 @@ mod tests {
     }
 
     #[test]
-    fn manage_sell_offer() {
+    fn test_manage_sell_offer() {
         let kp = keypair0();
         let kp1 = keypair1();
 
@@ -664,6 +664,36 @@ mod tests {
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQI9ZDQtGLZFCFgqd/6dLqznGWwAI4/LOwrNS7JkO5Rbx8j1cG60rWFylW9v0i40yk7Z5HleAncBJzrvcDeHhDAA=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn test_cretae_passive_sell_offer() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+
+        let amount = Amount::from_str("100.0").unwrap();
+        let buying = Asset::credit("AB", kp1.public_key().clone()).unwrap();
+        let price = Price::from_str("12.35").unwrap();
+
+        let op = operations::create_passive_sell_offer()
+            .with_selling_asset(Asset::native())
+            .with_buying_asset(buying)
+            .with_amount(amount)
+            .unwrap()
+            .with_price(price)
+            .build()
+            .unwrap();
+        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAEAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAAB6i5yxQAAAECG2/IOsqY2pTugmUnhX9Iafmy5JuCQjPxlA0kxdYHe2EKIbZVClMbgckEwvjJq+B0G2SzRUqiK1sfAOIZpAB4D";
         assert_eq!(expected, xdr);
         let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
         assert_eq!(envelope, back);
