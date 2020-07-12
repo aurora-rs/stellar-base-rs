@@ -2916,8 +2916,10 @@ pub struct ChangeTrustOp {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum AllowTrustOpAsset {
     // IDEN ASSET_TYPE_CREDIT_ALPHANUM4
+    #[discriminant(value = "1")]
     AssetTypeCreditAlphanum4(AssetCode4),
     // IDEN ASSET_TYPE_CREDIT_ALPHANUM12
+    #[discriminant(value = "2")]
     AssetTypeCreditAlphanum12(AssetCode12),
 }
 

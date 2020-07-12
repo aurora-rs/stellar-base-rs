@@ -769,7 +769,7 @@ mod tests {
         tx.sign(&kp, &Network::test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
-        let expected = "";
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAHAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAUFCQ0QAAAABAAAAAAAAAAHqLnLFAAAAQNhV5kJkZryrHEq8jgx9O76dchfHSkS99FTAcR6D2cjSoy6dbPuGsiPpTbwbMMV+lYTigEmv5vTVV+rWcLfr0Q0=";
         assert_eq!(expected, xdr);
         let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
         assert_eq!(envelope, back);
