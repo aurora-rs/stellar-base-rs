@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate xdr_rs_serialize_derive;
+#[macro_use]
+extern crate bitflags;
 extern crate chrono;
 extern crate json;
 extern crate xdr_rs_serialize;

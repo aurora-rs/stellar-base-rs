@@ -70,6 +70,12 @@ pub enum Error {
     /// Transaction fee is too low.
     #[error("transaction fee too low")]
     TransactionFeeTooLow,
+    /// Home domain is too long.
+    #[error("home domain too long")]
+    HomeDomainTooLong,
+    /// Invalid account flags.
+    #[error("invalid account flags")]
+    InvalidAccountFlags,
     /// Transaction fee overflow.
     #[error("transaction fee overflow")]
     TransactionFeeOverflow,
