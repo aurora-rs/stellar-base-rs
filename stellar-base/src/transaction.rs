@@ -671,7 +671,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cretae_passive_sell_offer() {
+    fn test_create_passive_sell_offer() {
         let kp = keypair0();
         let kp1 = keypair1();
 
@@ -861,6 +861,43 @@ mod tests {
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAMAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQJiREkdqaD2QzbsQWcuaUdr5mhJmbatEzAEqChBjtlUQ44C7nFbashDHyTN/Q6YkYOGr2xwL7yWIK9SCJKfeSQU=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn test_path_payment_strict_send() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+        let kp2 = keypair2();
+        let dest = kp1.public_key();
+
+        let dest_amount = Amount::from_str("12.301").unwrap();
+        let send_amount = Amount::from_str("0.333").unwrap();
+
+        let abcd = Asset::credit("ABCD", kp2.public_key().clone()).unwrap();
+        let dest_asset = Asset::credit("DESTASSET", kp2.public_key().clone()).unwrap();
+
+        let op = operations::path_payment_strict_send()
+            .with_destination(dest.clone())
+            .with_send_asset(Asset::native())
+            .with_send_amount(send_amount)
+            .unwrap()
+            .with_destination_asset(dest_asset)
+            .with_destination_min(dest_amount)
+            .unwrap()
+            .add_asset(abcd)
+            .build()
+            .unwrap();
+        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAANAAAAAAAAAAAAMs/QAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAkRFU1RBU1NFVAAAAAAAAAB+Ecs01jX14asC1KAsPdWlpGbYCM2PEgFZCD3NLhVZmAAAAAAHVPvQAAAAAQAAAAFBQkNEAAAAAH4RyzTWNfXhqwLUoCw91aWkZtgIzY8SAVkIPc0uFVmYAAAAAAAAAAHqLnLFAAAAQKDDuyBJaD3+y98EloB5VJi1wYamH+poOoaOhxGGFcH4ZhFI04TRAY3Ahggs3bMV7pcOmw120oZ4P4vA0aFjWgk=";
         assert_eq!(expected, xdr);
         let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
         assert_eq!(envelope, back);
