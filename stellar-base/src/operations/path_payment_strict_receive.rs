@@ -136,11 +136,15 @@ impl PathPaymentStrictReceiveOperationBuilder {
         self
     }
 
-    pub fn with_send_max<A: TryInto<Stroops, Error = Error>>(
+    pub fn with_send_max<A: TryInto<Stroops>>(
         mut self,
         send_max: A,
     ) -> Result<PathPaymentStrictReceiveOperationBuilder> {
-        self.send_max = Some(send_max.try_into()?);
+        self.send_max = Some(
+            send_max
+                .try_into()
+                .map_err(|_| Error::InvalidStroopsAmount)?,
+        );
         Ok(self)
     }
 
@@ -152,11 +156,15 @@ impl PathPaymentStrictReceiveOperationBuilder {
         self
     }
 
-    pub fn with_destination_amount<A: TryInto<Stroops, Error = Error>>(
+    pub fn with_destination_amount<A: TryInto<Stroops>>(
         mut self,
         dest_amount: A,
     ) -> Result<PathPaymentStrictReceiveOperationBuilder> {
-        self.destination_amount = Some(dest_amount.try_into()?);
+        self.destination_amount = Some(
+            dest_amount
+                .try_into()
+                .map_err(|_| Error::InvalidStroopsAmount)?,
+        );
         Ok(self)
     }
 

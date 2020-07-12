@@ -75,11 +75,15 @@ impl CreateAccountOperationBuilder {
         self
     }
 
-    pub fn with_starting_balance<B: TryInto<Stroops, Error = Error>>(
+    pub fn with_starting_balance<B: TryInto<Stroops>>(
         mut self,
         starting_balance: B,
     ) -> Result<CreateAccountOperationBuilder> {
-        self.starting_balance = Some(starting_balance.try_into()?);
+        self.starting_balance = Some(
+            starting_balance
+                .try_into()
+                .map_err(|_| Error::InvalidStroopsAmount)?,
+        );
         Ok(self)
     }
 

@@ -106,11 +106,11 @@ impl CreatePassiveSellOfferOperationBuilder {
         self
     }
 
-    pub fn with_amount<A: TryInto<Stroops, Error = Error>>(
+    pub fn with_amount<A: TryInto<Stroops>>(
         mut self,
         amount: A,
     ) -> Result<CreatePassiveSellOfferOperationBuilder> {
-        self.amount = Some(amount.try_into()?);
+        self.amount = Some(amount.try_into().map_err(|_| Error::InvalidStroopsAmount)?);
         Ok(self)
     }
 

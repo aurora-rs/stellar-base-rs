@@ -90,11 +90,11 @@ impl PaymentOperationBuilder {
         self
     }
 
-    pub fn with_amount<B: TryInto<Stroops, Error = Error>>(
+    pub fn with_amount<B: TryInto<Stroops>>(
         mut self,
         amount: B,
     ) -> Result<PaymentOperationBuilder> {
-        self.amount = Some(amount.try_into()?);
+        self.amount = Some(amount.try_into().map_err(|_| Error::InvalidStroopsAmount)?);
         Ok(self)
     }
 

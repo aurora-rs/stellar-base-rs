@@ -734,7 +734,8 @@ mod tests {
 
         let op = operations::change_trust()
             .with_asset(asset)
-            .with_limit(Some(i64::MAX))
+            .with_limit(Some(Stroops::max()))
+            .unwrap()
             .build()
             .unwrap();
         let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)

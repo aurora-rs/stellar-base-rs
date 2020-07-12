@@ -10,14 +10,14 @@ use std::convert::TryInto;
 pub struct ChangeTrustOperation {
     source_account: Option<MuxedAccount>,
     asset: Asset,
-    limit: Option<i64>,
+    limit: Option<Stroops>,
 }
 
 #[derive(Debug)]
 pub struct ChangeTrustOperationBuilder {
     source_account: Option<MuxedAccount>,
     asset: Option<Asset>,
-    limit: Option<i64>,
+    limit: Option<Stroops>,
 }
 
 impl ChangeTrustOperation {
@@ -29,13 +29,16 @@ impl ChangeTrustOperation {
         &self.asset
     }
 
-    pub fn limit(&self) -> &Option<i64> {
+    pub fn limit(&self) -> &Option<Stroops> {
         &self.limit
     }
 
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let line = self.asset.to_xdr()?;
-        let limit = xdr::Int64::new(self.limit.unwrap_or_else(|| 0));
+        let limit = match &self.limit {
+            None => xdr::Int64::new(0),
+            Some(limit) => limit.to_xdr_int64()?,
+        };
         let inner = xdr::ChangeTrustOp { line, limit };
         Ok(xdr::OperationBody::ChangeTrust(inner))
     }
@@ -49,7 +52,7 @@ impl ChangeTrustOperation {
         // has no control over the xdr.
         let limit = match &x.limit.value {
             0 => None,
-            n => Some(*n),
+            n => Some(Stroops::new(*n)),
         };
         Ok(ChangeTrustOperation {
             source_account,
@@ -78,9 +81,15 @@ impl ChangeTrustOperationBuilder {
         self
     }
 
-    pub fn with_limit(mut self, limit: Option<i64>) -> ChangeTrustOperationBuilder {
-        self.limit = limit;
-        self
+    pub fn with_limit<A: TryInto<Stroops>>(
+        mut self,
+        limit: Option<A>,
+    ) -> Result<ChangeTrustOperationBuilder> {
+        self.limit = limit
+            .map(|l| l.try_into())
+            .transpose()
+            .map_err(|_| Error::InvalidStroopsAmount)?;
+        Ok(self)
     }
 
     pub fn build(self) -> Result<Operation> {
@@ -88,8 +97,8 @@ impl ChangeTrustOperationBuilder {
             .asset
             .ok_or_else(|| Error::InvalidOperation("missing change trust asset".to_string()))?;
 
-        if let Some(limit) = self.limit {
-            if limit <= 0 {
+        if let Some(limit) = &self.limit {
+            if limit.to_i64() <= 0 {
                 return Err(Error::InvalidOperation(
                     "change trust limit must be positive".to_string(),
                 ));

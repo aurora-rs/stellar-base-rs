@@ -71,6 +71,14 @@ impl Stroops {
         Stroops(amount)
     }
 
+    pub fn max() -> Stroops {
+        Stroops(i64::MAX)
+    }
+
+    pub fn to_i64(&self) -> i64 {
+        self.0
+    }
+
     pub fn to_xdr_int64(&self) -> Result<xdr::Int64> {
         Ok(xdr::Int64::new(self.0))
     }
