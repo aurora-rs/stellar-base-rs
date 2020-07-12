@@ -726,6 +726,31 @@ mod tests {
     }
 
     #[test]
+    fn test_change_trust() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+
+        let asset = Asset::credit("FOOBAR", kp1.public_key().clone()).unwrap();
+
+        let op = operations::change_trust()
+            .with_asset(asset)
+            .with_limit(Some(i64::MAX))
+            .build()
+            .unwrap();
+        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAGAAAAAkZPT0JBUgAAAAAAAAAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfn//////////AAAAAAAAAAHqLnLFAAAAQBGXSIMx1RSjmS7XD9DluNCn6TolNnB9sdmvBSlWeaizwgfud6hD8BZSfqBHdTNm4DgmloojC9fIVRtVFEHhpAE=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
     fn test_inflation() {
         let kp = keypair0();
         let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)

@@ -6,6 +6,7 @@ use xdr_rs_serialize::de::XDRIn;
 use xdr_rs_serialize::ser::XDROut;
 
 mod account_merge;
+mod change_trust;
 mod create_account;
 mod create_passive_sell_offer;
 mod inflation;
@@ -15,6 +16,7 @@ mod payment;
 mod set_options;
 
 pub use account_merge::{AccountMergeOperation, AccountMergeOperationBuilder};
+pub use change_trust::{ChangeTrustOperation, ChangeTrustOperationBuilder};
 pub use create_account::{CreateAccountOperation, CreateAccountOperationBuilder};
 pub use create_passive_sell_offer::{
     CreatePassiveSellOfferOperation, CreatePassiveSellOfferOperationBuilder,
@@ -35,6 +37,7 @@ pub enum Operation {
     ManageSellOffer(ManageSellOfferOperation),
     CreatePassiveSellOffer(CreatePassiveSellOfferOperation),
     SetOptions(SetOptionsOperation),
+    ChangeTrust(ChangeTrustOperation),
     AccountMerge(AccountMergeOperation),
     Inflation(InflationOperation),
 }
@@ -61,6 +64,10 @@ pub fn create_passive_sell_offer() -> CreatePassiveSellOfferOperationBuilder {
 
 pub fn set_options() -> SetOptionsOperationBuilder {
     SetOptionsOperationBuilder::new()
+}
+
+pub fn change_trust() -> ChangeTrustOperationBuilder {
+    ChangeTrustOperationBuilder::new()
 }
 
 pub fn account_merge() -> AccountMergeOperationBuilder {
@@ -138,6 +145,17 @@ impl Operation {
         self.set_options().is_some()
     }
 
+    pub fn change_trust(&self) -> Option<&ChangeTrustOperation> {
+        match self {
+            Operation::ChangeTrust(op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn is_change_trust(&self) -> bool {
+        self.change_trust().is_some()
+    }
+
     pub fn account_merge(&self) -> Option<&AccountMergeOperation> {
         match self {
             Operation::AccountMerge(op) => Some(op),
@@ -168,6 +186,7 @@ impl Operation {
             Operation::ManageSellOffer(op) => op.source_account(),
             Operation::CreatePassiveSellOffer(op) => op.source_account(),
             Operation::SetOptions(op) => op.source_account(),
+            Operation::ChangeTrust(op) => op.source_account(),
             Operation::AccountMerge(op) => op.source_account(),
             Operation::Inflation(op) => op.source_account(),
         }
@@ -185,6 +204,7 @@ impl Operation {
             Operation::ManageSellOffer(op) => op.to_xdr_operation_body()?,
             Operation::CreatePassiveSellOffer(op) => op.to_xdr_operation_body()?,
             Operation::SetOptions(op) => op.to_xdr_operation_body()?,
+            Operation::ChangeTrust(op) => op.to_xdr_operation_body()?,
             Operation::AccountMerge(op) => op.to_xdr_operation_body()?,
             Operation::Inflation(op) => op.to_xdr_operation_body()?,
         };
@@ -226,7 +246,10 @@ impl Operation {
                 let inner = SetOptionsOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::SetOptions(inner))
             }
-            xdr::OperationBody::ChangeTrust(op) => todo!(),
+            xdr::OperationBody::ChangeTrust(op) => {
+                let inner = ChangeTrustOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::ChangeTrust(inner))
+            }
             xdr::OperationBody::AllowTrust(op) => todo!(),
             xdr::OperationBody::AccountMerge(op) => {
                 let inner = AccountMergeOperation::from_xdr_operation_body(source_account, op)?;
