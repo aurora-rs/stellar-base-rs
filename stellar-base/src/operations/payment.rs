@@ -1,9 +1,10 @@
 use crate::amount::Stroops;
 use crate::asset::Asset;
-use crate::crypto::{MuxedAccount, PublicKey};
+use crate::crypto::MuxedAccount;
 use crate::error::{Error, Result};
 use crate::operations::Operation;
 use crate::xdr;
+use std::convert::TryInto;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PaymentOperation {
@@ -78,6 +79,27 @@ impl PaymentOperationBuilder {
 
     pub fn with_source_account(mut self, source: MuxedAccount) -> PaymentOperationBuilder {
         self.source_account = Some(source);
+        self
+    }
+
+    pub fn with_destination<A: Into<MuxedAccount>>(
+        mut self,
+        destination: A,
+    ) -> PaymentOperationBuilder {
+        self.destination = Some(destination.into());
+        self
+    }
+
+    pub fn with_amount<B: TryInto<Stroops, Error = Error>>(
+        mut self,
+        amount: B,
+    ) -> Result<PaymentOperationBuilder> {
+        self.amount = Some(amount.try_into()?);
+        Ok(self)
+    }
+
+    pub fn with_asset(mut self, asset: Asset) -> PaymentOperationBuilder {
+        self.asset = Some(asset);
         self
     }
 

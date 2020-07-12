@@ -1,9 +1,10 @@
 use crate::amount::Stroops;
 use crate::asset::Asset;
-use crate::crypto::{MuxedAccount, PublicKey};
+use crate::crypto::MuxedAccount;
 use crate::error::{Error, Result};
 use crate::operations::Operation;
 use crate::xdr;
+use std::convert::TryInto;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PathPaymentStrictReceiveOperation {
@@ -116,6 +117,51 @@ impl PathPaymentStrictReceiveOperationBuilder {
         source: MuxedAccount,
     ) -> PathPaymentStrictReceiveOperationBuilder {
         self.source_account = Some(source);
+        self
+    }
+
+    pub fn with_destination<A: Into<MuxedAccount>>(
+        mut self,
+        destination: A,
+    ) -> PathPaymentStrictReceiveOperationBuilder {
+        self.destination = Some(destination.into());
+        self
+    }
+
+    pub fn with_send_asset(
+        mut self,
+        send_asset: Asset,
+    ) -> PathPaymentStrictReceiveOperationBuilder {
+        self.send_asset = Some(send_asset);
+        self
+    }
+
+    pub fn with_send_max<A: TryInto<Stroops, Error = Error>>(
+        mut self,
+        send_max: A,
+    ) -> Result<PathPaymentStrictReceiveOperationBuilder> {
+        self.send_max = Some(send_max.try_into()?);
+        Ok(self)
+    }
+
+    pub fn with_destination_asset(
+        mut self,
+        dest_asset: Asset,
+    ) -> PathPaymentStrictReceiveOperationBuilder {
+        self.destination_asset = Some(dest_asset);
+        self
+    }
+
+    pub fn with_destination_amount<A: TryInto<Stroops, Error = Error>>(
+        mut self,
+        dest_amount: A,
+    ) -> Result<PathPaymentStrictReceiveOperationBuilder> {
+        self.destination_amount = Some(dest_amount.try_into()?);
+        Ok(self)
+    }
+
+    pub fn add_asset(mut self, asset: Asset) -> PathPaymentStrictReceiveOperationBuilder {
+        self.path.push(asset);
         self
     }
 

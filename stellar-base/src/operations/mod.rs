@@ -8,12 +8,14 @@ use xdr_rs_serialize::ser::XDROut;
 mod account_merge;
 mod create_account;
 mod inflation;
+mod manage_sell_offer;
 mod path_payment_strict_receive;
 mod payment;
 
 pub use account_merge::{AccountMergeOperation, AccountMergeOperationBuilder};
 pub use create_account::{CreateAccountOperation, CreateAccountOperationBuilder};
 pub use inflation::{InflationOperation, InflationOperationBuilder};
+pub use manage_sell_offer::{ManageSellOfferOperation, ManageSellOfferOperationBuilder};
 pub use path_payment_strict_receive::{
     PathPaymentStrictReceiveOperation, PathPaymentStrictReceiveOperationBuilder,
 };
@@ -24,6 +26,7 @@ pub enum Operation {
     CreateAccount(CreateAccountOperation),
     Payment(PaymentOperation),
     PathPaymentStrictReceive(PathPaymentStrictReceiveOperation),
+    ManageSellOffer(ManageSellOfferOperation),
     AccountMerge(AccountMergeOperation),
     Inflation(InflationOperation),
 }
@@ -38,6 +41,10 @@ pub fn payment() -> PaymentOperationBuilder {
 
 pub fn path_payment_strict_receive() -> PathPaymentStrictReceiveOperationBuilder {
     PathPaymentStrictReceiveOperationBuilder::new()
+}
+
+pub fn manage_sell_offer() -> ManageSellOfferOperationBuilder {
+    ManageSellOfferOperationBuilder::new()
 }
 
 pub fn account_merge() -> AccountMergeOperationBuilder {
@@ -82,6 +89,17 @@ impl Operation {
         self.path_payment_strict_receive().is_some()
     }
 
+    pub fn manage_sell_offer(&self) -> Option<&ManageSellOfferOperation> {
+        match self {
+            Operation::ManageSellOffer(op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn is_manage_sell_offer(&self) -> bool {
+        self.manage_sell_offer().is_some()
+    }
+
     pub fn account_merge(&self) -> Option<&AccountMergeOperation> {
         match self {
             Operation::AccountMerge(op) => Some(op),
@@ -109,6 +127,7 @@ impl Operation {
             Operation::CreateAccount(op) => op.source_account(),
             Operation::Payment(op) => op.source_account(),
             Operation::PathPaymentStrictReceive(op) => op.source_account(),
+            Operation::ManageSellOffer(op) => op.source_account(),
             Operation::AccountMerge(op) => op.source_account(),
             Operation::Inflation(op) => op.source_account(),
         }
@@ -123,6 +142,7 @@ impl Operation {
             Operation::CreateAccount(op) => op.to_xdr_operation_body()?,
             Operation::Payment(op) => op.to_xdr_operation_body()?,
             Operation::PathPaymentStrictReceive(op) => op.to_xdr_operation_body()?,
+            Operation::ManageSellOffer(op) => op.to_xdr_operation_body()?,
             Operation::AccountMerge(op) => op.to_xdr_operation_body()?,
             Operation::Inflation(op) => op.to_xdr_operation_body()?,
         };
@@ -151,7 +171,10 @@ impl Operation {
                     PathPaymentStrictReceiveOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::PathPaymentStrictReceive(inner))
             }
-            xdr::OperationBody::ManageSellOffer(op) => todo!(),
+            xdr::OperationBody::ManageSellOffer(op) => {
+                let inner = ManageSellOfferOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::ManageSellOffer(inner))
+            }
             xdr::OperationBody::CreatePassiveSellOffer(op) => todo!(),
             xdr::OperationBody::SetOptions(op) => todo!(),
             xdr::OperationBody::ChangeTrust(op) => todo!(),

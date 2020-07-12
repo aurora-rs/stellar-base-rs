@@ -51,7 +51,7 @@ impl Asset {
                 CreditAsset::AlphaNum4 { code, issuer } => {
                     let code_len = code.len();
                     let mut code_bytes = Vec::with_capacity(4);
-                    code_bytes.resize(4, b'0');
+                    code_bytes.resize(4, 0);
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
                     let asset_code = xdr::AssetCode4::new(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
@@ -61,7 +61,7 @@ impl Asset {
                 CreditAsset::AlphaNum12 { code, issuer } => {
                     let code_len = code.len();
                     let mut code_bytes = Vec::with_capacity(12);
-                    code_bytes.resize(12, b'0');
+                    code_bytes.resize(12, 0);
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
                     let asset_code = xdr::AssetCode12::new(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
@@ -77,12 +77,12 @@ impl Asset {
             xdr::Asset::AssetTypeNative(()) => Ok(Asset::native()),
             xdr::Asset::AssetTypeCreditAlphanum4(credit) => {
                 let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
-                let code = String::from_utf8_lossy(&credit.asset_code.value);
+                let code = xdr_code_to_string(&credit.asset_code.value);
                 Asset::credit(code, issuer)
             }
             xdr::Asset::AssetTypeCreditAlphanum12(credit) => {
                 let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
-                let code = String::from_utf8_lossy(&credit.asset_code.value);
+                let code = xdr_code_to_string(&credit.asset_code.value);
                 Asset::credit(code, issuer)
             }
         }
@@ -142,6 +142,18 @@ impl XDRDeserialize for Asset {
         let res = Asset::from_xdr(&xdr_asset)?;
         Ok((res, bytes_read))
     }
+}
+
+/// Create new String from asset code. Make sure not to copy zero bytes.
+fn xdr_code_to_string(x: &[u8]) -> String {
+    let mut pos = 0;
+    for i in 0..x.len() {
+        if x[i] == 0 {
+            break;
+        }
+        pos += 1;
+    }
+    String::from_utf8_lossy(&x[..pos]).into_owned()
 }
 
 #[cfg(test)]

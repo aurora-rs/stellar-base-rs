@@ -504,7 +504,8 @@ fn signatures_from_xdr(
 #[cfg(test)]
 mod tests {
     use super::{transaction, TransactionEnvelope, MIN_BASE_FEE};
-    use crate::amount::{Amount, Stroops};
+    use crate::amount::{Amount, Price, Stroops};
+    use crate::asset::Asset;
     use crate::crypto::KeyPair;
     use crate::memo::Memo;
     use crate::network::Network;
@@ -548,22 +549,6 @@ mod tests {
     }
 
     #[test]
-    fn test_inflation() {
-        let kp = keypair0();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
-            .add_operation(operations::inflation().build())
-            .to_transaction()
-            .unwrap();
-        tx.sign(&kp, &Network::test());
-        let envelope = tx.to_envelope();
-        let xdr = envelope.xdr_base64().unwrap();
-        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAJAAAAAAAAAAHqLnLFAAAAQCvHHPKuTRaRXk9BH05oWii0PJRmVOoqMxxg+79MLO90n1ljVNoaQ1Fliy8Xe34yfUzjhMB/TCXH29T8dTYtBg4=";
-        assert_eq!(expected, xdr);
-        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
-        assert_eq!(envelope, back);
-    }
-
-    #[test]
     fn test_create_account() {
         let kp = keypair0();
         let kp1 = keypair1();
@@ -584,6 +569,117 @@ mod tests {
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAAdU1MAAAAAAAAAAAeoucsUAAABA0LiVS5BXQiPx/ZkMiJ55RngpeurtEgOrqbzAy99ZGnLUh68uiBejtKJdJPlw4XmVP/kojrA6nLI00zXhUiI7AQ==";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn test_payment() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+        let dest = kp1.public_key();
+        let amount = Amount::from_str("12.301").unwrap();
+
+        let op = operations::payment()
+            .with_destination(dest.clone())
+            .with_amount(amount)
+            .unwrap()
+            .with_asset(Asset::native())
+            .build()
+            .unwrap();
+        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAABAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAAAAAAAHVPvQAAAAAAAAAAHqLnLFAAAAQFOPIvnhDoRtPKJl7mJGPD69z2riRwZCJJcLRD+QaJ1Wg+yMiDHLiheBZv/BodiTqEvFHFxcmSxo7pjyzoc7mQ8=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn test_path_payment() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+        let kp2 = keypair2();
+        let dest = kp1.public_key();
+
+        let dest_amount = Amount::from_str("12.301").unwrap();
+        let send_max = Amount::from_str("0.333").unwrap();
+
+        let abcd = Asset::credit("ABCD", kp2.public_key().clone()).unwrap();
+        let dest_asset = Asset::credit("DESTASSET", kp2.public_key().clone()).unwrap();
+
+        let op = operations::path_payment_strict_receive()
+            .with_destination(dest.clone())
+            .with_send_asset(Asset::native())
+            .with_send_max(send_max)
+            .unwrap()
+            .with_destination_asset(dest_asset)
+            .with_destination_amount(dest_amount)
+            .unwrap()
+            .add_asset(abcd)
+            .build()
+            .unwrap();
+        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAACAAAAAAAAAAAAMs/QAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAkRFU1RBU1NFVAAAAAAAAAB+Ecs01jX14asC1KAsPdWlpGbYCM2PEgFZCD3NLhVZmAAAAAAHVPvQAAAAAQAAAAFBQkNEAAAAAH4RyzTWNfXhqwLUoCw91aWkZtgIzY8SAVkIPc0uFVmYAAAAAAAAAAHqLnLFAAAAQLZISKYSR3RXr9Hvxw1tr9P1B4fst/sDuQMGapBvSpLYU6DpDSOFM/vVEuB94HXWI79fSJmfyEl+gR6Zh+o0Yw4=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn manage_sell_offer() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+
+        let amount = Amount::from_str("100.0").unwrap();
+        let buying = Asset::credit("AB", kp1.public_key().clone()).unwrap();
+        let price = Price::from_str("12.35").unwrap();
+
+        let op = operations::manage_sell_offer()
+            .with_selling_asset(Asset::native())
+            .with_buying_asset(buying)
+            .with_amount(amount)
+            .unwrap()
+            .with_price(price)
+            .with_offer_id(Some(888))
+            .build()
+            .unwrap();
+        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQI9ZDQtGLZFCFgqd/6dLqznGWwAI4/LOwrNS7JkO5Rbx8j1cG60rWFylW9v0i40yk7Z5HleAncBJzrvcDeHhDAA=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn test_inflation() {
+        let kp = keypair0();
+        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(operations::inflation().build())
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAJAAAAAAAAAAHqLnLFAAAAQCvHHPKuTRaRXk9BH05oWii0PJRmVOoqMxxg+79MLO90n1ljVNoaQ1Fliy8Xe34yfUzjhMB/TCXH29T8dTYtBg4=";
         assert_eq!(expected, xdr);
         let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
         assert_eq!(envelope, back);
