@@ -504,7 +504,7 @@ fn signatures_from_xdr(
 #[cfg(test)]
 mod tests {
     use super::{transaction, TransactionEnvelope, MIN_BASE_FEE};
-    use crate::account::{AccountFlags, TrustLineFlags};
+    use crate::account::{AccountFlags, DataValue, TrustLineFlags};
     use crate::amount::{Amount, Price, Stroops};
     use crate::asset::{Asset, CreditAssetType};
     use crate::crypto::KeyPair;
@@ -786,6 +786,29 @@ mod tests {
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAJAAAAAAAAAAHqLnLFAAAAQCvHHPKuTRaRXk9BH05oWii0PJRmVOoqMxxg+79MLO90n1ljVNoaQ1Fliy8Xe34yfUzjhMB/TCXH29T8dTYtBg4=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn test_manage_data() {
+        let kp = keypair0();
+        let value = DataValue::from_slice("value value".as_bytes()).unwrap();
+        let op = operations::manage_data()
+            .with_data_name("TEST TEST".to_string())
+            .with_data_value(Some(value))
+            .build()
+            .unwrap();
+
+        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "";
         assert_eq!(expected, xdr);
         let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
         assert_eq!(envelope, back);

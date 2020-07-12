@@ -11,6 +11,7 @@ mod change_trust;
 mod create_account;
 mod create_passive_sell_offer;
 mod inflation;
+mod manage_data;
 mod manage_sell_offer;
 mod path_payment_strict_receive;
 mod payment;
@@ -24,6 +25,7 @@ pub use create_passive_sell_offer::{
     CreatePassiveSellOfferOperation, CreatePassiveSellOfferOperationBuilder,
 };
 pub use inflation::{InflationOperation, InflationOperationBuilder};
+pub use manage_data::{ManageDataOperation, ManageDataOperationBuilder};
 pub use manage_sell_offer::{ManageSellOfferOperation, ManageSellOfferOperationBuilder};
 pub use path_payment_strict_receive::{
     PathPaymentStrictReceiveOperation, PathPaymentStrictReceiveOperationBuilder,
@@ -43,6 +45,7 @@ pub enum Operation {
     AllowTrust(AllowTrustOperation),
     AccountMerge(AccountMergeOperation),
     Inflation(InflationOperation),
+    ManageData(ManageDataOperation),
 }
 
 pub fn create_account() -> CreateAccountOperationBuilder {
@@ -83,6 +86,10 @@ pub fn account_merge() -> AccountMergeOperationBuilder {
 
 pub fn inflation() -> InflationOperationBuilder {
     InflationOperationBuilder::new()
+}
+
+pub fn manage_data() -> ManageDataOperationBuilder {
+    ManageDataOperationBuilder::new()
 }
 
 impl Operation {
@@ -196,6 +203,17 @@ impl Operation {
         self.inflation().is_some()
     }
 
+    pub fn manage_data(&self) -> Option<&ManageDataOperation> {
+        match self {
+            Operation::ManageData(op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn is_manage_data(&self) -> bool {
+        self.manage_data().is_some()
+    }
+
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         match self {
             Operation::CreateAccount(op) => op.source_account(),
@@ -208,6 +226,7 @@ impl Operation {
             Operation::AllowTrust(op) => op.source_account(),
             Operation::AccountMerge(op) => op.source_account(),
             Operation::Inflation(op) => op.source_account(),
+            Operation::ManageData(op) => op.source_account(),
         }
     }
 
@@ -227,6 +246,7 @@ impl Operation {
             Operation::AllowTrust(op) => op.to_xdr_operation_body()?,
             Operation::AccountMerge(op) => op.to_xdr_operation_body()?,
             Operation::Inflation(op) => op.to_xdr_operation_body()?,
+            Operation::ManageData(op) => op.to_xdr_operation_body()?,
         };
         Ok(xdr::Operation {
             source_account,
@@ -282,7 +302,10 @@ impl Operation {
                 let inner = InflationOperation::from_xdr_operation_body(source_account)?;
                 Ok(Operation::Inflation(inner))
             }
-            xdr::OperationBody::ManageData(op) => todo!(),
+            xdr::OperationBody::ManageData(op) => {
+                let inner = ManageDataOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::ManageData(inner))
+            }
             xdr::OperationBody::BumpSequence(op) => todo!(),
             xdr::OperationBody::ManageBuyOffer(op) => todo!(),
             xdr::OperationBody::PathPaymentStrictSend(op) => todo!(),

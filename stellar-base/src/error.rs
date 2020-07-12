@@ -19,6 +19,9 @@ pub enum Error {
     /// Invalid Asset code.
     #[error("invalid asset code")]
     InvalidAssetCode,
+    /// Invalid data value.
+    #[error("invalid data value")]
+    InvalidDataValue,
     /// Invalid signature.
     #[error("invalid signature")]
     InvalidSignature,

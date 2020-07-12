@@ -105,6 +105,11 @@ impl AllowTrustOperationBuilder {
         }
     }
 
+    pub fn with_source_account(mut self, source: MuxedAccount) -> AllowTrustOperationBuilder {
+        self.source_account = Some(source);
+        self
+    }
+
     pub fn with_trustor(mut self, trustor: PublicKey) -> AllowTrustOperationBuilder {
         self.trustor = Some(trustor);
         self
