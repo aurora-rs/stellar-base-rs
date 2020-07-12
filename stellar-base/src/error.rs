@@ -76,6 +76,9 @@ pub enum Error {
     /// Invalid account flags.
     #[error("invalid account flags")]
     InvalidAccountFlags,
+    /// Invalid trust line flags.
+    #[error("invalid trust line flags")]
+    InvalidTrustLineFlags,
     /// Transaction fee overflow.
     #[error("transaction fee overflow")]
     TransactionFeeOverflow,

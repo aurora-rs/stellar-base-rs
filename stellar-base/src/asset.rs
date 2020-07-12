@@ -17,8 +17,8 @@ pub enum Asset {
 /// The credit asset type, based on its code length.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CreditAssetType {
-    CreditAlphaNum4,
-    CreditAlphaNum12,
+    CreditAlphaNum4(String),
+    CreditAlphaNum12(String),
 }
 
 /// A non-native asset, identified by asset code/issuer id.
@@ -123,8 +123,12 @@ impl CreditAsset {
     /// Return the credit asset type
     pub fn asset_type(&self) -> CreditAssetType {
         match self {
-            CreditAsset::AlphaNum4 { code: _, issuer: _ } => CreditAssetType::CreditAlphaNum4,
-            CreditAsset::AlphaNum12 { code: _, issuer: _ } => CreditAssetType::CreditAlphaNum12,
+            CreditAsset::AlphaNum4 { code, issuer: _ } => {
+                CreditAssetType::CreditAlphaNum4(code.clone())
+            }
+            CreditAsset::AlphaNum12 { code, issuer: _ } => {
+                CreditAssetType::CreditAlphaNum12(code.clone())
+            }
         }
     }
 }
@@ -145,7 +149,7 @@ impl XDRDeserialize for Asset {
 }
 
 /// Create new String from asset code. Make sure not to copy zero bytes.
-fn xdr_code_to_string(x: &[u8]) -> String {
+pub(crate) fn xdr_code_to_string(x: &[u8]) -> String {
     let mut pos = 0;
     for i in 0..x.len() {
         if x[i] == 0 {
