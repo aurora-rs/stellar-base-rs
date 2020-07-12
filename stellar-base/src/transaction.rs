@@ -813,4 +813,25 @@ mod tests {
         let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
         assert_eq!(envelope, back);
     }
+
+    #[test]
+    fn test_bump_sequence() {
+        let kp = keypair0();
+        let op = operations::bump_sequence()
+            .with_bump_to(123)
+            .build()
+            .unwrap();
+
+        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAALAAAAAAAAAHsAAAAAAAAAAeoucsUAAABAFjXV5orPOkYP+zKGyNKWNJPkZ1UG2n7zyj33W5LHlx1LkD+8vLtB8/GyamKUs7qThchbHdRS9lSBUnvqNkNeCg==";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
 }

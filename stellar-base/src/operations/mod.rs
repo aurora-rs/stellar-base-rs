@@ -7,6 +7,7 @@ use xdr_rs_serialize::ser::XDROut;
 
 mod account_merge;
 mod allow_trust;
+mod bump_sequence;
 mod change_trust;
 mod create_account;
 mod create_passive_sell_offer;
@@ -19,6 +20,7 @@ mod set_options;
 
 pub use account_merge::{AccountMergeOperation, AccountMergeOperationBuilder};
 pub use allow_trust::{AllowTrustOperation, AllowTrustOperationBuilder};
+pub use bump_sequence::{BumpSequenceOperation, BumpSequenceOperationBuilder};
 pub use change_trust::{ChangeTrustOperation, ChangeTrustOperationBuilder};
 pub use create_account::{CreateAccountOperation, CreateAccountOperationBuilder};
 pub use create_passive_sell_offer::{
@@ -46,6 +48,7 @@ pub enum Operation {
     AccountMerge(AccountMergeOperation),
     Inflation(InflationOperation),
     ManageData(ManageDataOperation),
+    BumpSequence(BumpSequenceOperation),
 }
 
 pub fn create_account() -> CreateAccountOperationBuilder {
@@ -90,6 +93,10 @@ pub fn inflation() -> InflationOperationBuilder {
 
 pub fn manage_data() -> ManageDataOperationBuilder {
     ManageDataOperationBuilder::new()
+}
+
+pub fn bump_sequence() -> BumpSequenceOperationBuilder {
+    BumpSequenceOperationBuilder::new()
 }
 
 impl Operation {
@@ -214,6 +221,17 @@ impl Operation {
         self.manage_data().is_some()
     }
 
+    pub fn bump_sequence(&self) -> Option<&BumpSequenceOperation> {
+        match self {
+            Operation::BumpSequence(op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn is_bump_sequence(&self) -> bool {
+        self.bump_sequence().is_some()
+    }
+
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         match self {
             Operation::CreateAccount(op) => op.source_account(),
@@ -227,6 +245,7 @@ impl Operation {
             Operation::AccountMerge(op) => op.source_account(),
             Operation::Inflation(op) => op.source_account(),
             Operation::ManageData(op) => op.source_account(),
+            Operation::BumpSequence(op) => op.source_account(),
         }
     }
 
@@ -247,6 +266,7 @@ impl Operation {
             Operation::AccountMerge(op) => op.to_xdr_operation_body()?,
             Operation::Inflation(op) => op.to_xdr_operation_body()?,
             Operation::ManageData(op) => op.to_xdr_operation_body()?,
+            Operation::BumpSequence(op) => op.to_xdr_operation_body()?,
         };
         Ok(xdr::Operation {
             source_account,
@@ -306,7 +326,10 @@ impl Operation {
                 let inner = ManageDataOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::ManageData(inner))
             }
-            xdr::OperationBody::BumpSequence(op) => todo!(),
+            xdr::OperationBody::BumpSequence(op) => {
+                let inner = BumpSequenceOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::BumpSequence(inner))
+            }
             xdr::OperationBody::ManageBuyOffer(op) => todo!(),
             xdr::OperationBody::PathPaymentStrictSend(op) => todo!(),
         }
