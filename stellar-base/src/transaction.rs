@@ -834,4 +834,35 @@ mod tests {
         let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
         assert_eq!(envelope, back);
     }
+
+    #[test]
+    fn test_manage_buy_offer() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+
+        let amount = Amount::from_str("100.0").unwrap();
+        let buying = Asset::credit("AB", kp1.public_key().clone()).unwrap();
+        let price = Price::from_str("12.35").unwrap();
+
+        let op = operations::manage_buy_offer()
+            .with_selling_asset(Asset::native())
+            .with_buying_asset(buying)
+            .with_buy_amount(amount)
+            .unwrap()
+            .with_price(price)
+            .with_offer_id(Some(888))
+            .build()
+            .unwrap();
+        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAMAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQJiREkdqaD2QzbsQWcuaUdr5mhJmbatEzAEqChBjtlUQ44C7nFbashDHyTN/Q6YkYOGr2xwL7yWIK9SCJKfeSQU=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
 }

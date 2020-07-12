@@ -12,6 +12,7 @@ mod change_trust;
 mod create_account;
 mod create_passive_sell_offer;
 mod inflation;
+mod manage_buy_offer;
 mod manage_data;
 mod manage_sell_offer;
 mod path_payment_strict_receive;
@@ -27,6 +28,7 @@ pub use create_passive_sell_offer::{
     CreatePassiveSellOfferOperation, CreatePassiveSellOfferOperationBuilder,
 };
 pub use inflation::{InflationOperation, InflationOperationBuilder};
+pub use manage_buy_offer::{ManageBuyOfferOperation, ManageBuyOfferOperationBuilder};
 pub use manage_data::{ManageDataOperation, ManageDataOperationBuilder};
 pub use manage_sell_offer::{ManageSellOfferOperation, ManageSellOfferOperationBuilder};
 pub use path_payment_strict_receive::{
@@ -49,6 +51,7 @@ pub enum Operation {
     Inflation(InflationOperation),
     ManageData(ManageDataOperation),
     BumpSequence(BumpSequenceOperation),
+    ManageBuyOffer(ManageBuyOfferOperation),
 }
 
 pub fn create_account() -> CreateAccountOperationBuilder {
@@ -97,6 +100,10 @@ pub fn manage_data() -> ManageDataOperationBuilder {
 
 pub fn bump_sequence() -> BumpSequenceOperationBuilder {
     BumpSequenceOperationBuilder::new()
+}
+
+pub fn manage_buy_offer() -> ManageBuyOfferOperationBuilder {
+    ManageBuyOfferOperationBuilder::new()
 }
 
 impl Operation {
@@ -232,6 +239,17 @@ impl Operation {
         self.bump_sequence().is_some()
     }
 
+    pub fn manage_buy_offer(&self) -> Option<&ManageBuyOfferOperation> {
+        match self {
+            Operation::ManageBuyOffer(op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn is_manage_buy_offer(&self) -> bool {
+        self.manage_buy_offer().is_some()
+    }
+
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         match self {
             Operation::CreateAccount(op) => op.source_account(),
@@ -246,6 +264,7 @@ impl Operation {
             Operation::Inflation(op) => op.source_account(),
             Operation::ManageData(op) => op.source_account(),
             Operation::BumpSequence(op) => op.source_account(),
+            Operation::ManageBuyOffer(op) => op.source_account(),
         }
     }
 
@@ -267,6 +286,7 @@ impl Operation {
             Operation::Inflation(op) => op.to_xdr_operation_body()?,
             Operation::ManageData(op) => op.to_xdr_operation_body()?,
             Operation::BumpSequence(op) => op.to_xdr_operation_body()?,
+            Operation::ManageBuyOffer(op) => op.to_xdr_operation_body()?,
         };
         Ok(xdr::Operation {
             source_account,
@@ -330,7 +350,10 @@ impl Operation {
                 let inner = BumpSequenceOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::BumpSequence(inner))
             }
-            xdr::OperationBody::ManageBuyOffer(op) => todo!(),
+            xdr::OperationBody::ManageBuyOffer(op) => {
+                let inner = ManageBuyOfferOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::ManageBuyOffer(inner))
+            }
             xdr::OperationBody::PathPaymentStrictSend(op) => todo!(),
         }
     }
