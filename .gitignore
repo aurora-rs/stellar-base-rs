@@ -1,2 +1,3 @@
 target
 stellar-base/Cargo.lock
+stellar-horizon/Cargo.lock

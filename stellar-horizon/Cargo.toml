@@ -1,0 +1,21 @@
+[package]
+name = "stellar-horizon"
+version = "0.1.0"
+authors = ["Francesco Ceccon <francesco@ceccon.me>"]
+edition = "2018"
+
+[dependencies]
+stellar-base = { path = "../stellar-base" }
+async-sse = "3.0.0"
+base64 = "0.12.3"
+chrono = "0.4.13"
+eventsource = "0.5.0"
+futures = "0.3.5"
+hyper = "0.13.6"
+hyper-tls = "0.4.1"
+http = "0.2.1"
+http-types = "2.2.1"
+serde = "1.0.114"
+serde_derive = "1.0.114"
+serde_json = "1.0.56"
+thiserror = "1.0.20"

@@ -1,4 +1,6 @@
 [workspace]
 members = [
-    "stellar-base"
+    "stellar-base",
+    "stellar-horizon",
+    "example"
 ]

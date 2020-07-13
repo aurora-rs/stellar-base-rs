@@ -16,6 +16,7 @@ pub struct PublicKey {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SecretKey {
     key: ed25519::SecretKey,
+    seed: ed25519::Seed,
 }
 
 /// The secret and public key pair of the account.
@@ -56,11 +57,11 @@ impl PublicKey {
         &self.key
     }
 
-    fn account_id(&self) -> Result<String> {
+    pub fn account_id(&self) -> Result<String> {
         strkey::encode_account_id(&self.key.0)
     }
 
-    fn to_xdr_uint256(&self) -> Result<xdr::Uint256> {
+    pub fn to_xdr_uint256(&self) -> Result<xdr::Uint256> {
         let bytes = self.as_bytes().to_vec();
         Ok(xdr::Uint256::new(bytes))
     }
@@ -103,7 +104,7 @@ impl SecretKey {
 
     /// Return the secret key as String, starting with `S`.
     pub fn secret_seed(&self) -> Result<String> {
-        strkey::encode_secret_seed(&self.key.0)
+        strkey::encode_secret_seed(&self.seed.0)
     }
 }
 
@@ -192,7 +193,10 @@ impl KeyPair {
         let the_seed = ed25519::Seed::from_slice(&data).ok_or(Error::InvalidSeed)?;
         let (pk, sk) = ed25519::keypair_from_seed(&the_seed);
         let public = PublicKey { key: pk };
-        let secret = SecretKey { key: sk };
+        let secret = SecretKey {
+            key: sk,
+            seed: the_seed,
+        };
         Ok(KeyPair { public, secret })
     }
 
