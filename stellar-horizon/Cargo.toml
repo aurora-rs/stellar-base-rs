@@ -3,6 +3,7 @@ name = "stellar-horizon"
 version = "0.1.0"
 authors = ["Francesco Ceccon <francesco@ceccon.me>"]
 edition = "2018"
+description = "Stellar Horizon client"
 license = "Apache-2.0"
 documentation = "https://docs.rs/stellar-horizon"
 repository = "https://github.com/aurora-rs/stellar-sdk"
