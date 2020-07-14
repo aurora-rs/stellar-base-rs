@@ -24,17 +24,11 @@ jobs:
           command: login
           args: -- ${{ secrets.CARGO_TOKEN }}
 
-      - name: Cargo publish stellar-base
+      - name: Cargo publish
         uses: actions-rs/cargo@v1
         with:
           command: publish
-          args: -- -p stellar-base
-
-      - name: Cargo publish stellar-horizon
-        uses: actions-rs/cargo@v1
-        with:
-          command: publish
-          args: -- -p stellar-horizon
+          args: -- --all
 
       - name: GitHub Release
         id: create_release
