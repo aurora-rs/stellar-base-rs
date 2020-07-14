@@ -11,17 +11,18 @@ use futures::stream::{Stream, StreamExt};
 use stellar_base::crypto::KeyPair;
 use stellar_horizon::api;
 use stellar_horizon::client::{HorizonClient, HorizonHttpClient};
+use stellar_horizon::request::PageRequest;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let horizon = HorizonHttpClient::new("https://horizon-testnet.stellar.org")?;
 
-    let all_ledgers = horizon.request(&api::ledger::all()).await?;
+    let all_ledgers = horizon.request(api::ledger::all().with_limit(20)).await?;
     for ledger in all_ledgers.records() {
         println!("{:?}", ledger);
     }
 
-    let mut ledger_stream = horizon.stream(api::ledger::all())?;
+    let mut ledger_stream = horizon.stream(api::ledger::all().with_cursor("now"))?;
 
     while let Some(event) = ledger_stream.next().await {
         let event = event?;

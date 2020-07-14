@@ -4,6 +4,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error("stellar base error")]
     StellarBaseError(#[from] stellar_base::error::Error),
+    #[error("sse decoder error")]
+    SSEDecoderError,
     #[error("http error")]
     HttpError(#[from] http::Error),
     #[error("hyper error")]
@@ -12,4 +14,6 @@ pub enum Error {
     JsonError(#[from] serde_json::error::Error),
     #[error("invalid uri")]
     InvalidUri(#[from] http::uri::InvalidUri),
+    #[error("invalid ul")]
+    InvalidUrl(#[from] url::ParseError),
 }
