@@ -17,6 +17,7 @@ use stellar_horizon::request::PageRequest;
 async fn main() -> Result<()> {
     let horizon = HorizonHttpClient::new("https://horizon-testnet.stellar.org")?;
 
+    /*
     let all_ledgers = horizon.request(api::ledger::all().with_limit(20)).await?;
     for ledger in all_ledgers.records() {
         println!("{:?}", ledger);
@@ -28,6 +29,7 @@ async fn main() -> Result<()> {
         let event = event?;
         println!("Ledger {:?}", event);
     }
+    */
 
     /*
     let keypair =

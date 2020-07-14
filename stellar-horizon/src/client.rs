@@ -154,6 +154,7 @@ where
                     }
                     Poll::Ready(Ok(resp)) => {
                         // TODO(fra): handle non success statuses
+                        assert!(resp.status().is_success());
                         let body_stream = resp
                             .into_body()
                             .map_err(|e| futures::io::Error::new(futures::io::ErrorKind::Other, e))

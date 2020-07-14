@@ -1,5 +1,5 @@
 use crate::resources::account::AccountFlags;
-use crate::resources::Asset;
+use crate::resources::{Asset, Link};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -16,5 +16,5 @@ pub struct AssetStat {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AssetStatLinks {
-    toml: String,
+    toml: Link,
 }

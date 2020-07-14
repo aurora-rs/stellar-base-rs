@@ -1,6 +1,8 @@
 use serde::de::{Deserialize, DeserializeOwned, Deserializer};
 use serde::ser::Serialize;
+
 pub mod account;
+pub mod asset;
 pub mod ledger;
 
 #[derive(Debug, Clone)]

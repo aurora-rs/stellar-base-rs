@@ -4,6 +4,7 @@ use crate::resources;
 use stellar_base::crypto::PublicKey;
 use url::Url;
 
+#[derive(Debug, Clone)]
 pub struct SingleAccountRequest {
     account_id: String,
 }

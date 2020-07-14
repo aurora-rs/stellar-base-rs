@@ -4,10 +4,12 @@ use crate::request::{Order, PageRequest, Request, StreamRequest, UrlPageRequestE
 use crate::resources;
 use url::Url;
 
+#[derive(Debug, Clone)]
 pub struct SingleLedgerRequest {
     ledger_sequence: u64,
 }
 
+#[derive(Debug, Clone)]
 pub struct AllLedgersRequest {
     limit: Option<u64>,
     cursor: Option<String>,
