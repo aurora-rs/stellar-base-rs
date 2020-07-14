@@ -5,6 +5,7 @@
 // When updating, use that as your source of truth.
 pub mod account;
 pub mod asset;
+pub mod book;
 pub mod ledger;
 pub mod offer;
 pub mod root;
@@ -13,6 +14,7 @@ pub mod transaction;
 
 pub use account::*;
 pub use asset::*;
+pub use book::*;
 pub use ledger::*;
 pub use offer::*;
 pub use root::*;
@@ -31,7 +33,7 @@ pub struct Price {
 pub struct Asset {
     asset_type: String,
     asset_code: Option<String>,
-    asset_isuer: Option<String>,
+    asset_issuer: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -65,7 +67,7 @@ struct SourceAsset {
     #[serde(rename = "source_asset_code")]
     asset_code: Option<String>,
     #[serde(rename = "source_asset_issuer")]
-    asset_isuer: Option<String>,
+    asset_issuer: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -76,5 +78,5 @@ struct DestinationAsset {
     #[serde(rename = "destination_asset_code")]
     asset_code: Option<String>,
     #[serde(rename = "destination_asset_issuer")]
-    asset_isuer: Option<String>,
+    asset_issuer: Option<String>,
 }

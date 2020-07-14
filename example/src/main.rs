@@ -8,15 +8,41 @@ extern crate tokio;
 
 use anyhow::Result;
 use futures::stream::{Stream, StreamExt};
+use stellar_base::asset::Asset;
 use stellar_base::crypto::KeyPair;
+use stellar_base::crypto::PublicKey;
 use stellar_horizon::api;
 use stellar_horizon::client::{HorizonClient, HorizonHttpClient};
 use stellar_horizon::request::PageRequest;
+
+fn anchor_usd() -> Result<Asset> {
+    let pk =
+        PublicKey::from_account_id("GDUKMGUGDZQK6YHYA5Z6AY2G4XDSZPSZ3SW5UN3ARVMO6QSRDWP5YLEX")?;
+    Ok(Asset::credit("USD", pk)?)
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let horizon = HorizonHttpClient::new("https://horizon.stellar.org")?;
 
+    let resp = horizon
+        .request(api::aggregations::order_book(
+            Asset::native(),
+            anchor_usd()?,
+        ))
+        .await?;
+    println!("{:?}", resp);
+
+    let mut stream = horizon.stream(api::aggregations::order_book(
+        Asset::native(),
+        anchor_usd()?,
+    ))?;
+
+    while let Some(event) = stream.next().await {
+        let event = event?;
+        println!("> {:?}", event);
+    }
+    /*
     let page = horizon.request(api::trades::all().with_limit(20)).await?;
     for record in page.records() {
         println!("{:?}", record);
@@ -28,6 +54,7 @@ async fn main() -> Result<()> {
         let event = event?;
         println!("> {:?}", event);
     }
+    */
 
     /*
     let keypair =

@@ -89,7 +89,7 @@ struct BaseAsset {
     #[serde(rename = "base_asset_code")]
     asset_code: Option<String>,
     #[serde(rename = "base_asset_issuer")]
-    asset_isuer: Option<String>,
+    asset_issuer: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -100,7 +100,7 @@ struct CounterAsset {
     #[serde(rename = "counter_asset_code")]
     asset_code: Option<String>,
     #[serde(rename = "counter_asset_issuer")]
-    asset_isuer: Option<String>,
+    asset_issuer: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -111,7 +111,7 @@ struct SoldAsset {
     #[serde(rename = "sold_asset_code")]
     asset_code: Option<String>,
     #[serde(rename = "sold_asset_issuer")]
-    asset_isuer: Option<String>,
+    asset_issuer: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -122,5 +122,5 @@ struct BoughtAsset {
     #[serde(rename = "bought_asset_code")]
     asset_code: Option<String>,
     #[serde(rename = "bought_asset_issuer")]
-    asset_isuer: Option<String>,
+    asset_issuer: Option<String>,
 }

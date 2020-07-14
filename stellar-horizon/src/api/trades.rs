@@ -16,6 +16,9 @@ pub struct AllTradesRequest {
     order: Option<Order>,
 }
 
+#[derive(Debug, Clone)]
+pub struct TradesForAccountRequest {}
+
 pub fn all() -> AllTradesRequest {
     AllTradesRequest {
         offer_id: None,
@@ -54,12 +57,12 @@ impl Request for AllTradesRequest {
             if let Some(offer_id) = &self.offer_id {
                 query.append_pair("offer_id", offer_id);
             }
-            if let Some(asset) = &self.base_asset {
-                todo!()
-            }
-            if let Some(asset) = &self.counter_asset {
-                todo!()
-            }
+        }
+        if let Some(asset) = &self.base_asset {
+            url = url.append_asset_params(&asset, Some("base_"))?;
+        }
+        if let Some(asset) = &self.counter_asset {
+            url = url.append_asset_params(&asset, Some("counter_"))?;
         }
         Ok(url.append_pagination_params(self))
     }

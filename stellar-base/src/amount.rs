@@ -1,11 +1,11 @@
 use crate::error::{Error, Result};
 use crate::xdr;
 use crate::xdr::{XDRDeserialize, XDRSerialize};
-use num_bigint::BigInt;
 use num_rational::Ratio;
-use num_traits::cast::{FromPrimitive, ToPrimitive};
+use num_traits::cast::ToPrimitive;
 use rust_decimal::Decimal;
 use std::convert::TryFrom;
+use std::fmt;
 use std::ops::Mul;
 use std::str::FromStr;
 use xdr_rs_serialize::de::XDRIn;
@@ -19,9 +19,13 @@ pub struct Amount {
     inner: Decimal,
 }
 
+/// Amount in stroops.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Stroops(pub i64);
+
 impl Amount {
     /// Create from amount specified in stroops.
-    pub fn from_stroops(stroops: Stroops) -> Result<Amount> {
+    pub fn from_stroops(stroops: &Stroops) -> Result<Amount> {
         let inner = Decimal::new(stroops.0, STELLAR_SCALE);
         Ok(Amount { inner })
     }
@@ -61,9 +65,11 @@ impl FromStr for Amount {
     }
 }
 
-/// Amount in stroops.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Stroops(pub i64);
+impl fmt::Display for Amount {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.inner)
+    }
+}
 
 impl Stroops {
     /// Create from stroops.

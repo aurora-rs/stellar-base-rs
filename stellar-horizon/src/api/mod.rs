@@ -2,9 +2,16 @@ use serde::de::{Deserialize, DeserializeOwned, Deserializer};
 use serde::ser::Serialize;
 
 pub mod accounts;
+pub mod aggregations;
 pub mod assets;
+pub mod data;
+pub mod effects;
 pub mod ledgers;
+pub mod offers;
+pub mod operations;
+pub mod payments;
 pub mod trades;
+pub mod transactions;
 
 #[derive(Debug, Clone)]
 pub struct Page<T>
