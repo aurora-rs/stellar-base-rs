@@ -36,7 +36,7 @@ pub trait StreamRequest: Request + Unpin {
 
 pub(crate) trait UrlPageRequestExt: Sized {
     fn append_pagination_params<R: PageRequest>(self, req: &R) -> Self;
-    fn append_asset_params(self, asset: &Asset, prefix: Option<&str>) -> Result<Self>;
+    fn append_asset_params(self, asset: &Asset, prefix: Option<&str>) -> Self;
     fn append_query_param(self, key: &str, value: &str) -> Self;
 }
 
@@ -63,7 +63,7 @@ impl UrlPageRequestExt for Url {
         self
     }
 
-    fn append_asset_params(mut self, asset: &Asset, prefix: Option<&str>) -> Result<Self> {
+    fn append_asset_params(mut self, asset: &Asset, prefix: Option<&str>) -> Self {
         {
             let mut query = self.query_pairs_mut();
 
@@ -83,7 +83,7 @@ impl UrlPageRequestExt for Url {
 
             if let Asset::Credit(credit) = asset {
                 let asset_code = credit.code();
-                let asset_issuer = credit.issuer().account_id()?;
+                let asset_issuer = credit.issuer().account_id();
                 if let Some(prefix) = prefix {
                     query.append_pair(&format!("{}_asset_code", prefix), asset_code);
                     query.append_pair(&format!("{}_asset_issuer", prefix), &asset_issuer);
@@ -93,7 +93,7 @@ impl UrlPageRequestExt for Url {
                 }
             }
         }
-        Ok(self)
+        self
     }
 
     fn append_query_param(mut self, key: &str, value: &str) -> Self {

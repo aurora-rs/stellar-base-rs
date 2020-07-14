@@ -5,15 +5,6 @@ use crate::resources;
 use stellar_base::crypto::PublicKey;
 use url::Url;
 
-#[derive(Debug, Clone)]
-pub struct AllAssetsRequest {
-    asset_code: Option<String>,
-    asset_issuer: Option<String>,
-    limit: Option<u64>,
-    cursor: Option<String>,
-    order: Option<Order>,
-}
-
 pub fn all() -> AllAssetsRequest {
     AllAssetsRequest {
         asset_code: None,
@@ -24,15 +15,24 @@ pub fn all() -> AllAssetsRequest {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct AllAssetsRequest {
+    asset_code: Option<String>,
+    asset_issuer: Option<String>,
+    limit: Option<u64>,
+    cursor: Option<String>,
+    order: Option<Order>,
+}
+
 impl AllAssetsRequest {
     pub fn with_asset_code(mut self, code: &str) -> AllAssetsRequest {
         self.asset_code = Some(code.to_string());
         self
     }
 
-    pub fn with_asset_issuer(mut self, issuer: &PublicKey) -> Result<AllAssetsRequest> {
-        self.asset_issuer = Some(issuer.account_id()?);
-        Ok(self)
+    pub fn with_asset_issuer(mut self, issuer: &PublicKey) -> AllAssetsRequest {
+        self.asset_issuer = Some(issuer.account_id());
+        self
     }
 }
 

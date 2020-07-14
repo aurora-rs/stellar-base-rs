@@ -3,7 +3,6 @@ use crate::error::Result;
 use crate::request::{Order, PageRequest, Request, StreamRequest, UrlPageRequestExt};
 use crate::resources;
 use stellar_base::asset::Asset;
-use stellar_base::crypto::PublicKey;
 use url::Url;
 
 #[derive(Debug, Clone)]
@@ -59,10 +58,10 @@ impl Request for AllTradesRequest {
             }
         }
         if let Some(asset) = &self.base_asset {
-            url = url.append_asset_params(&asset, Some("base_"))?;
+            url = url.append_asset_params(&asset, Some("base_"));
         }
         if let Some(asset) = &self.counter_asset {
-            url = url.append_asset_params(&asset, Some("counter_"))?;
+            url = url.append_asset_params(&asset, Some("counter_"));
         }
         Ok(url.append_pagination_params(self))
     }

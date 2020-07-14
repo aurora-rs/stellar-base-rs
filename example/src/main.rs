@@ -25,18 +25,7 @@ fn anchor_usd() -> Result<Asset> {
 async fn main() -> Result<()> {
     let horizon = HorizonHttpClient::new("https://horizon.stellar.org")?;
 
-    let resp = horizon
-        .request(api::aggregations::order_book(
-            Asset::native(),
-            anchor_usd()?,
-        ))
-        .await?;
-    println!("{:?}", resp);
-
-    let mut stream = horizon.stream(api::aggregations::order_book(
-        Asset::native(),
-        anchor_usd()?,
-    ))?;
+    let mut stream = horizon.stream(api::transactions::all().with_cursor("now").with_limit(100))?;
 
     while let Some(event) = stream.next().await {
         let event = event?;

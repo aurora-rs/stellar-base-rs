@@ -10,17 +10,6 @@ use stellar_base::crypto::PublicKey;
 use stellar_base::error::Error as StellarBaseError;
 use url::Url;
 
-#[derive(Debug, Copy, Clone)]
-pub enum Resolution {
-    OneMinute,
-    FiveMinutes,
-    FifteenMinutes,
-    OneHour,
-    OneDay,
-    OneWeek,
-    Custom(Duration),
-}
-
 pub fn order_book(selling: Asset, buying: Asset) -> OrderBookRequest {
     OrderBookRequest {
         buying,
@@ -82,6 +71,17 @@ pub fn all_trades(
 
 pub fn fee_stats() -> FeeStatsRequest {
     FeeStatsRequest {}
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum Resolution {
+    OneMinute,
+    FiveMinutes,
+    FifteenMinutes,
+    OneHour,
+    OneDay,
+    OneWeek,
+    Custom(Duration),
 }
 
 #[derive(Debug, Clone)]
@@ -148,8 +148,8 @@ impl Request for OrderBookRequest {
 
     fn uri(&self, host: &Url) -> Result<Url> {
         let mut url = host.join("/order_book")?;
-        url = url.append_asset_params(&self.buying, Some("buying"))?;
-        url = url.append_asset_params(&self.selling, Some("selling"))?;
+        url = url.append_asset_params(&self.buying, Some("buying"));
+        url = url.append_asset_params(&self.selling, Some("selling"));
         if let Some(limit) = &self.limit {
             url = url.append_query_param("limit", &limit.to_string());
         }
@@ -166,10 +166,10 @@ impl Request for PathsStrictReceiveRequest {
             url = url.append_query_param("source_account", &source_account);
         }
         if !self.source_assets.is_empty() {
-            let source_assets = serialize_assets_to_query_value(&self.source_assets)?;
+            let source_assets = serialize_assets_to_query_value(&self.source_assets);
             url = url.append_query_param("source_assets", &source_assets);
         }
-        url = url.append_asset_params(&self.destination_asset, Some("destination"))?;
+        url = url.append_asset_params(&self.destination_asset, Some("destination"));
         let amount = Amount::from_stroops(&self.destination_amount)?;
         url = url.append_query_param("destination_amount", &amount.to_string());
         Ok(url)
@@ -185,10 +185,10 @@ impl Request for PathsStrictSendRequest {
             url = url.append_query_param("destination_account", &destination_account);
         }
         if !self.destination_assets.is_empty() {
-            let destination_assets = serialize_assets_to_query_value(&self.destination_assets)?;
+            let destination_assets = serialize_assets_to_query_value(&self.destination_assets);
             url = url.append_query_param("destination_assets", &destination_assets);
         }
-        url = url.append_asset_params(&self.source_asset, Some("source"))?;
+        url = url.append_asset_params(&self.source_asset, Some("source"));
         let amount = Amount::from_stroops(&self.source_amount)?;
         url = url.append_query_param("source_amount", &amount.to_string());
         Ok(url)
@@ -213,8 +213,8 @@ impl Request for AllTradesRequest {
         if let Some(offset) = &self.offset {
             url = url.append_query_param("offset", &offset.num_milliseconds().to_string());
         }
-        url = url.append_asset_params(&self.base_asset, Some("base"))?;
-        url = url.append_asset_params(&self.counter_asset, Some("counter"))?;
+        url = url.append_asset_params(&self.base_asset, Some("base"));
+        url = url.append_asset_params(&self.counter_asset, Some("counter"));
         if let Some(order) = &self.order {
             url = url.append_query_param("order", &order.to_query_value());
         }
@@ -233,15 +233,15 @@ impl Request for FeeStatsRequest {
     }
 }
 
-fn serialize_assets_to_query_value(assets: &Vec<CreditAsset>) -> Result<String> {
-    let assets: Result<Vec<_>> = assets.iter().map(credit_asset_to_string).collect();
-    Ok(assets?.join(","))
+fn serialize_assets_to_query_value(assets: &Vec<CreditAsset>) -> String {
+    let assets: Vec<_> = assets.iter().map(credit_asset_to_string).collect();
+    assets.join(",")
 }
 
-fn credit_asset_to_string(asset: &CreditAsset) -> Result<String> {
+fn credit_asset_to_string(asset: &CreditAsset) -> String {
     let code = asset.code();
-    let issuer = asset.issuer().account_id()?;
-    Ok(format!("{}:{}", code, issuer))
+    let issuer = asset.issuer().account_id();
+    format!("{}:{}", code, issuer)
 }
 
 fn resolution_to_milliseconds(resolution: &Resolution) -> u64 {
@@ -253,5 +253,75 @@ fn resolution_to_milliseconds(resolution: &Resolution) -> u64 {
         Resolution::OneDay => 86400000,
         Resolution::OneWeek => 604800000,
         Resolution::Custom(d) => d.num_milliseconds() as u64,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::request::Request;
+    use std::collections::HashMap;
+    use stellar_base::asset::Asset;
+    use stellar_base::crypto::PublicKey;
+    use url::Url;
+
+    fn host() -> Url {
+        "https://horizon.stellar.org".parse().unwrap()
+    }
+
+    fn keypair0() -> PublicKey {
+        PublicKey::from_account_id("GDHCYXWSMCGPN7S5VBCSDVNXUMRI62MCRVK7DBULCDBBIEQE76DND623")
+            .unwrap()
+    }
+
+    fn keypair1() -> PublicKey {
+        PublicKey::from_account_id("GB6YS5JYLNFHLFSFF7KXQ6DWIRGZTMZ64MBAXOF7OV764PET3T7FHVR")
+            .unwrap()
+    }
+
+    fn credit_asset0() -> Asset {
+        let issuer = keypair0();
+        let code = "ABCD";
+        Asset::credit(code, issuer).unwrap()
+    }
+
+    fn credit_asset1() -> Asset {
+        let issuer = keypair1();
+        let code = "WXYZ0";
+        Asset::credit(code, issuer).unwrap()
+    }
+
+    #[test]
+    fn test_order_book_request_uri() {
+        let req = order_book(credit_asset0(), Asset::native());
+        let uri = req.uri(&host()).unwrap();
+        assert!(uri
+            .to_string()
+            .starts_with("https://horizon.stellar.org/order_book?"));
+        let query: HashMap<_, _> = uri.query_pairs().into_owned().collect();
+        assert_eq!(Some(&"native".to_string()), query.get("buying_asset_type"));
+        assert_eq!(None, query.get("buying_asset_code"));
+        assert_eq!(None, query.get("buying_asset_issuer"));
+        assert_eq!(
+            Some(&"credit_alphanum4".to_string()),
+            query.get("selling_asset_type")
+        );
+        assert_eq!(Some(&"ABCD".to_string()), query.get("selling_asset_code"));
+        assert_eq!(
+            Some(&"GDHCYXWSMCGPN7S5VBCSDVNXUMRI62MCRVK7DBULCDBBIEQE76DND623".to_string()),
+            query.get("selling_asset_issuer")
+        );
+        assert_eq!(None, query.get("limit"));
+    }
+
+    #[test]
+    fn test_order_book_request_uri_with_limit() {
+        let req = order_book(credit_asset0(), Asset::native()).with_limit(100);
+        let uri = req.uri(&host()).unwrap();
+        let query: HashMap<_, _> = uri.query_pairs().into_owned().collect();
+        assert!(uri
+            .to_string()
+            .starts_with("https://horizon.stellar.org/order_book?"));
+        assert_eq!(Some(&"100".to_string()), query.get("limit"));
     }
 }
