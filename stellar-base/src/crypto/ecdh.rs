@@ -1,6 +1,6 @@
 //! Elliptic-curve Diffie–Hellman
-use sodiumoxide::crypto::scalarmult::curve25519;
 use crate::crypto;
+use sodiumoxide::crypto::scalarmult::curve25519;
 
 /// EC secret key.
 #[derive(Debug, Clone, PartialEq, Eq)]
