@@ -10,7 +10,7 @@ const SHA256_HASH_VERSION_BYTE: u8 = 23 << 3; // X
 
 static ALPHABET: base32::Alphabet = base32::Alphabet::RFC4648 { padding: false };
 
-pub fn encode_account_id(data: &[u8]) -> Result<String> {
+pub fn encode_account_id(data: &[u8]) -> String {
     encode_check(ACCOUNT_ID_VERSION_BYTE, data)
 }
 
@@ -18,7 +18,7 @@ pub fn decode_account_id(data: &str) -> Result<Vec<u8>> {
     decode_check(ACCOUNT_ID_VERSION_BYTE, data)
 }
 
-pub fn encode_muxed_account(data: &[u8], id: u64) -> Result<String> {
+pub fn encode_muxed_account(data: &[u8], id: u64) -> String {
     let mut data_to_encode = Vec::new();
     data_to_encode.resize(8 + data.len(), b'0');
     BigEndian::write_u64(&mut data_to_encode[..8], id);
@@ -35,28 +35,28 @@ pub fn decode_muxed_account(data: &str) -> Result<(Vec<u8>, u64)> {
     Ok((decoded_data, id))
 }
 
-pub fn encode_secret_seed(data: &[u8]) -> Result<String> {
+pub fn encode_secret_seed(data: &[u8]) -> String {
     encode_check(SECRET_SEED_VERSION_BYTE, data)
 }
 pub fn decode_secret_seed(data: &str) -> Result<Vec<u8>> {
     decode_check(SECRET_SEED_VERSION_BYTE, data)
 }
 
-pub fn encode_pre_auth_tx(data: &[u8]) -> Result<String> {
+pub fn encode_pre_auth_tx(data: &[u8]) -> String {
     encode_check(PRE_AUTH_TX_VERSION_BYTE, data)
 }
 pub fn decode_pre_auth_tx(data: &str) -> Result<Vec<u8>> {
     decode_check(PRE_AUTH_TX_VERSION_BYTE, data)
 }
 
-pub fn encode_sha256_hash(data: &[u8]) -> Result<String> {
+pub fn encode_sha256_hash(data: &[u8]) -> String {
     encode_check(SHA256_HASH_VERSION_BYTE, data)
 }
 pub fn decode_sha256_hash(data: &str) -> Result<Vec<u8>> {
     decode_check(SHA256_HASH_VERSION_BYTE, data)
 }
 
-fn encode_check(version: u8, indata: &[u8]) -> Result<String> {
+fn encode_check(version: u8, indata: &[u8]) -> String {
     let mut data = Vec::with_capacity(35);
     data.push(version);
     data.extend_from_slice(&indata);
@@ -64,7 +64,7 @@ fn encode_check(version: u8, indata: &[u8]) -> Result<String> {
     let data_end = data.len();
     data.resize(data_end + 2, 0);
     LittleEndian::write_u16(&mut data[data_end..], checksum);
-    Ok(base32::encode(ALPHABET, &data))
+    base32::encode(ALPHABET, &data)
 }
 
 fn decode_unchecked(data: &str) -> Result<(u8, Vec<u8>)> {
@@ -126,7 +126,7 @@ mod tests {
     fn test_encode_decode_secret_seed() {
         let seed = "SDJHRQF4GCMIIKAAAQ6IHY42X73FQFLHUULAPSKKD4DFDM7UXWWCRHBE";
         let secret = decode_secret_seed(&seed).unwrap();
-        let encoded = encode_secret_seed(&secret).unwrap();
+        let encoded = encode_secret_seed(&secret);
         assert_eq!(seed, &encoded);
     }
 
@@ -134,7 +134,7 @@ mod tests {
     fn test_encode_decode_account_id() {
         let addr = "GCZHXL5HXQX5ABDM26LHYRCQZ5OJFHLOPLZX47WEBP3V2PF5AVFK2A5D";
         let accountid = decode_account_id(&addr).unwrap();
-        let encoded = encode_account_id(&accountid).unwrap();
+        let encoded = encode_account_id(&accountid);
         assert_eq!(addr, &encoded);
     }
 
@@ -150,12 +150,12 @@ mod tests {
         let addr = "MAAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITLVL6";
         let (key, id) = decode_muxed_account(addr).unwrap();
         assert_eq!(0, id);
-        let public_addr = encode_account_id(&key).unwrap();
+        let public_addr = encode_account_id(&key);
         assert_eq!(
             "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ",
             public_addr
         );
-        let back = encode_muxed_account(&key, 0).unwrap();
+        let back = encode_muxed_account(&key, 0);
         assert_eq!(addr, back);
     }
 
@@ -164,12 +164,12 @@ mod tests {
         let addr = "MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNOG";
         let (key, id) = decode_muxed_account(addr).unwrap();
         assert_eq!(9223372036854775808, id);
-        let public_addr = encode_account_id(&key).unwrap();
+        let public_addr = encode_account_id(&key);
         assert_eq!(
             "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ",
             public_addr
         );
-        let back = encode_muxed_account(&key, id).unwrap();
+        let back = encode_muxed_account(&key, id);
         assert_eq!(addr, back);
     }
 

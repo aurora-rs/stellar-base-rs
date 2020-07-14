@@ -57,7 +57,7 @@ impl PublicKey {
         &self.key
     }
 
-    pub fn account_id(&self) -> Result<String> {
+    pub fn account_id(&self) -> String {
         strkey::encode_account_id(&self.key.0)
     }
 
@@ -103,7 +103,7 @@ impl SecretKey {
     }
 
     /// Return the secret key as String, starting with `S`.
-    pub fn secret_seed(&self) -> Result<String> {
+    pub fn secret_seed(&self) -> String {
         strkey::encode_secret_seed(&self.seed.0)
     }
 }
@@ -125,7 +125,7 @@ impl MuxedEd25519PublicKey {
         &self.key
     }
 
-    pub fn account_id(&self) -> Result<String> {
+    pub fn account_id(&self) -> String {
         strkey::encode_muxed_account(&self.key.as_bytes(), self.id)
     }
 
@@ -141,7 +141,7 @@ impl MuxedEd25519PublicKey {
 }
 
 impl MuxedAccount {
-    pub fn account_id(&self) -> Result<String> {
+    pub fn account_id(&self) -> String {
         match self {
             MuxedAccount::Ed25519(pk) => pk.account_id(),
             MuxedAccount::MuxedEd25519(mx) => mx.account_id(),
@@ -297,7 +297,7 @@ mod tests {
 
         for &(secret, address) in keypairs.iter() {
             let keypair = KeyPair::from_secret_seed(&secret).unwrap();
-            let account_id = keypair.public_key().account_id().unwrap();
+            let account_id = keypair.public_key().account_id();
             assert_eq!(&account_id, address);
         }
     }
@@ -306,7 +306,7 @@ mod tests {
     fn test_from_network() {
         let network = Network::public();
         let kp = KeyPair::from_network(&network).unwrap();
-        let public = kp.public_key().account_id().unwrap();
+        let public = kp.public_key().account_id();
         assert_eq!(
             public,
             "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"
