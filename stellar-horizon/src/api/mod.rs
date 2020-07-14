@@ -1,9 +1,10 @@
 use serde::de::{Deserialize, DeserializeOwned, Deserializer};
 use serde::ser::Serialize;
 
-pub mod account;
-pub mod asset;
-pub mod ledger;
+pub mod accounts;
+pub mod assets;
+pub mod ledgers;
+pub mod trades;
 
 #[derive(Debug, Clone)]
 pub struct Page<T>

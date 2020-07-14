@@ -15,21 +15,19 @@ use stellar_horizon::request::PageRequest;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let horizon = HorizonHttpClient::new("https://horizon-testnet.stellar.org")?;
+    let horizon = HorizonHttpClient::new("https://horizon.stellar.org")?;
 
-    /*
-    let all_ledgers = horizon.request(api::ledger::all().with_limit(20)).await?;
-    for ledger in all_ledgers.records() {
-        println!("{:?}", ledger);
+    let page = horizon.request(api::trades::all().with_limit(20)).await?;
+    for record in page.records() {
+        println!("{:?}", record);
     }
 
-    let mut ledger_stream = horizon.stream(api::ledger::all().with_cursor("now"))?;
+    let mut stream = horizon.stream(api::trades::all().with_cursor("now"))?;
 
-    while let Some(event) = ledger_stream.next().await {
+    while let Some(event) = stream.next().await {
         let event = event?;
-        println!("Ledger {:?}", event);
+        println!("> {:?}", event);
     }
-    */
 
     /*
     let keypair =
