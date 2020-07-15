@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.2.0] - 2020-07-15
+### Added
+ - Added several mutable accessors to structs fields
+
+### Changed
+ - Renamed enum accessors to `as_`
+ - Moved builders inside structs
+
+
 ## [0.1.0] - 2020-07-14
 ### Added
  - Build and sign transactions.
