@@ -24,9 +24,8 @@ jobs:
           command: login
           args: -- ${{ secrets.CARGO_TOKEN }}
 
-      - name: Cargo publish stellar-base
+      - name: Cargo publish
         run: cargo publish
-        working-directory: ./stellar-base
 
       - name: GitHub Release
         id: create_release
