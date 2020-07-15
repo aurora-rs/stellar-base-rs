@@ -11,6 +11,9 @@ This crate contains low level Stellar types. You can use this library
 to build and sign Stellar transactions, as well as to serialize and
 deserialize them from XDR.
 
+If you are looking for a crate to interact with Stellar Horizon, look at
+[stellar-horizon](https://github.com/aurora-rs/stellar-horizon-rs).
+
 
 ## Features
 
@@ -23,6 +26,23 @@ deserialize them from XDR.
 
 You can find the documentation on [docs.rs](https://docs.rs/stellar-base).
 
+
+## Roadmap
+
+The library is fairly complete, so we should be able to stabilise the
+API soon.
+
+ - [ ] Consider making all types possibly mutable
+ - [ ] Implement signigning transactions with hashX and preauthtx
+ - [ ] Improve `Amount` and `Stroops` to behave like numbers
+ - [ ] Remove unnecessary `Result<_>` return types
+ - [ ] Remove unused crypto types
+ - [ ] Cleanup api, e.g. turn `String` into `Into<String>`, and
+       `Stroops` into `TryInto<Stroops>`
+
+## Generating XDR types
+
+You can generated XDR types using [our fork of `xdrgen`](https://github.com/aurora-rs/xdrgen).
 
 ## Changelog
 
