@@ -21,18 +21,37 @@ pub struct ChangeTrustOperationBuilder {
 }
 
 impl ChangeTrustOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Retrieves the operation asset.
     pub fn asset(&self) -> &Asset {
         &self.asset
     }
 
+    /// Retrieves a mutable reference the operation asset.
+    pub fn asset_mut(&mut self) -> &mut Asset {
+        &mut self.asset
+    }
+
+    /// Retrieves the operation limit.
     pub fn limit(&self) -> &Option<Stroops> {
         &self.limit
     }
 
+    /// Retrieves a mutable reference to the operation limit.
+    pub fn limit_mut(&mut self) -> &mut Option<Stroops> {
+        &mut self.limit
+    }
+
+    /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let line = self.asset.to_xdr()?;
         let limit = match &self.limit {
@@ -43,6 +62,7 @@ impl ChangeTrustOperation {
         Ok(xdr::OperationBody::ChangeTrust(inner))
     }
 
+    /// Creates from the xdr operatino body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
         x: &xdr::ChangeTrustOp,

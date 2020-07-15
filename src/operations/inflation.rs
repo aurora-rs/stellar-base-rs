@@ -14,14 +14,22 @@ pub struct InflationOperationBuilder {
 }
 
 impl InflationOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         Ok(xdr::OperationBody::Inflation(()))
     }
 
+    /// Creates from the xdr operation body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
     ) -> Result<InflationOperation> {

@@ -16,12 +16,12 @@ impl Network {
     }
 
     /// Create new network with the same passphrase as SDF public network.
-    pub fn public() -> Network {
+    pub fn new_public() -> Network {
         Self::new(PUBLIC_PASSPHRASE.to_string())
     }
 
     /// Create new network with the same passphrase as SDF test network.
-    pub fn test() -> Network {
+    pub fn new_test() -> Network {
         Self::new(TEST_PASSPHRASE.to_string())
     }
 
@@ -42,7 +42,7 @@ mod tests {
 
     #[test]
     fn test_public_network_id() {
-        let network = Network::public();
+        let network = Network::new_public();
         let id = network.network_id();
         let expected_id = vec![
             0x7A, 0xC3, 0x39, 0x97, 0x54, 0x4E, 0x31, 0x75, 0xD2, 0x66, 0xBD, 0x02, 0x24, 0x39,
@@ -54,7 +54,7 @@ mod tests {
 
     #[test]
     fn test_test_network_id() {
-        let network = Network::test();
+        let network = Network::new_test();
         let id = network.network_id();
         let expected_id = vec![
             0xCE, 0xE0, 0x30, 0x2D, 0x59, 0x84, 0x4D, 0x32, 0xBD, 0xCA, 0x91, 0x5C, 0x82, 0x03,

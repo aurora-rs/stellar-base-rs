@@ -44,13 +44,13 @@ pub struct Signer {
 }
 
 impl Signature {
-    /// Sign `data` using the `secret` key.
+    /// Signs `data` using the `secret` key.
     pub fn sign(secret: &SecretKey, data: &[u8]) -> Signature {
         let sig = ed25519::sign_detached(data, &secret.inner());
         Signature { sig }
     }
 
-    /// Return a `Signature` from bytes.
+    /// Returns a `Signature` from bytes.
     pub fn from_slice(sb: &[u8]) -> Result<Signature> {
         let sig = ed25519::Signature::from_slice(sb).ok_or(Error::InvalidSignature)?;
         Ok(Signature { sig })
@@ -72,27 +72,29 @@ impl Signature {
     }
 
     /// Inner buffer as slice.
-    pub fn buf(&self) -> &[u8] {
+    pub fn as_bytes(&self) -> &[u8] {
         &self.sig.0
     }
 
-    /// Verify the signature againt the `data` and the `public` key.
-    /// Return `true` if the signature is valid, `false` otherwise.
+    /// Verifise the signature againt the `data` and the `public` key.
+    /// Returns `true` if the signature is valid, `false` otherwise.
     pub fn verify(&self, public: &PublicKey, data: &[u8]) -> bool {
         ed25519::verify_detached(&self.sig, data, &public.inner())
     }
 
+    /// Returns xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Signature> {
         Ok(xdr::Signature::new(self.to_vec()))
     }
 
+    /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::Signature) -> Result<Signature> {
         Signature::from_slice(&x.value)
     }
 }
 
 impl SignatureHint {
-    /// Create a `SignatureHint` with the last 4 bytes of the public key `pk`.
+    /// Creates a `SignatureHint` with the last 4 bytes of the public key `pk`.
     pub fn from_public_key(pk: &PublicKey) -> SignatureHint {
         let mut hint: [u8; 4] = Default::default();
         let buf = pk.as_bytes();
@@ -101,6 +103,7 @@ impl SignatureHint {
         SignatureHint(hint)
     }
 
+    /// Creates a `SignatureHint` from the byte slice.
     pub fn from_slice(buf: &[u8]) -> Result<SignatureHint> {
         let mut hint: [u8; 4] = Default::default();
         if buf.len() != 4 {
@@ -110,42 +113,56 @@ impl SignatureHint {
         Ok(SignatureHint(hint))
     }
 
-    /// Convert to `Vec<u8>`.
+    /// Converts to `Vec<u8>`.
     pub fn to_vec(&self) -> Vec<u8> {
         self.0.to_vec()
     }
 
+    /// Returns xdr object.
     pub fn to_xdr(&self) -> Result<xdr::SignatureHint> {
         Ok(xdr::SignatureHint::new(self.to_vec()))
     }
 
+    /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::SignatureHint) -> Result<SignatureHint> {
         SignatureHint::from_slice(&x.value)
     }
 }
 
 impl DecoratedSignature {
-    /// Create a new `DecoratedSignature` with `hint` and `signature`.
+    /// Creates a new `DecoratedSignature` with `hint` and `signature`.
     pub fn new(hint: SignatureHint, signature: Signature) -> DecoratedSignature {
         DecoratedSignature { hint, signature }
     }
 
-    /// Return the decorated signature `hint`.
+    /// Returns the decorated signature `hint`.
     pub fn hint(&self) -> &SignatureHint {
         &self.hint
     }
 
-    /// Return the decorated signature `signature`.
+    /// Returns a mutable reference to the decorated signature `hint`.
+    pub fn hint_mut(&mut self) -> &mut SignatureHint {
+        &mut self.hint
+    }
+
+    /// Returns the decorated signature `signature`.
     pub fn signature(&self) -> &Signature {
         &self.signature
     }
 
+    /// Returns a mutable reference to the decorated signature `signature`.
+    pub fn signature_mut(&mut self) -> &mut Signature {
+        &mut self.signature
+    }
+
+    /// Returns xdr object.
     pub fn to_xdr(&self) -> Result<xdr::DecoratedSignature> {
         let hint = self.hint.to_xdr()?;
         let signature = self.signature.to_xdr()?;
         Ok(xdr::DecoratedSignature { hint, signature })
     }
 
+    /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::DecoratedSignature) -> Result<DecoratedSignature> {
         let hint = SignatureHint::from_xdr(&x.hint)?;
         let signature = Signature::from_xdr(&x.signature)?;
@@ -154,6 +171,7 @@ impl DecoratedSignature {
 }
 
 impl SignerKey {
+    /// Returns the xdr object.
     pub fn to_xdr(&self) -> Result<xdr::SignerKey> {
         match self {
             SignerKey::Ed25519(pk) => {
@@ -172,6 +190,7 @@ impl SignerKey {
         }
     }
 
+    /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::SignerKey) -> Result<SignerKey> {
         match x {
             xdr::SignerKey::SignerKeyTypeEd25519(bytes) => {
@@ -191,16 +210,39 @@ impl SignerKey {
 }
 
 impl Signer {
+    /// Creates a new `Signer` with `key` and `weight`.
     pub fn new(key: SignerKey, weight: u32) -> Signer {
         Signer { key, weight }
     }
 
+    /// Returns the key.
+    pub fn key(&self) -> &SignerKey {
+        &self.key
+    }
+
+    /// Returns a mutable reference to the key.
+    pub fn key_mut(&mut self) -> &mut SignerKey {
+        &mut self.key
+    }
+
+    /// Returns the weight.
+    pub fn weight(&self) -> &u32 {
+        &self.weight
+    }
+
+    /// Returns a mutable reference to the weight.
+    pub fn weight_mut(&mut self) -> &mut u32 {
+        &mut self.weight
+    }
+
+    /// Returns xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Signer> {
         let key = self.key.to_xdr()?;
         let weight = xdr::Uint32::new(self.weight);
         Ok(xdr::Signer { key, weight })
     }
 
+    /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::Signer) -> Result<Signer> {
         let weight = x.weight.value;
         let key = SignerKey::from_xdr(&x.key)?;

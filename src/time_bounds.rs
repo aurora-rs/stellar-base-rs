@@ -68,11 +68,22 @@ impl TimeBounds {
         &self.lower
     }
 
+    /// Retrieves a mutable reference to the time bounds lower bound.
+    pub fn lower_mut(&mut self) -> &mut Option<DateTime<Utc>> {
+        &mut self.lower
+    }
+
     /// Retrieves the time bounds lower bound.
     pub fn upper(&self) -> &Option<DateTime<Utc>> {
         &self.upper
     }
 
+    /// Retrieves a mutable reference to the time bounds lower bound.
+    pub fn upper_mut(&mut self) -> &mut Option<DateTime<Utc>> {
+        &mut self.upper
+    }
+
+    /// Returns the xdr object.
     pub fn to_xdr(&self) -> Result<xdr::TimeBounds> {
         let min_time = match self.lower {
             None => xdr::Uint64::new(0),
@@ -87,6 +98,7 @@ impl TimeBounds {
         Ok(xdr::TimeBounds { min_time, max_time })
     }
 
+    /// Creates from the xdr object.
     pub fn from_xdr(x: &xdr::TimeBounds) -> Result<TimeBounds> {
         let min_time_epoch = x.min_time.value.value as i64;
         let max_time_epoch = x.max_time.value.value as i64;

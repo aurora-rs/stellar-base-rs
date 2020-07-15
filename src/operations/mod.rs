@@ -41,235 +41,411 @@ pub use path_payment_strict_send::{
 pub use payment::{PaymentOperation, PaymentOperationBuilder};
 pub use set_options::{SetOptionsOperation, SetOptionsOperationBuilder};
 
+/// Operations on a Stellar network.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Operation {
+    /// Create and fund a non existing account.
     CreateAccount(CreateAccountOperation),
+    /// Create a payment.
     Payment(PaymentOperation),
+    /// Send the specified amount of asset, optionally through a path.
     PathPaymentStrictReceive(PathPaymentStrictReceiveOperation),
+    /// Create, update, or delete a sell offer.
     ManageSellOffer(ManageSellOfferOperation),
+    /// Create a passive sell offer. This offer won't consume a counter offer that exactly matches this offer.
     CreatePassiveSellOffer(CreatePassiveSellOfferOperation),
+    /// Change the account options.
     SetOptions(SetOptionsOperation),
+    /// Add, remove, or update a trust line for the given asset.
     ChangeTrust(ChangeTrustOperation),
+    /// Authorize another account to hold your account's credit aset.
     AllowTrust(AllowTrustOperation),
+    /// Transfer all of account balance into destination account.
     AccountMerge(AccountMergeOperation),
+    /// Generate the inflation.
     Inflation(InflationOperation),
+    /// Add o remove data entry.
     ManageData(ManageDataOperation),
+    /// Bumps the account sequence number.
     BumpSequence(BumpSequenceOperation),
+    /// Create, update, or delete a buy offer.
     ManageBuyOffer(ManageBuyOfferOperation),
+    /// Send the specified amount of asset, optionally through a path.
     PathPaymentStrictSend(PathPaymentStrictSendOperation),
 }
 
-pub fn create_account() -> CreateAccountOperationBuilder {
-    CreateAccountOperationBuilder::new()
-}
-
-pub fn payment() -> PaymentOperationBuilder {
-    PaymentOperationBuilder::new()
-}
-
-pub fn path_payment_strict_receive() -> PathPaymentStrictReceiveOperationBuilder {
-    PathPaymentStrictReceiveOperationBuilder::new()
-}
-
-pub fn manage_sell_offer() -> ManageSellOfferOperationBuilder {
-    ManageSellOfferOperationBuilder::new()
-}
-
-pub fn create_passive_sell_offer() -> CreatePassiveSellOfferOperationBuilder {
-    CreatePassiveSellOfferOperationBuilder::new()
-}
-
-pub fn set_options() -> SetOptionsOperationBuilder {
-    SetOptionsOperationBuilder::new()
-}
-
-pub fn change_trust() -> ChangeTrustOperationBuilder {
-    ChangeTrustOperationBuilder::new()
-}
-
-pub fn allow_trust() -> AllowTrustOperationBuilder {
-    AllowTrustOperationBuilder::new()
-}
-
-pub fn account_merge() -> AccountMergeOperationBuilder {
-    AccountMergeOperationBuilder::new()
-}
-
-pub fn inflation() -> InflationOperationBuilder {
-    InflationOperationBuilder::new()
-}
-
-pub fn manage_data() -> ManageDataOperationBuilder {
-    ManageDataOperationBuilder::new()
-}
-
-pub fn bump_sequence() -> BumpSequenceOperationBuilder {
-    BumpSequenceOperationBuilder::new()
-}
-
-pub fn manage_buy_offer() -> ManageBuyOfferOperationBuilder {
-    ManageBuyOfferOperationBuilder::new()
-}
-
-pub fn path_payment_strict_send() -> PathPaymentStrictSendOperationBuilder {
-    PathPaymentStrictSendOperationBuilder::new()
-}
-
 impl Operation {
-    pub fn create_account(&self) -> Option<&CreateAccountOperation> {
-        match self {
-            Operation::CreateAccount(op) => Some(op),
+    /// Creates a new create account operation builder.
+    pub fn new_create_account() -> CreateAccountOperationBuilder {
+        CreateAccountOperationBuilder::new()
+    }
+
+    /// Creates a new payment operation builder.
+    pub fn new_payment() -> PaymentOperationBuilder {
+        PaymentOperationBuilder::new()
+    }
+
+    /// Creates a new path payment strict receive operation builder.
+    pub fn new_path_payment_strict_receive() -> PathPaymentStrictReceiveOperationBuilder {
+        PathPaymentStrictReceiveOperationBuilder::new()
+    }
+
+    /// Creates a new manage sell offer operation builder.
+    pub fn new_manage_sell_offer() -> ManageSellOfferOperationBuilder {
+        ManageSellOfferOperationBuilder::new()
+    }
+
+    /// Creates a new create passive sell offer operation builder.
+    pub fn new_create_passive_sell_offer() -> CreatePassiveSellOfferOperationBuilder {
+        CreatePassiveSellOfferOperationBuilder::new()
+    }
+
+    /// Creates a new set options operation builder.
+    pub fn new_set_options() -> SetOptionsOperationBuilder {
+        SetOptionsOperationBuilder::new()
+    }
+
+    /// Creates a new change trust operation builder.
+    pub fn new_change_trust() -> ChangeTrustOperationBuilder {
+        ChangeTrustOperationBuilder::new()
+    }
+
+    /// Creates a new allow trust operation builder.
+    pub fn new_allow_trust() -> AllowTrustOperationBuilder {
+        AllowTrustOperationBuilder::new()
+    }
+
+    /// Creates a new account merge operation builder.
+    pub fn new_account_merge() -> AccountMergeOperationBuilder {
+        AccountMergeOperationBuilder::new()
+    }
+
+    /// Creates a new inflation operation builder.
+    pub fn new_inflation() -> InflationOperationBuilder {
+        InflationOperationBuilder::new()
+    }
+
+    /// Creates a new manage data operation builder.
+    pub fn new_manage_data() -> ManageDataOperationBuilder {
+        ManageDataOperationBuilder::new()
+    }
+
+    /// Creates a new bump sequence operation builder.
+    pub fn new_bump_sequence() -> BumpSequenceOperationBuilder {
+        BumpSequenceOperationBuilder::new()
+    }
+
+    /// Creates a new manage buy offer operation builder.
+    pub fn new_manage_buy_offer() -> ManageBuyOfferOperationBuilder {
+        ManageBuyOfferOperationBuilder::new()
+    }
+
+    /// Creates a new path payment strict send operation builder.
+    pub fn new_path_payment_strict_send() -> PathPaymentStrictSendOperationBuilder {
+        PathPaymentStrictSendOperationBuilder::new()
+    }
+
+    /// If the operation is a CreateAccount, returns its value. Returns None otherwise.
+    pub fn as_create_account(&self) -> Option<&CreateAccountOperation> {
+        match *self {
+            Operation::CreateAccount(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a CreateAccount, returns its mutable value. Returns None otherwise.
+    pub fn as_create_account_mut(&mut self) -> Option<&mut CreateAccountOperation> {
+        match *self {
+            Operation::CreateAccount(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a CreateAccount.
     pub fn is_create_account(&self) -> bool {
-        self.create_account().is_some()
+        self.as_create_account().is_some()
     }
 
-    pub fn payment(&self) -> Option<&PaymentOperation> {
-        match self {
-            Operation::Payment(op) => Some(op),
+    /// If the operation is a Payment, returns its value. Returns None otherwise.
+    pub fn as_payment(&self) -> Option<&PaymentOperation> {
+        match *self {
+            Operation::Payment(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a Payment, returns its value. Returns None otherwise.
+    pub fn as_payment_mut(&mut self) -> Option<&PaymentOperation> {
+        match *self {
+            Operation::Payment(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a Payment.
     pub fn is_payment(&self) -> bool {
-        self.payment().is_some()
+        self.as_payment().is_some()
     }
 
-    pub fn path_payment_strict_receive(&self) -> Option<&PathPaymentStrictReceiveOperation> {
-        match self {
-            Operation::PathPaymentStrictReceive(op) => Some(op),
+    /// If the operation is a PathPaymentStrictReceive, returns its value. Returns None otherwise.
+    pub fn as_path_payment_strict_receive(&self) -> Option<&PathPaymentStrictReceiveOperation> {
+        match *self {
+            Operation::PathPaymentStrictReceive(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a PathPaymentStrictReceive, returns its mutable value. Returns None otherwise.
+    pub fn as_path_payment_strict_receive_mut(
+        &mut self,
+    ) -> Option<&mut PathPaymentStrictReceiveOperation> {
+        match *self {
+            Operation::PathPaymentStrictReceive(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a PathPaymentStrictReceive.
     pub fn is_path_payment_strict_receive(&self) -> bool {
-        self.path_payment_strict_receive().is_some()
+        self.as_path_payment_strict_receive().is_some()
     }
 
-    pub fn manage_sell_offer(&self) -> Option<&ManageSellOfferOperation> {
-        match self {
-            Operation::ManageSellOffer(op) => Some(op),
+    /// If the operation is a ManageSellOffer, returns its value. Returns None otherwise.
+    pub fn as_manage_sell_offer(&self) -> Option<&ManageSellOfferOperation> {
+        match *self {
+            Operation::ManageSellOffer(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a ManageSellOffer, returns its mutable value. Returns None otherwise.
+    pub fn as_manage_sell_offer_mut(&mut self) -> Option<&mut ManageSellOfferOperation> {
+        match *self {
+            Operation::ManageSellOffer(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a ManageSellOffer.
     pub fn is_manage_sell_offer(&self) -> bool {
-        self.manage_sell_offer().is_some()
+        self.as_manage_sell_offer().is_some()
     }
 
-    pub fn create_passive_sell_offer(&self) -> Option<&CreatePassiveSellOfferOperation> {
-        match self {
-            Operation::CreatePassiveSellOffer(op) => Some(op),
+    /// If the operation is a CreatePassiveSellOffer, returns its value. Returns None otherwise.
+    pub fn as_create_passive_sell_offer(&self) -> Option<&CreatePassiveSellOfferOperation> {
+        match *self {
+            Operation::CreatePassiveSellOffer(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a CreatePassiveSellOffer, returns its mutable value. Returns None otherwise.
+    pub fn as_create_passive_sell_offer_mut(
+        &mut self,
+    ) -> Option<&mut CreatePassiveSellOfferOperation> {
+        match *self {
+            Operation::CreatePassiveSellOffer(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a CreatePassiveSellOffer.
     pub fn is_create_passive_sell_offer(&self) -> bool {
-        self.create_passive_sell_offer().is_some()
+        self.as_create_passive_sell_offer().is_some()
     }
 
-    pub fn set_options(&self) -> Option<&SetOptionsOperation> {
-        match self {
-            Operation::SetOptions(op) => Some(op),
+    /// If the operation is a SetOptions, returns its value. Returns None otherwise.
+    pub fn as_set_options(&self) -> Option<&SetOptionsOperation> {
+        match *self {
+            Operation::SetOptions(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a SetOptions, returns its mutable value. Returns None otherwise.
+    pub fn as_set_options_mut(&mut self) -> Option<&mut SetOptionsOperation> {
+        match *self {
+            Operation::SetOptions(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a SetOptions.
     pub fn is_set_options(&self) -> bool {
-        self.set_options().is_some()
+        self.as_set_options().is_some()
     }
 
-    pub fn change_trust(&self) -> Option<&ChangeTrustOperation> {
-        match self {
-            Operation::ChangeTrust(op) => Some(op),
+    /// If the operation is a ChangeTrust, returns its value. Returns None otherwise.
+    pub fn as_change_trust(&self) -> Option<&ChangeTrustOperation> {
+        match *self {
+            Operation::ChangeTrust(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a ChangeTrust, returns its mutable value. Returns None otherwise.
+    pub fn as_change_trust_mut(&mut self) -> Option<&ChangeTrustOperation> {
+        match *self {
+            Operation::ChangeTrust(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a ChangeTrust.
     pub fn is_change_trust(&self) -> bool {
-        self.change_trust().is_some()
+        self.as_change_trust().is_some()
     }
 
-    pub fn allow_trust(&self) -> Option<&AllowTrustOperation> {
-        match self {
-            Operation::AllowTrust(op) => Some(op),
+    /// If the operation is a AllowTrust, returns its value. Returns None otherwise.
+    pub fn as_allow_trust(&self) -> Option<&AllowTrustOperation> {
+        match *self {
+            Operation::AllowTrust(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a AllowTrust, returns its mutable value. Returns None otherwise.
+    pub fn as_allow_trust_mut(&mut self) -> Option<&mut AllowTrustOperation> {
+        match *self {
+            Operation::AllowTrust(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a AllowTrust.
     pub fn is_allow_trust(&self) -> bool {
-        self.allow_trust().is_some()
+        self.as_allow_trust().is_some()
     }
 
-    pub fn account_merge(&self) -> Option<&AccountMergeOperation> {
-        match self {
-            Operation::AccountMerge(op) => Some(op),
+    /// If the operation is a AccountMerge, returns its value. Returns None otherwise.
+    pub fn as_account_merge(&self) -> Option<&AccountMergeOperation> {
+        match *self {
+            Operation::AccountMerge(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a AccountMerge, returns its mutable value. Returns None otherwise.
+    pub fn as_account_merge_mut(&mut self) -> Option<&mut AccountMergeOperation> {
+        match *self {
+            Operation::AccountMerge(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a AccountMerge.
     pub fn is_account_merge(&self) -> bool {
-        self.account_merge().is_some()
+        self.as_account_merge().is_some()
     }
 
-    pub fn inflation(&self) -> Option<&InflationOperation> {
-        match self {
-            Operation::Inflation(op) => Some(op),
+    /// If the operation is a Inflation, returns its value. Returns None otherwise.
+    pub fn as_inflation(&self) -> Option<&InflationOperation> {
+        match *self {
+            Operation::Inflation(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a Inflation, returns its mutable value. Returns None otherwise.
+    pub fn as_inflation_mut(&mut self) -> Option<&mut InflationOperation> {
+        match *self {
+            Operation::Inflation(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a Inflation.
     pub fn is_inflation(&self) -> bool {
-        self.inflation().is_some()
+        self.as_inflation().is_some()
     }
 
-    pub fn manage_data(&self) -> Option<&ManageDataOperation> {
-        match self {
-            Operation::ManageData(op) => Some(op),
+    /// If the operation is a ManageData, returns its value. Returns None otherwise.
+    pub fn as_manage_data(&self) -> Option<&ManageDataOperation> {
+        match *self {
+            Operation::ManageData(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a ManageData, returns its mutable value. Returns None otherwise.
+    pub fn as_manage_data_mut(&mut self) -> Option<&mut ManageDataOperation> {
+        match *self {
+            Operation::ManageData(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a ManageData.
     pub fn is_manage_data(&self) -> bool {
-        self.manage_data().is_some()
+        self.as_manage_data().is_some()
     }
 
-    pub fn bump_sequence(&self) -> Option<&BumpSequenceOperation> {
-        match self {
-            Operation::BumpSequence(op) => Some(op),
+    /// If the operation is a BumpSequence, returns its value. Returns None otherwise.
+    pub fn as_bump_sequence(&self) -> Option<&BumpSequenceOperation> {
+        match *self {
+            Operation::BumpSequence(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a BumpSequence, returns its mutable value. Returns None otherwise.
+    pub fn as_bump_sequence_mut(&mut self) -> Option<&mut BumpSequenceOperation> {
+        match *self {
+            Operation::BumpSequence(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a BumpSequence.
     pub fn is_bump_sequence(&self) -> bool {
-        self.bump_sequence().is_some()
+        self.as_bump_sequence().is_some()
     }
 
-    pub fn manage_buy_offer(&self) -> Option<&ManageBuyOfferOperation> {
-        match self {
-            Operation::ManageBuyOffer(op) => Some(op),
+    /// If the operation is a ManageBuyOffer, returns its value. Returns None otherwise.
+    pub fn as_manage_buy_offer(&self) -> Option<&ManageBuyOfferOperation> {
+        match *self {
+            Operation::ManageBuyOffer(ref op) => Some(op),
             _ => None,
         }
     }
 
+    /// If the operation is a ManageBuyOffer, returns its mutable value. Returns None otherwise.
+    pub fn as_manage_buy_offer_mut(&mut self) -> Option<&mut ManageBuyOfferOperation> {
+        match *self {
+            Operation::ManageBuyOffer(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a ManageBuyOffer.
     pub fn is_manage_buy_offer(&self) -> bool {
-        self.manage_buy_offer().is_some()
+        self.as_manage_buy_offer().is_some()
     }
 
-    pub fn path_payment_strict_send(&self) -> Option<&PathPaymentStrictSendOperation> {
-        match self {
-            Operation::PathPaymentStrictSend(op) => Some(op),
+    /// If the operation is a PathPaymentStrictSend, returns its value. Returns None otherwise.
+    pub fn as_path_payment_strict_send(&self) -> Option<&PathPaymentStrictSendOperation> {
+        match *self {
+            Operation::PathPaymentStrictSend(ref op) => Some(op),
             _ => None,
         }
     }
 
-    pub fn is_path_payment_strict_send(&self) -> bool {
-        self.path_payment_strict_send().is_some()
+    /// If the operation is a PathPaymentStrictSend, returns its mutable value. Returns None otherwise.
+    pub fn as_path_payment_strict_send_mut(
+        &mut self,
+    ) -> Option<&mut PathPaymentStrictSendOperation> {
+        match *self {
+            Operation::PathPaymentStrictSend(ref mut op) => Some(op),
+            _ => None,
+        }
     }
 
+    /// Returns true if the operation is a PathPaymentStrictSend.
+    pub fn is_path_payment_strict_send(&self) -> bool {
+        self.as_path_payment_strict_send().is_some()
+    }
+
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         match self {
             Operation::CreateAccount(op) => op.source_account(),
@@ -289,6 +465,30 @@ impl Operation {
         }
     }
 
+    /// Retrieves a mutable reference to the operation source account.
+    pub fn source_account_mut(&self) -> &mut Option<MuxedAccount> {
+        todo!()
+        /*
+        match self {
+            Operation::CreateAccount(op) => op.source_account_mut(),
+            Operation::Payment(op) => op.source_account_mut(),
+            Operation::PathPaymentStrictReceive(op) => op.source_account_mut(),
+            Operation::ManageSellOffer(op) => op.source_account_mut(),
+            Operation::CreatePassiveSellOffer(op) => op.source_account_mut(),
+            Operation::SetOptions(op) => op.source_account_mut(),
+            Operation::ChangeTrust(op) => op.source_account_mut(),
+            Operation::AllowTrust(op) => op.source_account_mut(),
+            Operation::AccountMerge(op) => op.source_account_mut(),
+            Operation::Inflation(op) => op.source_account_mut(),
+            Operation::ManageData(op) => op.source_account_mut(),
+            Operation::BumpSequence(op) => op.source_account_mut(),
+            Operation::ManageBuyOffer(op) => op.source_account_mut(),
+            Operation::PathPaymentStrictSend(op) => op.source_account_mut(),
+        }
+        */
+    }
+
+    /// Returns the xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Operation> {
         let source_account = match self.source_account() {
             None => None,
@@ -316,6 +516,7 @@ impl Operation {
         })
     }
 
+    /// Creates from the xdr object.
     pub fn from_xdr(x: &xdr::Operation) -> Result<Operation> {
         let source_account = match &x.source_account {
             None => None,
@@ -401,6 +602,7 @@ impl XDRDeserialize for Operation {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -448,3 +650,5 @@ mod tests {
         assert_eq!(op, decoded);
     }
 }
+
+*/

@@ -5,7 +5,8 @@ use crate::xdr::{XDRDeserialize, XDRSerialize};
 use xdr_rs_serialize::de::XDRIn;
 use xdr_rs_serialize::ser::XDROut;
 
-/// Enum representing an asset.
+/// Represent an asset, either the native asset (XLM) or an asset
+/// issued.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Asset {
     /// The native asset (XLM).
@@ -30,12 +31,12 @@ pub enum CreditAsset {
 
 impl Asset {
     /// Create the native asset: Lumens.
-    pub fn native() -> Asset {
+    pub fn new_native() -> Asset {
         Asset::Native
     }
 
     /// Create the asset with `code` issued by `issuer`.
-    pub fn credit<S>(code: S, issuer: PublicKey) -> Result<Asset>
+    pub fn new_credit<S>(code: S, issuer: PublicKey) -> Result<Asset>
     where
         S: Into<String>,
     {
@@ -44,6 +45,36 @@ impl Asset {
         Ok(Asset::Credit(inner))
     }
 
+    /// Returns true if the asset is a Native. Returns false otherwise.
+    pub fn is_native(&self) -> bool {
+        match *self {
+            Asset::Native => true,
+            _ => false,
+        }
+    }
+
+    /// If the asset is a Credit, returns its value. Returns None otherwise
+    pub fn as_credit(&self) -> Option<&CreditAsset> {
+        match *self {
+            Asset::Credit(ref credit) => Some(credit),
+            _ => None,
+        }
+    }
+
+    /// If the asset is a Credit, returns its mutable value. Returns None otherwise
+    pub fn as_credit_mut(&mut self) -> Option<&mut CreditAsset> {
+        match *self {
+            Asset::Credit(ref mut credit) => Some(credit),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the asset is a Credit. Returns false otherwise.
+    pub fn is_credit(&self) -> bool {
+        self.as_credit().is_some()
+    }
+
+    /// Returns the asset xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Asset> {
         match self {
             Asset::Native => Ok(xdr::Asset::AssetTypeNative(())),
@@ -72,25 +103,26 @@ impl Asset {
         }
     }
 
+    /// Creates an asset from the xdr object.
     pub fn from_xdr(x: &xdr::Asset) -> Result<Asset> {
         match x {
-            xdr::Asset::AssetTypeNative(()) => Ok(Asset::native()),
+            xdr::Asset::AssetTypeNative(()) => Ok(Asset::new_native()),
             xdr::Asset::AssetTypeCreditAlphanum4(credit) => {
                 let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
                 let code = xdr_code_to_string(&credit.asset_code.value);
-                Asset::credit(code, issuer)
+                Asset::new_credit(code, issuer)
             }
             xdr::Asset::AssetTypeCreditAlphanum12(credit) => {
                 let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
                 let code = xdr_code_to_string(&credit.asset_code.value);
-                Asset::credit(code, issuer)
+                Asset::new_credit(code, issuer)
             }
         }
     }
 }
 
 impl CreditAsset {
-    /// Create new credit asset with `code` and `issuer.
+    /// Creates new credit asset with `code` and `issuer`.
     ///
     /// Code must be shorter than 12 characters.
     pub fn new(code: String, issuer: PublicKey) -> Result<CreditAsset> {
@@ -104,7 +136,7 @@ impl CreditAsset {
         }
     }
 
-    /// Return the asset code.
+    /// Returns the asset code.
     pub fn code(&self) -> &str {
         match self {
             CreditAsset::AlphaNum4 { code, issuer: _ } => &code,
@@ -112,7 +144,7 @@ impl CreditAsset {
         }
     }
 
-    /// Return the asset issuer.
+    /// Returns the asset issuer.
     pub fn issuer(&self) -> &PublicKey {
         match self {
             CreditAsset::AlphaNum4 { code: _, issuer } => &issuer,
@@ -120,7 +152,7 @@ impl CreditAsset {
         }
     }
 
-    /// Return the credit asset type
+    /// Returns the credit asset type.
     pub fn asset_type(&self) -> CreditAssetType {
         match self {
             CreditAsset::AlphaNum4 { code, issuer: _ } => {
@@ -178,7 +210,7 @@ mod tests {
 
     #[test]
     fn test_asset_native_xdr_ser() {
-        let native = Asset::native();
+        let native = Asset::new_native();
         let xdr = native.xdr_base64().unwrap();
         assert_eq!("AAAAAA==", xdr);
     }
@@ -189,7 +221,7 @@ mod tests {
         let pk =
             PublicKey::from_account_id("GCZHXL5HXQX5ABDM26LHYRCQZ5OJFHLOPLZX47WEBP3V2PF5AVFK2A5D")
                 .unwrap();
-        let asset = Asset::credit(code, pk).unwrap();
+        let asset = Asset::new_credit(code, pk).unwrap();
         let xdr = asset.xdr_base64().unwrap();
         assert_eq!(
             "AAAAAVJVU1QAAAAAsnuvp7wv0ARs15Z8RFDPXJKdbnrzfn7EC/ddPL0FSq0=",
@@ -203,7 +235,7 @@ mod tests {
         let pk =
             PublicKey::from_account_id("GCZHXL5HXQX5ABDM26LHYRCQZ5OJFHLOPLZX47WEBP3V2PF5AVFK2A5D")
                 .unwrap();
-        let asset = Asset::credit(code, pk).unwrap();
+        let asset = Asset::new_credit(code, pk).unwrap();
         let xdr = asset.xdr_base64().unwrap();
         assert_eq!(
             "AAAAAlJVU1RSVVNUUlVTVAAAAACye6+nvC/QBGzXlnxEUM9ckp1uevN+fsQL9108vQVKrQ==",
@@ -213,7 +245,7 @@ mod tests {
 
     #[test]
     fn test_asset_native_xdr_de() {
-        let expected = Asset::native();
+        let expected = Asset::new_native();
         let asset = Asset::from_xdr_base64("AAAAAA==").unwrap();
         assert_eq!(expected, asset);
     }
@@ -224,7 +256,7 @@ mod tests {
         let pk =
             PublicKey::from_account_id("GCZHXL5HXQX5ABDM26LHYRCQZ5OJFHLOPLZX47WEBP3V2PF5AVFK2A5D")
                 .unwrap();
-        let expected = Asset::credit(code, pk).unwrap();
+        let expected = Asset::new_credit(code, pk).unwrap();
         let asset =
             Asset::from_xdr_base64("AAAAAVJVU1QAAAAAsnuvp7wv0ARs15Z8RFDPXJKdbnrzfn7EC/ddPL0FSq0=")
                 .unwrap();
@@ -237,7 +269,7 @@ mod tests {
         let pk =
             PublicKey::from_account_id("GCZHXL5HXQX5ABDM26LHYRCQZ5OJFHLOPLZX47WEBP3V2PF5AVFK2A5D")
                 .unwrap();
-        let expected = Asset::credit(code, pk).unwrap();
+        let expected = Asset::new_credit(code, pk).unwrap();
         let asset = Asset::from_xdr_base64(
             "AAAAAlJVU1RSVVNUUlVTVAAAAACye6+nvC/QBGzXlnxEUM9ckp1uevN+fsQL9108vQVKrQ==",
         )

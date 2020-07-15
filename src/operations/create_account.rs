@@ -20,18 +20,37 @@ pub struct CreateAccountOperationBuilder {
 }
 
 impl CreateAccountOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Retrieves the operation destination.
     pub fn destination(&self) -> &PublicKey {
         &self.destination
     }
 
+    /// Retrieves a mutable reference to the operation destination.
+    pub fn destination_mut(&mut self) -> &mut PublicKey {
+        &mut self.destination
+    }
+
+    /// Retrieves the operation starting balance.
     pub fn starting_balance(&self) -> &Stroops {
         &self.starting_balance
     }
 
+    /// Retrieves a mutable reference to the operation starting balance.
+    pub fn starting_balance_mut(&mut self) -> &mut Stroops {
+        &mut self.starting_balance
+    }
+
+    /// Returns the operation xdr body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let destination = self.destination.to_xdr_account_id()?;
         let starting_balance = self.starting_balance.to_xdr_int64()?;
@@ -42,6 +61,7 @@ impl CreateAccountOperation {
         Ok(xdr::OperationBody::CreateAccount(inner))
     }
 
+    /// Creates from the xdr operation body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
         x: &xdr::CreateAccountOp,

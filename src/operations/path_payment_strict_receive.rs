@@ -29,34 +29,77 @@ pub struct PathPaymentStrictReceiveOperationBuilder {
 }
 
 impl PathPaymentStrictReceiveOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Retrieves the operation destination.
     pub fn destination(&self) -> &MuxedAccount {
         &self.destination
     }
 
+    /// Retrieves a mutable reference to the operation destination.
+    pub fn destination_mut(&mut self) -> &mut MuxedAccount {
+        &mut self.destination
+    }
+
+    /// Retrieves the operatino send asset.
     pub fn send_asset(&self) -> &Asset {
         &self.send_asset
     }
 
+    /// Retrieves a mutable reference to the operatino send asset.
+    pub fn send_asset_mut(&mut self) -> &mut Asset {
+        &mut self.send_asset
+    }
+
+    /// Retrieves the operation send max.
     pub fn send_max(&self) -> &Stroops {
         &self.send_max
     }
 
+    /// Retrieves a mutable reference to the operation send max.
+    pub fn send_max_mut(&mut self) -> &mut Stroops {
+        &mut self.send_max
+    }
+
+    /// Retrieves the operation destination asset.
     pub fn destination_asset(&self) -> &Asset {
         &self.destination_asset
     }
 
+    /// Retrieves a mutable reference to the operation destination asset.
+    pub fn destination_asset_mut(&mut self) -> &mut Asset {
+        &mut self.destination_asset
+    }
+
+    /// Retrieves the operation destination amount.
     pub fn destination_amount(&self) -> &Stroops {
         &self.destination_amount
     }
 
+    /// Retrieves a mutable reference to the operation destination amount.
+    pub fn destination_amount_mut(&mut self) -> &mut Stroops {
+        &mut self.destination_amount
+    }
+
+    /// Retrieves the operation path.
     pub fn path(&self) -> &Vec<Asset> {
         &self.path
     }
 
+    /// Retrieves a mutable reference to the operation path.
+    pub fn path_mut(&mut self) -> &mut Vec<Asset> {
+        &mut self.path
+    }
+
+    /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let destination = self.destination.to_xdr()?;
         let send_asset = self.send_asset.to_xdr()?;
@@ -76,6 +119,7 @@ impl PathPaymentStrictReceiveOperation {
         Ok(xdr::OperationBody::PathPaymentStrictReceive(inner))
     }
 
+    /// Creates from the xdr operation body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
         x: &xdr::PathPaymentStrictReceiveOp,

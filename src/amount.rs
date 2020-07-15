@@ -6,42 +6,68 @@ use num_traits::cast::ToPrimitive;
 use rust_decimal::Decimal;
 use std::convert::TryFrom;
 use std::fmt;
-use std::ops::Mul;
+use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
 use xdr_rs_serialize::de::XDRIn;
 use xdr_rs_serialize::ser::XDROut;
 
 const STELLAR_SCALE: u32 = 7;
 
-/// Amount in XLM.
+/// Amount in base units.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Amount {
-    inner: Decimal,
-}
+pub struct Amount(pub(crate) Decimal);
 
 /// Amount in stroops.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Stroops(pub i64);
+pub struct Stroops(pub(crate) i64);
+
+/// Price in fractional representation.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Price(Ratio<i32>);
 
 impl Amount {
-    /// Create from amount specified in stroops.
+    pub(crate) fn from_decimal(decimal: Decimal) -> Amount {
+        Amount(decimal)
+    }
+
+    /// Creates from amount specified in stroops.
     pub fn from_stroops(stroops: &Stroops) -> Result<Amount> {
         let inner = Decimal::new(stroops.0, STELLAR_SCALE);
-        Ok(Amount { inner })
+        Ok(Amount(inner))
     }
 
-    /// Convert to stroops.
-    pub fn as_stroops(&self) -> Result<Stroops> {
-        self.clone().into_stroops()
+    /// Checked addition. Computes `self + other`, returning None if overflow occurred.
+    pub fn checked_add(&self, other: &Amount) -> Option<Amount> {
+        self.0.checked_add(other.0).map(Amount)
     }
 
-    /// Convert into stroops.
-    pub fn into_stroops(self) -> Result<Stroops> {
-        let scale = self.inner.scale();
+    /// Checked subtraction. Computes `self - other`, returning None if overflow occurred.
+    pub fn checked_sub(&self, other: &Amount) -> Option<Amount> {
+        self.0.checked_sub(other.0).map(Amount)
+    }
+
+    /// Checked multiplication. Computes `self * other`, returning None if overflow occurred.
+    pub fn checked_mul(&self, other: &Amount) -> Option<Amount> {
+        self.0.checked_mul(other.0).map(Amount)
+    }
+
+    /// Checked division. Computes `self / other`, returning None if overflow occurred or `other == 0.0`.
+    pub fn checked_div(&self, other: &Amount) -> Option<Amount> {
+        self.0.checked_div(other.0).map(Amount)
+    }
+
+    /// Checked division. Computes `self % other`, returning None if overflow occurred or `other == 0.0`.
+    pub fn checked_rem(&self, other: &Amount) -> Option<Amount> {
+        self.0.checked_rem(other.0).map(Amount)
+    }
+
+    /// Returns the equivalent amount in stroops.
+    pub fn to_stroops(&self) -> Result<Stroops> {
+        let scale = self.0.scale();
         if scale != STELLAR_SCALE {
             return Err(Error::InvalidAmountScale);
         }
-        let res = self.inner * Decimal::new(100_000_000, 1);
+        let res = self.0 * Decimal::new(100_000_000, 1);
         match res.to_i64() {
             Some(stroops) => Ok(Stroops::new(stroops)),
             None => Err(Error::InvalidStroopsAmount),
@@ -60,35 +86,64 @@ impl FromStr for Amount {
             Err(Error::InvalidAmountScale)
         } else {
             inner.rescale(STELLAR_SCALE);
-            Ok(Amount { inner })
+            Ok(Amount::from_decimal(inner))
         }
     }
 }
 
 impl fmt::Display for Amount {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.inner)
+        write!(f, "{}", self.0)
     }
 }
 
 impl Stroops {
-    /// Create from stroops.
+    /// Creates with stroops amount.
     pub fn new(amount: i64) -> Stroops {
         Stroops(amount)
     }
 
+    /// Creates with maximum amount of stroops.
     pub fn max() -> Stroops {
         Stroops(i64::MAX)
     }
 
+    /// Returns the stroops amount as `i64`.
     pub fn to_i64(&self) -> i64 {
         self.0
     }
 
+    /// Checked addition. Computes `self + other`, returning None if overflow occurred.
+    pub fn checked_add(&self, other: &Stroops) -> Option<Stroops> {
+        self.0.checked_add(other.0).map(Stroops)
+    }
+
+    /// Checked subtraction. Computes `self - other`, returning None if overflow occurred.
+    pub fn checked_sub(&self, other: &Stroops) -> Option<Stroops> {
+        self.0.checked_sub(other.0).map(Stroops)
+    }
+
+    /// Checked multiplication. Computes `self * other`, returning None if overflow occurred.
+    pub fn checked_mul(&self, other: &Stroops) -> Option<Stroops> {
+        self.0.checked_mul(other.0).map(Stroops)
+    }
+
+    /// Checked division. Computes `self / other`, returning None if overflow occurred or `other == 0.0`.
+    pub fn checked_div(&self, other: &Stroops) -> Option<Stroops> {
+        self.0.checked_div(other.0).map(Stroops)
+    }
+
+    /// Checked division. Computes `self % other`, returning None if overflow occurred or `other == 0.0`.
+    pub fn checked_rem(&self, other: &Stroops) -> Option<Stroops> {
+        self.0.checked_rem(other.0).map(Stroops)
+    }
+
+    /// Returns stroops amount as xdr object.
     pub fn to_xdr_int64(&self) -> Result<xdr::Int64> {
         Ok(xdr::Int64::new(self.0))
     }
 
+    /// Returns stroops amount as xdr object.
     pub fn to_xdr_uint32(&self) -> Result<xdr::Uint32> {
         if self.0 >= 0 {
             Ok(xdr::Uint32::new(self.0 as u32))
@@ -97,52 +152,41 @@ impl Stroops {
         }
     }
 
+    /// Creates from xdr object.
     pub fn from_xdr_int64(x: &xdr::Int64) -> Result<Stroops> {
         Ok(Stroops::new(x.value))
     }
 
+    /// Creates from xdr object.
     pub fn from_xdr_uint32(x: &xdr::Uint32) -> Result<Stroops> {
         Ok(Stroops::new(x.value as i64))
     }
 }
 
-impl Mul<usize> for Stroops {
-    type Output = Self;
-
-    fn mul(self, rhs: usize) -> Self {
-        Stroops(self.0 * rhs as i64)
-    }
-}
-
-/// Price in fractional representation.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Price {
-    inner: Ratio<i32>,
-}
-
 impl Price {
-    /// Create from numerator and denominator.
+    /// Creates price from numerator and denominator.
     pub fn new(numerator: i32, denominator: i32) -> Price {
         let inner = Ratio::new_raw(numerator, denominator);
-        Price { inner }
+        Price(inner)
     }
 
     /// Retrievs the price numerator.
     pub fn numerator(&self) -> i32 {
-        *self.inner.numer()
+        *self.0.numer()
     }
 
     /// Retries the price denominator.
     pub fn denominator(&self) -> i32 {
-        *self.inner.denom()
+        *self.0.denom()
     }
 
     /// Returns a reduced copy.
     pub fn reduced(&self) -> Price {
-        let inner = self.inner.reduced();
-        Price { inner }
+        let inner = self.0.reduced();
+        Price(inner)
     }
 
+    /// Returns price as xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Price> {
         Ok(xdr::Price {
             n: xdr::Int32::new(self.numerator()),
@@ -150,6 +194,7 @@ impl Price {
         })
     }
 
+    /// Creates price from xdr object.
     pub fn from_xdr(x: &xdr::Price) -> Result<Price> {
         Ok(Price::new(x.n.value, x.d.value))
     }
@@ -208,7 +253,15 @@ impl TryFrom<Amount> for Stroops {
     type Error = Error;
 
     fn try_from(amount: Amount) -> std::result::Result<Self, Self::Error> {
-        amount.as_stroops()
+        amount.to_stroops()
+    }
+}
+
+impl TryFrom<Stroops> for Amount {
+    type Error = Error;
+
+    fn try_from(stroops: Stroops) -> std::result::Result<Self, Self::Error> {
+        Amount::from_stroops(&stroops)
     }
 }
 
@@ -252,9 +305,9 @@ mod tests {
     }
 
     #[test]
-    fn test_amount_as_stroops() {
+    fn test_amount_to_stroops() {
         let amount = str::parse::<Amount>("123.45678").unwrap();
-        let stroops = amount.as_stroops().unwrap();
+        let stroops = amount.to_stroops().unwrap();
         assert_eq!(stroops, Stroops::new(1234567800));
     }
 

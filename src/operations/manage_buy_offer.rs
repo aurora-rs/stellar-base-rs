@@ -27,30 +27,67 @@ pub struct ManageBuyOfferOperationBuilder {
 }
 
 impl ManageBuyOfferOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Retrieves the operation seling asset.
     pub fn selling(&self) -> &Asset {
         &self.selling
     }
 
+    /// Retrieves a mutable reference to the operation seling asset.
+    pub fn selling_mut(&mut self) -> &mut Asset {
+        &mut self.selling
+    }
+
+    /// Retrieves the operation buying asset.
     pub fn buying(&self) -> &Asset {
         &self.buying
     }
 
+    /// Retrieves a mutable reference to the operation buying asset.
+    pub fn buying_mut(&mut self) -> &mut Asset {
+        &mut self.buying
+    }
+
+    /// Retrieves the operation buy amount.
     pub fn buy_amount(&self) -> &Stroops {
         &self.buy_amount
     }
 
+    /// Retrieves a mutable reference to the operation buy amount.
+    pub fn buy_amount_mut(&mut self) -> &mut Stroops {
+        &mut self.buy_amount
+    }
+
+    /// Retrieves the operation price.
     pub fn price(&self) -> &Price {
         &self.price
     }
 
+    /// Retrieves a mutable reference to the operation price.
+    pub fn price_mut(&mut self) -> &mut Price {
+        &mut self.price
+    }
+
+    /// Retrieves the operation offer id.
     pub fn offer_id(&self) -> &Option<i64> {
         &self.offer_id
     }
 
+    /// Retrieves a mutable reference the operation offer id.
+    pub fn offer_id_mut(&mut self) -> &mut Option<i64> {
+        &mut self.offer_id
+    }
+
+    /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let selling = self.selling.to_xdr()?;
         let buying = self.buying.to_xdr()?;
@@ -70,6 +107,7 @@ impl ManageBuyOfferOperation {
         Ok(xdr::OperationBody::ManageBuyOffer(inner))
     }
 
+    /// Creates from xdr operation body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
         x: &xdr::ManageBuyOfferOp,

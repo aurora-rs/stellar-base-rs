@@ -22,18 +22,37 @@ pub struct ManageDataOperationBuilder {
 }
 
 impl ManageDataOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Retrieves the operation data name.
     pub fn data_name(&self) -> &str {
         &self.data_name
     }
 
+    /// Retrieves a mutable reference to the operation data name.
+    pub fn data_name_mut(&mut self) -> &mut str {
+        &mut self.data_name
+    }
+
+    /// Retrieves the operation data value.
     pub fn data_value(&self) -> &Option<DataValue> {
         &self.data_value
     }
 
+    /// Retrieves a mutable reference to the operation data value.
+    pub fn data_value_mut(&mut self) -> &mut Option<DataValue> {
+        &mut self.data_value
+    }
+
+    /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let data_name = xdr::String64::new(self.data_name.to_string());
         let data_value = self.data_value.as_ref().map(|d| d.to_xdr()).transpose()?;
@@ -44,6 +63,7 @@ impl ManageDataOperation {
         Ok(xdr::OperationBody::ManageData(inner))
     }
 
+    /// Creates from the xdr operation body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
         x: &xdr::ManageDataOp,

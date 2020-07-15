@@ -1,5 +1,5 @@
 use crate::amount::Stroops;
-use crate::crypto::{hash, KeyPair, MuxedAccount, SecretKey};
+use crate::crypto::{hash, KeyPair, MuxedAccount};
 use crate::error::{Error, Result};
 use crate::memo::Memo;
 use crate::network::Network;
@@ -11,8 +11,10 @@ use crate::xdr::{XDRDeserialize, XDRSerialize};
 use xdr_rs_serialize::de::XDRIn;
 use xdr_rs_serialize::ser::XDROut;
 
+/// Minimum base fee.
 pub const MIN_BASE_FEE: Stroops = Stroops(100);
 
+/// Stellar transaction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
     source_account: MuxedAccount,
@@ -24,6 +26,7 @@ pub struct Transaction {
     signatures: Vec<DecoratedSignature>,
 }
 
+/// Fee bump transaction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FeeBumpTransaction {
     fee_source: MuxedAccount,
@@ -32,76 +35,123 @@ pub struct FeeBumpTransaction {
     signatures: Vec<DecoratedSignature>,
 }
 
+/// Transaction envelope.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TransactionEnvelope {
+    /// Transaction
     Transaction(Transaction),
+    /// Fee bump transaction.
     FeeBumpTransaction(FeeBumpTransaction),
 }
 
+/// A builder to construct the properties of a `Transaction`.
 pub struct TransactionBuilder {
-    source_account: MuxedAccount,
-    sequence: i64,
     base_fee: Stroops,
-    time_bounds: Option<TimeBounds>,
-    memo: Memo,
-    operations: Vec<Operation>,
-}
-
-pub fn transaction<S: Into<MuxedAccount>>(
-    source_account: S,
-    sequence: i64,
-    fee: Stroops,
-) -> TransactionBuilder {
-    TransactionBuilder::new(source_account, sequence, fee)
-}
-
-pub fn fee_bump_transaction(
-    fee_source: MuxedAccount,
-    fee: Stroops,
-    inner_tx: Transaction,
-) -> FeeBumpTransaction {
-    FeeBumpTransaction::new(fee_source, fee, inner_tx)
+    tx: Result<Transaction>,
 }
 
 impl Transaction {
+    /// Creates a `TransactionBuilder` to configure a `Transaction`.
+    ///
+    /// This is the same as `TransactionBuilder::new`.
+    pub fn builder<S: Into<MuxedAccount>>(
+        source_account: S,
+        sequence: i64,
+        fee: Stroops,
+    ) -> TransactionBuilder {
+        TransactionBuilder::new(source_account, sequence, fee)
+    }
+
+    /// Retrieves the transaction source account.
     pub fn source_account(&self) -> &MuxedAccount {
         &self.source_account
     }
 
+    /// Retrieves a mutable reference to the transaction source account.
+    pub fn source_account_mut(&mut self) -> &mut MuxedAccount {
+        &mut self.source_account
+    }
+
+    /// Retrieves the transaction fee.
     pub fn fee(&self) -> &Stroops {
         &self.fee
     }
 
+    /// Retrieves a mutable reference to the transaction fee.
+    pub fn fee_mut(&mut self) -> &mut Stroops {
+        &mut self.fee
+    }
+
+    /// Retrieves the transaction sequence number.
     pub fn sequence(&self) -> &i64 {
         &self.sequence
     }
 
+    /// Retrieves a mutable reference to the transaction sequence number.
+    pub fn sequence_mut(&mut self) -> &mut i64 {
+        &mut self.sequence
+    }
+
+    /// Retrieves the transaction time bounds.
     pub fn time_bounds(&self) -> &Option<TimeBounds> {
         &self.time_bounds
     }
 
+    /// Retrieves a mutable reference to the transaction time bounds.
+    pub fn time_bounds_mut(&mut self) -> &mut Option<TimeBounds> {
+        &mut self.time_bounds
+    }
+
+    /// Retrieves the transaction memo.
     pub fn memo(&self) -> &Memo {
         &self.memo
     }
 
+    /// Retrieves a mutable reference to the transaction memo.
+    pub fn memo_mut(&mut self) -> &mut Memo {
+        &mut self.memo
+    }
+
+    /// Retrieves the transaction operations.
     pub fn operations(&self) -> &Vec<Operation> {
         &self.operations
     }
 
+    /// Retrieves a mutable reference to the transaction operations.
+    pub fn operations_mut(&mut self) -> &mut Vec<Operation> {
+        &mut self.operations
+    }
+
+    /// Retrieves the transaction signatures.
     pub fn signatures(&self) -> &Vec<DecoratedSignature> {
         &self.signatures
     }
 
-    pub fn to_envelope(self) -> TransactionEnvelope {
+    /// Retrieves a mutable reference to the transaction signatures.
+    pub fn signatures_mut(&mut self) -> &mut Vec<DecoratedSignature> {
+        &mut self.signatures
+    }
+
+    /// Creates a `TransactionEnvelope` from the transaction.
+    pub fn to_envelope(&self) -> TransactionEnvelope {
+        self.clone().into_envelope()
+    }
+
+    /// Creates a `TransactionEnvelope` from the transaction.
+    ///
+    /// This consumes the transaction and takes ownership of it.
+    pub fn into_envelope(self) -> TransactionEnvelope {
         TransactionEnvelope::Transaction(self)
     }
 
+    /// Sign transaction with `key` for `network`, and add signature.
     pub fn sign(&mut self, key: &KeyPair, network: &Network) -> Result<()> {
         let signature = self.decorated_signature(&key, &network)?;
         self.signatures.push(signature);
         Ok(())
     }
 
+    /// Returns the decorated signature of the transaction create with `key` for `network`.
     pub fn decorated_signature(
         &self,
         key: &KeyPair,
@@ -111,11 +161,13 @@ impl Transaction {
         Ok(key.sign_decorated(&tx_hash))
     }
 
+    /// Returns the transaction hash for the transaction on `network`.
     pub fn hash(&self, network: &Network) -> Result<Vec<u8>> {
         let signature_data = self.signature_data(network)?;
         Ok(hash(&signature_data))
     }
 
+    /// Returns the transaction signature data as bytes.
     pub fn signature_data(&self, network: &Network) -> Result<Vec<u8>> {
         let mut base = Vec::new();
         let tx_signature_payload = self.to_xdr_transaction_signature_payload(&network)?;
@@ -125,6 +177,7 @@ impl Transaction {
         Ok(base)
     }
 
+    /// Returns the xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Transaction> {
         let source_account = self.source_account.to_xdr()?;
         let fee = self.fee.to_xdr_uint32()?;
@@ -151,12 +204,14 @@ impl Transaction {
         })
     }
 
+    /// Returns the transaction envelope v1 xdr object.
     pub fn to_xdr_envelope(&self) -> Result<xdr::TransactionV1Envelope> {
         let tx = self.to_xdr()?;
         let signatures = signatures_to_xdr(self.signatures())?;
         Ok(xdr::TransactionV1Envelope { tx, signatures })
     }
 
+    /// Returns the xdr transaction signature payload object.
     pub fn to_xdr_transaction_signature_payload(
         &self,
         network: &Network,
@@ -171,6 +226,7 @@ impl Transaction {
         })
     }
 
+    /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::Transaction) -> Result<Transaction> {
         let source_account = MuxedAccount::from_xdr(&x.source_account)?;
         let fee = Stroops::from_xdr_uint32(&x.fee)?;
@@ -196,6 +252,7 @@ impl Transaction {
         })
     }
 
+    /// Creates from xdr envelope object.
     pub fn from_xdr_envelope(x: &xdr::TransactionV1Envelope) -> Result<Transaction> {
         let mut tx = Self::from_xdr(&x.tx)?;
         let signatures = signatures_from_xdr(&x.signatures)?;
@@ -205,6 +262,7 @@ impl Transaction {
 }
 
 impl FeeBumpTransaction {
+    /// Creates a new fee bump transaction.
     pub fn new(
         fee_source: MuxedAccount,
         fee: Stroops,
@@ -218,32 +276,66 @@ impl FeeBumpTransaction {
         }
     }
 
+    /// Retrieves the transaction fee source.
     pub fn fee_source(&self) -> &MuxedAccount {
         &self.fee_source
     }
 
+    /// Retrieves a mutable reference to the transaction fee source.
+    pub fn fee_source_mut(&mut self) -> &mut MuxedAccount {
+        &mut self.fee_source
+    }
+
+    /// Retrievies the transaction fee.
     pub fn fee(&self) -> &Stroops {
         &self.fee
     }
 
+    /// Retrievies a mutable reference to the transaction fee.
+    pub fn fee_mut(&mut self) -> &mut Stroops {
+        &mut self.fee
+    }
+
+    /// Retrieves the transaction inner transaction.
     pub fn inner_transaction(&self) -> &Transaction {
         &self.inner_tx
     }
 
+    /// Retrieves a mutable reference to the transaction inner transaction.
+    pub fn inner_transaction_mut(&mut self) -> &mut Transaction {
+        &mut self.inner_tx
+    }
+
+    /// Retrieves the transaction signatures.
     pub fn signatures(&self) -> &Vec<DecoratedSignature> {
         &self.signatures
     }
 
-    pub fn to_envelope(self) -> TransactionEnvelope {
+    /// Retrieves a mutable reference the transaction signatures.
+    pub fn signatures_mut(&mut self) -> &mut Vec<DecoratedSignature> {
+        &mut self.signatures
+    }
+
+    /// Creates a `TransactionEnvelope` from the transaction.
+    ///
+    /// This consumes the transaction and takes ownership of it.
+    pub fn into_envelope(self) -> TransactionEnvelope {
         TransactionEnvelope::FeeBumpTransaction(self)
     }
 
+    /// Creates a `TransactionEnvelope` from the transaction.
+    pub fn to_envelope(&self) -> TransactionEnvelope {
+        self.clone().into_envelope()
+    }
+
+    /// Sign transaction with `key` for `network`, and add signature.
     pub fn sign(&mut self, key: &KeyPair, network: &Network) -> Result<()> {
         let signature = self.decorated_signature(&key, &network)?;
         self.signatures.push(signature);
         Ok(())
     }
 
+    /// Returns the decorated signature of the transaction create with `key` for `network`.
     pub fn decorated_signature(
         &self,
         key: &KeyPair,
@@ -253,11 +345,13 @@ impl FeeBumpTransaction {
         Ok(key.sign_decorated(&tx_hash))
     }
 
+    /// Returns the transaction hash for the transaction on `network`.
     pub fn hash(&self, network: &Network) -> Result<Vec<u8>> {
         let signature_data = self.signature_data(network)?;
         Ok(hash(&signature_data))
     }
 
+    /// Returns the transaction signature data as bytes.
     pub fn signature_data(&self, network: &Network) -> Result<Vec<u8>> {
         let mut base = Vec::new();
         let tx_signature_payload = self.to_xdr_transaction_signature_payload(&network)?;
@@ -267,6 +361,7 @@ impl FeeBumpTransaction {
         Ok(base)
     }
 
+    /// Returns the xdr object.
     pub fn to_xdr(&self) -> Result<xdr::FeeBumpTransaction> {
         let fee_source = self.fee_source.to_xdr()?;
         let fee = self.fee.to_xdr_int64()?;
@@ -281,12 +376,14 @@ impl FeeBumpTransaction {
         })
     }
 
+    /// Returns the fee bump transaction envelope xdr object.
     pub fn to_xdr_envelope(&self) -> Result<xdr::FeeBumpTransactionEnvelope> {
         let tx = self.to_xdr()?;
         let signatures = signatures_to_xdr(self.signatures())?;
         Ok(xdr::FeeBumpTransactionEnvelope { tx, signatures })
     }
 
+    /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::FeeBumpTransaction) -> Result<FeeBumpTransaction> {
         let fee_source = MuxedAccount::from_xdr(&x.fee_source)?;
         let fee = Stroops::new(x.fee.value);
@@ -303,6 +400,7 @@ impl FeeBumpTransaction {
         })
     }
 
+    /// Creates from xdr envelope object.
     pub fn from_xdr_envelope(x: &xdr::FeeBumpTransactionEnvelope) -> Result<FeeBumpTransaction> {
         let mut tx = FeeBumpTransaction::from_xdr(&x.tx)?;
         let signatures = signatures_from_xdr(&x.signatures)?;
@@ -310,6 +408,7 @@ impl FeeBumpTransaction {
         Ok(tx)
     }
 
+    /// Returns the xdr transaction signature payload object.
     pub fn to_xdr_transaction_signature_payload(
         &self,
         network: &Network,
@@ -326,6 +425,49 @@ impl FeeBumpTransaction {
 }
 
 impl TransactionEnvelope {
+    /// If the transaction is a Transaction, returns its value. Returns None otherwise.
+    pub fn as_transaction(&self) -> Option<&Transaction> {
+        match *self {
+            TransactionEnvelope::Transaction(ref tx) => Some(tx),
+            _ => None,
+        }
+    }
+
+    /// If the transaction is a Transaction, returns its mutable value. Returns None otherwise.
+    pub fn as_transaction_mut(&mut self) -> Option<&mut Transaction> {
+        match *self {
+            TransactionEnvelope::Transaction(ref mut tx) => Some(tx),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the transaction is a Transaction.
+    pub fn is_transaction(&self) -> bool {
+        self.as_transaction().is_some()
+    }
+
+    /// If the transaction is a FeeBumpTransaction, returns its value. Returns None otherwise.
+    pub fn as_fee_bump_transaction(&self) -> Option<&FeeBumpTransaction> {
+        match *self {
+            TransactionEnvelope::FeeBumpTransaction(ref tx) => Some(tx),
+            _ => None,
+        }
+    }
+
+    /// If the transaction is a FeeBumpTransaction, returns its mutable value. Returns None otherwise.
+    pub fn as_fee_bump_transaction_mut(&mut self) -> Option<&mut FeeBumpTransaction> {
+        match *self {
+            TransactionEnvelope::FeeBumpTransaction(ref mut tx) => Some(tx),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the transaction is a FeeBumpTransaction.
+    pub fn is_fee_bump_transaction(&self) -> bool {
+        self.as_fee_bump_transaction().is_some()
+    }
+
+    /// Sign transaction with `key` for `network`, and add signature.
     pub fn sign(&mut self, key: &KeyPair, network: &Network) -> Result<()> {
         match self {
             TransactionEnvelope::Transaction(tx) => tx.sign(&key, &network),
@@ -333,6 +475,7 @@ impl TransactionEnvelope {
         }
     }
 
+    /// Returns the decorated signature of the transaction create with `key` for `network`.
     pub fn decorated_signature(
         &self,
         key: &KeyPair,
@@ -344,6 +487,7 @@ impl TransactionEnvelope {
         }
     }
 
+    /// Returns the transaction hash for the transaction on `network`.
     pub fn hash(&self, network: &Network) -> Result<Vec<u8>> {
         match self {
             TransactionEnvelope::Transaction(tx) => tx.hash(&network),
@@ -351,6 +495,7 @@ impl TransactionEnvelope {
         }
     }
 
+    /// Returns the transaction signature data as bytes.
     pub fn signature_data(&self, network: &Network) -> Result<Vec<u8>> {
         match self {
             TransactionEnvelope::Transaction(tx) => tx.signature_data(&network),
@@ -358,6 +503,7 @@ impl TransactionEnvelope {
         }
     }
 
+    /// Returns the xdr object.
     pub fn to_xdr(&self) -> Result<xdr::TransactionEnvelope> {
         match self {
             TransactionEnvelope::Transaction(tx) => {
@@ -371,6 +517,7 @@ impl TransactionEnvelope {
         }
     }
 
+    /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::TransactionEnvelope) -> Result<TransactionEnvelope> {
         match x {
             xdr::TransactionEnvelope::EnvelopeTypeTx(inner) => {
@@ -385,6 +532,7 @@ impl TransactionEnvelope {
         }
     }
 
+    /// Returns the xdr transaction signature payload object.
     pub fn to_xdr_transaction_signature_payload(
         &self,
         network: &Network,
@@ -406,62 +554,70 @@ impl TransactionBuilder {
         sequence: i64,
         base_fee: Stroops,
     ) -> TransactionBuilder {
-        TransactionBuilder {
+        let tx = Transaction {
             source_account: source_account.into(),
             sequence,
-            base_fee,
+            fee: Stroops::new(0),
             time_bounds: None,
-            memo: Memo::none(),
+            memo: Memo::new_none(),
             operations: Vec::new(),
-        }
+            signatures: Vec::new(),
+        };
+        let tx = if base_fee < MIN_BASE_FEE {
+            Err(Error::TransactionFeeTooLow)
+        } else {
+            Ok(tx)
+        };
+        TransactionBuilder { tx, base_fee }
     }
 
     pub fn with_time_bounds(mut self, time_bounds: TimeBounds) -> TransactionBuilder {
-        self.time_bounds = Some(time_bounds);
+        if let Ok(ref mut tx) = self.tx {
+            *tx.time_bounds_mut() = Some(time_bounds);
+        }
         self
     }
 
     pub fn with_memo(mut self, memo: Memo) -> TransactionBuilder {
-        self.memo = memo;
+        if let Ok(ref mut tx) = self.tx {
+            *tx.memo_mut() = memo;
+        }
         self
     }
 
     pub fn add_operation(mut self, operation: Operation) -> TransactionBuilder {
-        self.operations.push(operation);
+        let mut error = None;
+        if let Ok(ref mut tx) = self.tx {
+            let operations = tx.operations_mut();
+            if operations.len() > xdr::MAX_OPS_PER_TX as usize {
+                error = Some(Err(Error::TooManyOperations));
+            } else {
+                operations.push(operation);
+            }
+        }
+        if let Some(error) = error {
+            self.tx = error;
+        }
         self
     }
 
-    pub fn to_transaction(self) -> Result<Transaction> {
-        if self.operations.len() > xdr::MAX_OPS_PER_TX as usize {
-            return Err(Error::TooManyOperations);
+    pub fn to_transaction(mut self) -> Result<Transaction> {
+        let mut error = None;
+        if let Ok(ref mut tx) = self.tx {
+            if tx.operations().len() == 0 {
+                error = Some(Err(Error::MissingOperations));
+            }
+            let fee = self
+                .base_fee
+                .checked_mul(&Stroops::new(tx.operations.len() as i64))
+                .ok_or_else(|| Error::TransactionFeeOverflow)?;
+            *tx.fee_mut() = fee;
         }
-        if self.operations.len() == 0 {
-            return Err(Error::MissingOperations);
+
+        if let Some(error) = error {
+            self.tx = error;
         }
-
-        if self.base_fee < MIN_BASE_FEE {
-            return Err(Error::TransactionFeeTooLow);
-        }
-
-        self.to_transaction_unchecked()
-    }
-
-    pub fn to_transaction_unchecked(self) -> Result<Transaction> {
-        let fee = self
-            .base_fee
-            .0
-            .checked_mul(self.operations.len() as i64)
-            .ok_or_else(|| Error::TransactionFeeOverflow)?;
-
-        Ok(Transaction {
-            source_account: self.source_account,
-            sequence: self.sequence,
-            fee: Stroops::new(fee),
-            time_bounds: self.time_bounds,
-            memo: self.memo,
-            operations: self.operations,
-            signatures: Vec::new(),
-        })
+        self.tx
     }
 }
 
@@ -503,14 +659,14 @@ fn signatures_from_xdr(
 
 #[cfg(test)]
 mod tests {
-    use super::{transaction, TransactionEnvelope, MIN_BASE_FEE};
+    use super::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
     use crate::account::{AccountFlags, DataValue, TrustLineFlags};
     use crate::amount::{Amount, Price, Stroops};
     use crate::asset::{Asset, CreditAssetType};
     use crate::crypto::KeyPair;
     use crate::memo::Memo;
     use crate::network::Network;
-    use crate::operations;
+    use crate::operations::Operation;
     use crate::time_bounds::TimeBounds;
     use crate::xdr::{XDRDeserialize, XDRSerialize};
     use std::str::FromStr;
@@ -536,10 +692,10 @@ mod tests {
     #[test]
     fn test_transaction_builder() {
         let kp = KeyPair::random().unwrap();
-        let tx = transaction(kp.public_key().clone(), 123, Stroops::new(100))
-            .with_memo(Memo::id(987))
+        let tx = Transaction::builder(kp.public_key().clone(), 123, Stroops::new(100))
+            .with_memo(Memo::new_id(987))
             .with_time_bounds(TimeBounds::always_valid())
-            .add_operation(operations::inflation().build())
+            .add_operation(Operation::new_inflation().build())
             .to_transaction()
             .unwrap();
         assert_eq!(123, *tx.sequence());
@@ -556,17 +712,17 @@ mod tests {
         let dest = kp1.public_key();
         let starting_balance = Amount::from_str("12.30").unwrap();
 
-        let op = operations::create_account()
+        let op = Operation::new_create_account()
             .with_destination(dest.clone())
             .with_starting_balance(starting_balance)
             .unwrap()
             .build()
             .unwrap();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAAdU1MAAAAAAAAAAAeoucsUAAABA0LiVS5BXQiPx/ZkMiJ55RngpeurtEgOrqbzAy99ZGnLUh68uiBejtKJdJPlw4XmVP/kojrA6nLI00zXhUiI7AQ==";
@@ -582,18 +738,18 @@ mod tests {
         let dest = kp1.public_key();
         let amount = Amount::from_str("12.301").unwrap();
 
-        let op = operations::payment()
+        let op = Operation::new_payment()
             .with_destination(dest.clone())
             .with_amount(amount)
             .unwrap()
-            .with_asset(Asset::native())
+            .with_asset(Asset::new_native())
             .build()
             .unwrap();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAABAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAAAAAAAHVPvQAAAAAAAAAAHqLnLFAAAAQFOPIvnhDoRtPKJl7mJGPD69z2riRwZCJJcLRD+QaJ1Wg+yMiDHLiheBZv/BodiTqEvFHFxcmSxo7pjyzoc7mQ8=";
@@ -612,12 +768,12 @@ mod tests {
         let dest_amount = Amount::from_str("12.301").unwrap();
         let send_max = Amount::from_str("0.333").unwrap();
 
-        let abcd = Asset::credit("ABCD", kp2.public_key().clone()).unwrap();
-        let dest_asset = Asset::credit("DESTASSET", kp2.public_key().clone()).unwrap();
+        let abcd = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
+        let dest_asset = Asset::new_credit("DESTASSET", kp2.public_key().clone()).unwrap();
 
-        let op = operations::path_payment_strict_receive()
+        let op = Operation::new_path_payment_strict_receive()
             .with_destination(dest.clone())
-            .with_send_asset(Asset::native())
+            .with_send_asset(Asset::new_native())
             .with_send_max(send_max)
             .unwrap()
             .with_destination_asset(dest_asset)
@@ -626,11 +782,11 @@ mod tests {
             .add_asset(abcd)
             .build()
             .unwrap();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAACAAAAAAAAAAAAMs/QAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAkRFU1RBU1NFVAAAAAAAAAB+Ecs01jX14asC1KAsPdWlpGbYCM2PEgFZCD3NLhVZmAAAAAAHVPvQAAAAAQAAAAFBQkNEAAAAAH4RyzTWNfXhqwLUoCw91aWkZtgIzY8SAVkIPc0uFVmYAAAAAAAAAAHqLnLFAAAAQLZISKYSR3RXr9Hvxw1tr9P1B4fst/sDuQMGapBvSpLYU6DpDSOFM/vVEuB94HXWI79fSJmfyEl+gR6Zh+o0Yw4=";
@@ -645,11 +801,11 @@ mod tests {
         let kp1 = keypair1();
 
         let amount = Amount::from_str("100.0").unwrap();
-        let buying = Asset::credit("AB", kp1.public_key().clone()).unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
         let price = Price::from_str("12.35").unwrap();
 
-        let op = operations::manage_sell_offer()
-            .with_selling_asset(Asset::native())
+        let op = Operation::new_manage_sell_offer()
+            .with_selling_asset(Asset::new_native())
             .with_buying_asset(buying)
             .with_amount(amount)
             .unwrap()
@@ -657,11 +813,11 @@ mod tests {
             .with_offer_id(Some(888))
             .build()
             .unwrap();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQI9ZDQtGLZFCFgqd/6dLqznGWwAI4/LOwrNS7JkO5Rbx8j1cG60rWFylW9v0i40yk7Z5HleAncBJzrvcDeHhDAA=";
@@ -676,22 +832,22 @@ mod tests {
         let kp1 = keypair1();
 
         let amount = Amount::from_str("100.0").unwrap();
-        let buying = Asset::credit("AB", kp1.public_key().clone()).unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
         let price = Price::from_str("12.35").unwrap();
 
-        let op = operations::create_passive_sell_offer()
-            .with_selling_asset(Asset::native())
+        let op = Operation::new_create_passive_sell_offer()
+            .with_selling_asset(Asset::new_native())
             .with_buying_asset(buying)
             .with_amount(amount)
             .unwrap()
             .with_price(price)
             .build()
             .unwrap();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAEAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAAB6i5yxQAAAECG2/IOsqY2pTugmUnhX9Iafmy5JuCQjPxlA0kxdYHe2EKIbZVClMbgckEwvjJq+B0G2SzRUqiK1sfAOIZpAB4D";
@@ -705,18 +861,18 @@ mod tests {
         let kp = keypair0();
         let kp1 = keypair1();
 
-        let op = operations::set_options()
+        let op = Operation::new_set_options()
             .with_inflation_destination(Some(kp1.public_key().clone()))
             .with_set_flags(Some(
                 AccountFlags::AUTH_REQUIRED | AccountFlags::AUTH_IMMUTABLE,
             ))
             .build()
             .unwrap();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAQAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfgAAAAAAAAABAAAABQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6i5yxQAAAEBtYhsjGguNMF06uqEn/cUIdy9eAp/X2jlhTRiVcIGUQJ2U/45eFGXZ8AjgE5P/fWoQYlsUihurccOMwu891EAD";
@@ -730,19 +886,19 @@ mod tests {
         let kp = keypair0();
         let kp1 = keypair1();
 
-        let asset = Asset::credit("FOOBAR", kp1.public_key().clone()).unwrap();
+        let asset = Asset::new_credit("FOOBAR", kp1.public_key().clone()).unwrap();
 
-        let op = operations::change_trust()
+        let op = Operation::new_change_trust()
             .with_asset(asset)
             .with_limit(Some(Stroops::max()))
             .unwrap()
             .build()
             .unwrap();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAGAAAAAkZPT0JBUgAAAAAAAAAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfn//////////AAAAAAAAAAHqLnLFAAAAQBGXSIMx1RSjmS7XD9DluNCn6TolNnB9sdmvBSlWeaizwgfud6hD8BZSfqBHdTNm4DgmloojC9fIVRtVFEHhpAE=";
@@ -756,17 +912,17 @@ mod tests {
         let kp = keypair0();
         let kp1 = keypair1();
 
-        let op = operations::allow_trust()
+        let op = Operation::new_allow_trust()
             .with_trustor(kp1.public_key().clone())
             .with_asset(CreditAssetType::CreditAlphaNum4("ABCD".to_string()))
             .with_authorize_flags(TrustLineFlags::AUTHORIZED)
             .build()
             .unwrap();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAHAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAUFCQ0QAAAABAAAAAAAAAAHqLnLFAAAAQNhV5kJkZryrHEq8jgx9O76dchfHSkS99FTAcR6D2cjSoy6dbPuGsiPpTbwbMMV+lYTigEmv5vTVV+rWcLfr0Q0=";
@@ -778,11 +934,11 @@ mod tests {
     #[test]
     fn test_inflation() {
         let kp = keypair0();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
-            .add_operation(operations::inflation().build())
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(Operation::new_inflation().build())
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAJAAAAAAAAAAHqLnLFAAAAQCvHHPKuTRaRXk9BH05oWii0PJRmVOoqMxxg+79MLO90n1ljVNoaQ1Fliy8Xe34yfUzjhMB/TCXH29T8dTYtBg4=";
@@ -795,17 +951,17 @@ mod tests {
     fn test_manage_data() {
         let kp = keypair0();
         let value = DataValue::from_slice("value value".as_bytes()).unwrap();
-        let op = operations::manage_data()
+        let op = Operation::new_manage_data()
             .with_data_name("TEST TEST".to_string())
             .with_data_value(Some(value))
             .build()
             .unwrap();
 
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAKAAAACVRFU1QgVEVTVAAAAAAAAAEAAAALdmFsdWUgdmFsdWUAAAAAAAAAAAHqLnLFAAAAQLxeb1DkXDTXi/rOffnHpyxuJhl8vN/GDMKLtxFFTGn5b99FNHmWUyUoxb4KTE9bBguIe33SEQ/npj32f2vt/gY=";
@@ -817,16 +973,16 @@ mod tests {
     #[test]
     fn test_bump_sequence() {
         let kp = keypair0();
-        let op = operations::bump_sequence()
+        let op = Operation::new_bump_sequence()
             .with_bump_to(123)
             .build()
             .unwrap();
 
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAALAAAAAAAAAHsAAAAAAAAAAeoucsUAAABAFjXV5orPOkYP+zKGyNKWNJPkZ1UG2n7zyj33W5LHlx1LkD+8vLtB8/GyamKUs7qThchbHdRS9lSBUnvqNkNeCg==";
@@ -841,11 +997,11 @@ mod tests {
         let kp1 = keypair1();
 
         let amount = Amount::from_str("100.0").unwrap();
-        let buying = Asset::credit("AB", kp1.public_key().clone()).unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
         let price = Price::from_str("12.35").unwrap();
 
-        let op = operations::manage_buy_offer()
-            .with_selling_asset(Asset::native())
+        let op = Operation::new_manage_buy_offer()
+            .with_selling_asset(Asset::new_native())
             .with_buying_asset(buying)
             .with_buy_amount(amount)
             .unwrap()
@@ -853,11 +1009,11 @@ mod tests {
             .with_offer_id(Some(888))
             .build()
             .unwrap();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAMAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQJiREkdqaD2QzbsQWcuaUdr5mhJmbatEzAEqChBjtlUQ44C7nFbashDHyTN/Q6YkYOGr2xwL7yWIK9SCJKfeSQU=";
@@ -876,12 +1032,12 @@ mod tests {
         let dest_amount = Amount::from_str("12.301").unwrap();
         let send_amount = Amount::from_str("0.333").unwrap();
 
-        let abcd = Asset::credit("ABCD", kp2.public_key().clone()).unwrap();
-        let dest_asset = Asset::credit("DESTASSET", kp2.public_key().clone()).unwrap();
+        let abcd = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
+        let dest_asset = Asset::new_credit("DESTASSET", kp2.public_key().clone()).unwrap();
 
-        let op = operations::path_payment_strict_send()
+        let op = Operation::new_path_payment_strict_send()
             .with_destination(dest.clone())
-            .with_send_asset(Asset::native())
+            .with_send_asset(Asset::new_native())
             .with_send_amount(send_amount)
             .unwrap()
             .with_destination_asset(dest_asset)
@@ -890,11 +1046,11 @@ mod tests {
             .add_asset(abcd)
             .build()
             .unwrap();
-        let mut tx = transaction(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::test());
+        tx.sign(&kp, &Network::new_test());
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAANAAAAAAAAAAAAMs/QAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAkRFU1RBU1NFVAAAAAAAAAB+Ecs01jX14asC1KAsPdWlpGbYCM2PEgFZCD3NLhVZmAAAAAAHVPvQAAAAAQAAAAFBQkNEAAAAAH4RyzTWNfXhqwLUoCw91aWkZtgIzY8SAVkIPc0uFVmYAAAAAAAAAAHqLnLFAAAAQKDDuyBJaD3+y98EloB5VJi1wYamH+poOoaOhxGGFcH4ZhFI04TRAY3Ahggs3bMV7pcOmw120oZ4P4vA0aFjWgk=";

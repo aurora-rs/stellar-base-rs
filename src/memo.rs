@@ -4,8 +4,11 @@ use crate::xdr::{XDRDeserialize, XDRSerialize};
 use xdr_rs_serialize::de::XDRIn;
 use xdr_rs_serialize::ser::XDROut;
 
-const MAX_MEMO_TEXT_LEN: usize = 28;
-const MAX_HASH_LEN: usize = 32;
+/// Maximum length of text memo.
+pub const MAX_MEMO_TEXT_LEN: usize = 28;
+
+/// Maximum length of hash and return memo.
+pub const MAX_HASH_LEN: usize = 32;
 
 /// Memo attached to transactions.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -24,17 +27,17 @@ pub enum Memo {
 
 impl Memo {
     /// Create new empty memo.
-    pub fn none() -> Memo {
+    pub fn new_none() -> Memo {
         Memo::None
     }
 
     /// Create new id memo.
-    pub fn id(id: u64) -> Memo {
+    pub fn new_id(id: u64) -> Memo {
         Memo::Id(id)
     }
 
     /// Create new text memo. `text` must be shorter than 28 bytes.
-    pub fn text<S: Into<String>>(text: S) -> Result<Memo> {
+    pub fn new_text<S: Into<String>>(text: S) -> Result<Memo> {
         let text = text.into();
         if text.len() > MAX_MEMO_TEXT_LEN {
             Err(Error::InvalidMemoText)
@@ -44,7 +47,7 @@ impl Memo {
     }
 
     /// Create new hash memo.
-    pub fn hash(hash: &[u8]) -> Result<Memo> {
+    pub fn new_hash(hash: &[u8]) -> Result<Memo> {
         if hash.len() > MAX_HASH_LEN {
             Err(Error::InvalidMemoHash)
         } else {
@@ -55,7 +58,7 @@ impl Memo {
     }
 
     /// Creates new return memo.
-    pub fn return_(ret: &[u8]) -> Result<Memo> {
+    pub fn new_return(ret: &[u8]) -> Result<Memo> {
         if ret.len() > MAX_HASH_LEN {
             Err(Error::InvalidMemoReturn)
         } else {
@@ -65,7 +68,7 @@ impl Memo {
         }
     }
 
-    /// Returns `true` if memo is `None`.
+    /// Returns true if memo is None. Returns false otherwise.
     pub fn is_none(&self) -> bool {
         match self {
             Memo::None => true,
@@ -73,70 +76,91 @@ impl Memo {
         }
     }
 
-    /// Returns `true` if memo is `Id`.
+    /// If the memo is an Id, returns its value. Returns None otherwise.
+    pub fn as_id(&self) -> Option<&u64> {
+        match *self {
+            Memo::Id(ref id) => Some(id),
+            _ => None,
+        }
+    }
+
+    /// If the memo is an Id, returns its mutable value. Returns None otherwise.
+    pub fn as_id_mut(&mut self) -> Option<&mut u64> {
+        match *self {
+            Memo::Id(ref mut id) => Some(id),
+            _ => None,
+        }
+    }
+
+    /// Returns true if memo is Id. Returns false otherwise.
     pub fn is_id(&self) -> bool {
-        match self {
-            Memo::Id(_) => true,
-            _ => false,
+        self.as_id().is_some()
+    }
+
+    /// If the memo is a Text, returns its value. Returns None otherwise.
+    pub fn as_text(&self) -> Option<&str> {
+        match *self {
+            Memo::Text(ref text) => Some(text),
+            _ => None,
         }
     }
 
-    /// Returns `true` if memo is `Text`.
+    /// If the memo is a Text, returns its value. Returns None otherwise.
+    pub fn as_text_mut(&mut self) -> Option<&mut str> {
+        match *self {
+            Memo::Text(ref mut text) => Some(text),
+            _ => None,
+        }
+    }
+
+    /// Returns true if memo is Text. Returns false otherwise.
     pub fn is_text(&self) -> bool {
-        match self {
-            Memo::Text(_) => true,
-            _ => false,
+        self.as_text().is_some()
+    }
+
+    /// If the memo is a Hash, returns its value. Returns None otherwise.
+    pub fn as_hash(&self) -> Option<&[u8; 32]> {
+        match *self {
+            Memo::Hash(ref hash) => Some(hash),
+            _ => None,
         }
     }
 
-    /// Returns `true` if memo is `Hash`.
+    /// If the memo is a Hash, returns its mutable value. Returns None otherwise.
+    pub fn as_hash_mut(&mut self) -> Option<&mut [u8; 32]> {
+        match *self {
+            Memo::Hash(ref mut hash) => Some(hash),
+            _ => None,
+        }
+    }
+
+    /// Returns true if memo is a Hash.
     pub fn is_hash(&self) -> bool {
-        match self {
-            Memo::Hash(_) => true,
-            _ => false,
+        self.as_hash().is_some()
+    }
+
+    /// If the memo is a Return, returns its value. Returns None otherwise.
+    pub fn as_return(&self) -> Option<&[u8; 32]> {
+        match *self {
+            Memo::Return(ref hash) => Some(hash),
+            _ => None,
         }
     }
 
-    /// Returns `true` if memo is `Return`.
+    /// If the memo is a Return, returns its mutable value. Returns None otherwise.
+    pub fn as_return_mut(&mut self) -> Option<&mut [u8; 32]> {
+        match *self {
+            Memo::Return(ref mut hash) => Some(hash),
+            _ => None,
+        }
+    }
+
+    /// Returns true if memo is a Return.
     pub fn is_return(&self) -> bool {
-        match self {
-            Memo::Return(_) => true,
-            _ => false,
-        }
+        self.as_return().is_some()
     }
 
-    /// Retrieves memo value if the memo is of type `Id`, returning `None` if not an `Id` memo.
-    pub fn id_value(&self) -> Option<&u64> {
-        match self {
-            Memo::Id(id) => Some(id),
-            _ => None,
-        }
-    }
-
-    /// Retrieves memo value if the memo is of type `Text`, returning `None` if not a `Text` memo.
-    pub fn text_value(&self) -> Option<&str> {
-        match self {
-            Memo::Text(text) => Some(text),
-            _ => None,
-        }
-    }
-
-    /// Retrieves memo value if the memo is of type `Hash`, returning `None` if not a `Hash` memo.
-    pub fn hash_value(&self) -> Option<&[u8; 32]> {
-        match self {
-            Memo::Hash(hash) => Some(hash),
-            _ => None,
-        }
-    }
-
-    /// Retrieves memo value if the memo is of type `Return`, returning `None` if not a `Return` memo.
-    pub fn return_value(&self) -> Option<&[u8; 32]> {
-        match self {
-            Memo::Return(ret) => Some(ret),
-            _ => None,
-        }
-    }
-
+    /// Returns the memo xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Memo> {
         match self {
             Memo::None => Ok(xdr::Memo::MemoNone(())),
@@ -153,20 +177,21 @@ impl Memo {
         }
     }
 
+    /// Creates a new memo from the xdr object.
     pub fn from_xdr(x: &xdr::Memo) -> Result<Memo> {
         match x {
-            xdr::Memo::MemoNone(()) => Ok(Memo::none()),
-            xdr::Memo::MemoText(text) => Memo::text(text),
-            xdr::Memo::MemoId(id) => Ok(Memo::id(id.value)),
-            xdr::Memo::MemoHash(hash) => Memo::hash(&hash.value),
-            xdr::Memo::MemoReturn(ret) => Memo::return_(&ret.value),
+            xdr::Memo::MemoNone(()) => Ok(Memo::new_none()),
+            xdr::Memo::MemoText(text) => Memo::new_text(text),
+            xdr::Memo::MemoId(id) => Ok(Memo::new_id(id.value)),
+            xdr::Memo::MemoHash(hash) => Memo::new_hash(&hash.value),
+            xdr::Memo::MemoReturn(ret) => Memo::new_return(&ret.value),
         }
     }
 }
 
 impl Default for Memo {
     fn default() -> Memo {
-        Memo::none()
+        Memo::new_none()
     }
 }
 
@@ -199,95 +224,117 @@ mod tests {
 
     #[test]
     fn test_memo_none() {
-        let memo = Memo::none();
+        let memo = Memo::new_none();
         assert!(memo.is_none());
         assert!(!memo.is_id());
         assert!(!memo.is_text());
         assert!(!memo.is_hash());
         assert!(!memo.is_return());
 
-        assert_eq!(None, memo.id_value());
-        assert_eq!(None, memo.text_value());
-        assert_eq!(None, memo.hash_value());
-        assert_eq!(None, memo.return_value());
+        assert_eq!(None, memo.as_id());
+        assert_eq!(None, memo.as_text());
+        assert_eq!(None, memo.as_hash());
+        assert_eq!(None, memo.as_return());
     }
 
     #[test]
     fn test_memo_id() {
-        let memo = Memo::id(1234);
+        let mut memo = Memo::new_id(1234);
         assert!(!memo.is_none());
         assert!(memo.is_id());
         assert!(!memo.is_text());
         assert!(!memo.is_hash());
         assert!(!memo.is_return());
 
-        assert_eq!(Some(&1234), memo.id_value());
-        assert_eq!(None, memo.text_value());
-        assert_eq!(None, memo.hash_value());
-        assert_eq!(None, memo.return_value());
+        assert_eq!(Some(&1234), memo.as_id());
+        assert_eq!(None, memo.as_text());
+        assert_eq!(None, memo.as_hash());
+        assert_eq!(None, memo.as_return());
+
+        *memo.as_id_mut().unwrap() = 456;
+        assert_eq!(Some(&456), memo.as_id());
     }
 
     #[test]
     fn test_memo_text() {
-        let memo = Memo::text("Short text memo").unwrap();
+        let mut memo = Memo::new_text("Short text memo").unwrap();
         assert!(!memo.is_none());
         assert!(!memo.is_id());
         assert!(memo.is_text());
         assert!(!memo.is_hash());
         assert!(!memo.is_return());
 
-        assert_eq!(None, memo.id_value());
-        assert_eq!("Short text memo", memo.text_value().unwrap());
-        assert_eq!(None, memo.hash_value());
-        assert_eq!(None, memo.return_value());
+        assert_eq!(None, memo.as_id());
+        assert_eq!("Short text memo", memo.as_text().unwrap());
+        assert_eq!(None, memo.as_hash());
+        assert_eq!(None, memo.as_return());
     }
 
     #[test]
     fn test_memo_hash() {
-        let memo = Memo::hash(&vec![1, 2, 3, 4, 5]).unwrap();
+        let mut memo = Memo::new_hash(&vec![1, 2, 3, 4, 5]).unwrap();
         assert!(!memo.is_none());
         assert!(!memo.is_id());
         assert!(!memo.is_text());
         assert!(memo.is_hash());
         assert!(!memo.is_return());
 
-        assert_eq!(None, memo.id_value());
-        assert_eq!(None, memo.text_value());
+        assert_eq!(None, memo.as_id());
+        assert_eq!(None, memo.as_text());
         assert_eq!(
             vec![
                 1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0
             ],
-            memo.hash_value().unwrap()
+            memo.as_hash().unwrap()
         );
-        assert_eq!(None, memo.return_value());
+        assert_eq!(None, memo.as_return());
+
+        memo.as_hash_mut().unwrap()[super::MAX_HASH_LEN - 1] = 9;
+
+        assert_eq!(
+            vec![
+                1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 9
+            ],
+            memo.as_hash().unwrap()
+        );
     }
 
     #[test]
     fn test_memo_return() {
-        let memo = Memo::return_(&vec![1, 2, 3, 4, 5]).unwrap();
+        let mut memo = Memo::new_return(&vec![1, 2, 3, 4, 5]).unwrap();
         assert!(!memo.is_none());
         assert!(!memo.is_id());
         assert!(!memo.is_text());
         assert!(!memo.is_hash());
         assert!(memo.is_return());
 
-        assert_eq!(None, memo.id_value());
-        assert_eq!(None, memo.text_value());
-        assert_eq!(None, memo.hash_value());
+        assert_eq!(None, memo.as_id());
+        assert_eq!(None, memo.as_text());
+        assert_eq!(None, memo.as_hash());
         assert_eq!(
             vec![
                 1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0
             ],
-            memo.return_value().unwrap()
+            memo.as_return().unwrap()
+        );
+
+        memo.as_return_mut().unwrap()[super::MAX_HASH_LEN - 1] = 9;
+        assert_eq!(
+            vec![
+                1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 9
+            ],
+            memo.as_return().unwrap()
         );
     }
 
     #[test]
     fn test_memo_text_too_long() {
         let result =
-            Memo::text("This is a very long text that will not fit in the memo 100% sure.");
+            Memo::new_text("This is a very long text that will not fit in the memo 100% sure.");
         assert!(result.is_err());
     }
 
@@ -295,7 +342,7 @@ mod tests {
     fn test_memo_hash_too_long() {
         let mut hash = Vec::new();
         hash.resize(33, b'1');
-        let result = Memo::hash(&hash);
+        let result = Memo::new_hash(&hash);
         assert!(result.is_err());
     }
 
@@ -303,13 +350,13 @@ mod tests {
     fn test_memo_return_too_long() {
         let mut hash = Vec::new();
         hash.resize(33, b'1');
-        let result = Memo::return_(&hash);
+        let result = Memo::new_return(&hash);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_memo_none_xdr_ser_de() {
-        let original = Memo::none();
+        let original = Memo::new_none();
         let xdr = original.xdr_base64().unwrap();
         assert_eq!("AAAAAA==", xdr);
         let back = Memo::from_xdr_base64(&xdr).unwrap();
@@ -318,7 +365,7 @@ mod tests {
 
     #[test]
     fn test_memo_id_xdr_ser_de() {
-        let original = Memo::id(u64::MAX);
+        let original = Memo::new_id(u64::MAX);
         let xdr = original.xdr_base64().unwrap();
         assert_eq!("AAAAAv//////////", xdr);
         let back = Memo::from_xdr_base64(&xdr).unwrap();
@@ -331,7 +378,7 @@ mod tests {
         for i in 0..32 {
             hash.push(i as u8);
         }
-        let original = Memo::hash(&hash).unwrap();
+        let original = Memo::new_hash(&hash).unwrap();
         let xdr = original.xdr_base64().unwrap();
         assert_eq!("AAAAAwABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4f", xdr);
         let back = Memo::from_xdr_base64(&xdr).unwrap();
@@ -344,7 +391,7 @@ mod tests {
         for i in 0..32 {
             hash.push(i as u8);
         }
-        let original = Memo::return_(&hash).unwrap();
+        let original = Memo::new_return(&hash).unwrap();
         let xdr = original.xdr_base64().unwrap();
         assert_eq!("AAAABAABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4f", xdr);
         let back = Memo::from_xdr_base64(&xdr).unwrap();

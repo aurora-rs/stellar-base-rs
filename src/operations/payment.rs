@@ -23,22 +23,47 @@ pub struct PaymentOperationBuilder {
 }
 
 impl PaymentOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Retrieves the operation destination.
     pub fn destination(&self) -> &MuxedAccount {
         &self.destination
     }
 
+    /// Retrieves a mutable reference to the operation destination.
+    pub fn destination_mut(&mut self) -> &mut MuxedAccount {
+        &mut self.destination
+    }
+
+    /// Retrieves the operation amount.
     pub fn amount(&self) -> &Stroops {
         &self.amount
     }
 
+    /// Retrieves a mutable reference to the operation amount.
+    pub fn amount_mut(&mut self) -> &mut Stroops {
+        &mut self.amount
+    }
+
+    /// Retrieves the operation asset.
     pub fn asset(&self) -> &Asset {
         &self.asset
     }
 
+    /// Retrieves a mutable reference to the operation asset.
+    pub fn asset_mut(&mut self) -> &mut Asset {
+        &mut self.asset
+    }
+
+    /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let destination = self.destination.to_xdr()?;
         let amount = self.amount.to_xdr_int64()?;
@@ -51,6 +76,7 @@ impl PaymentOperation {
         Ok(xdr::OperationBody::Payment(inner))
     }
 
+    /// Creates from the xdr operation body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
         x: &xdr::PaymentOp,

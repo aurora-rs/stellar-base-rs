@@ -37,46 +37,107 @@ pub struct SetOptionsOperationBuilder {
 }
 
 impl SetOptionsOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Retrieves the operation inflation destination.
     pub fn inflation_destination(&self) -> &Option<PublicKey> {
         &self.inflation_destination
     }
 
+    /// Retrieves a mutable reference to the operation inflation destination.
+    pub fn inflation_destination_mut(&mut self) -> &mut Option<PublicKey> {
+        &mut self.inflation_destination
+    }
+
+    /// Retrieves the operation clear flags.
     pub fn clear_flags(&self) -> &Option<AccountFlags> {
         &self.clear_flags
     }
 
+    /// Retrieves a mutable reference to the operation clear flags.
+    pub fn clear_flags_mut(&mut self) -> &mut Option<AccountFlags> {
+        &mut self.clear_flags
+    }
+
+    /// Retrieves the operation set flags.
     pub fn set_flags(&self) -> &Option<AccountFlags> {
         &self.set_flags
     }
 
+    /// Retrieves a mutable reference to the operation set flags.
+    pub fn set_flags_mut(&mut self) -> &mut Option<AccountFlags> {
+        &mut self.set_flags
+    }
+
+    /// Retrieves the operation master weight.
     pub fn master_weight(&self) -> &Option<u32> {
         &self.master_weight
     }
 
+    /// Retrieves a mutable reference to the operation master weight.
+    pub fn master_weight_mut(&mut self) -> &mut Option<u32> {
+        &mut self.master_weight
+    }
+
+    /// Retrieves the operation low threshold.
     pub fn low_threshold(&self) -> &Option<u32> {
         &self.low_threshold
     }
 
+    /// Retrieves a mutable reference to the operation low threshold.
+    pub fn low_threshold_mut(&mut self) -> &mut Option<u32> {
+        &mut self.low_threshold
+    }
+
+    /// Retrieves the operation medium threshold.
     pub fn medium_threshold(&self) -> &Option<u32> {
         &self.medium_threshold
     }
 
+    /// Retrieves a mutable reference to the operation medium threshold.
+    pub fn medium_threshold_mut(&mut self) -> &mut Option<u32> {
+        &mut self.medium_threshold
+    }
+
+    /// Retrieves the operation high threshold.
     pub fn high_threshold(&self) -> &Option<u32> {
         &self.high_threshold
     }
 
+    /// Retrieves a mutable reference to the operation high threshold.
+    pub fn high_threshold_mut(&mut self) -> &mut Option<u32> {
+        &mut self.high_threshold
+    }
+
+    /// Retrieves the operation home domain.
     pub fn home_domain(&self) -> &Option<String> {
         &self.home_domain
     }
 
+    /// Retrieves a mutable reference to the operation home domain.
+    pub fn home_domain_mut(&mut self) -> &mut Option<String> {
+        &mut self.home_domain
+    }
+
+    /// Retrieves the operation signer.
     pub fn signer(&self) -> &Option<Signer> {
         &self.signer
     }
 
+    /// Retrieves a mutable reference the operation signer.
+    pub fn signer_mut(&mut self) -> &mut Option<Signer> {
+        &mut self.signer
+    }
+
+    /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let inflation_dest = self
             .inflation_destination
@@ -117,6 +178,7 @@ impl SetOptionsOperation {
         Ok(xdr::OperationBody::SetOptions(inner))
     }
 
+    /// Creates from the xdr operation body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
         x: &xdr::SetOptionsOp,

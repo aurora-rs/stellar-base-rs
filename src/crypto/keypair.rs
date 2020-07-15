@@ -304,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_from_network() {
-        let network = Network::public();
+        let network = Network::new_public();
         let kp = KeyPair::from_network(&network).unwrap();
         let public = kp.public_key().account_id();
         assert_eq!(

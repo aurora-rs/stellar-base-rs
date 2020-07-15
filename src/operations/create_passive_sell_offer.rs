@@ -25,26 +25,57 @@ pub struct CreatePassiveSellOfferOperationBuilder {
 }
 
 impl CreatePassiveSellOfferOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Retrieves the operation seling asset.
     pub fn selling(&self) -> &Asset {
         &self.selling
     }
 
+    /// Retrieves a mutable reference to the operation seling asset.
+    pub fn selling_mut(&mut self) -> &mut Asset {
+        &mut self.selling
+    }
+
+    /// Retrieves the operation buying asset.
     pub fn buying(&self) -> &Asset {
         &self.buying
     }
 
+    /// Retrieves a mutable reference to the operation buying asset.
+    pub fn buying_mut(&mut self) -> &mut Asset {
+        &mut self.buying
+    }
+
+    /// Retrieves the operation amout.
     pub fn amount(&self) -> &Stroops {
         &self.amount
     }
 
+    /// Retrieves a mutable reference to the operation amout.
+    pub fn amount_mut(&mut self) -> &mut Stroops {
+        &mut self.amount
+    }
+
+    /// Retrieves the operation price.
     pub fn price(&self) -> &Price {
         &self.price
     }
 
+    /// Retrieves a mutable reference to the operation price.
+    pub fn price_(&mut self) -> &mut Price {
+        &mut self.price
+    }
+
+    /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let selling = self.selling.to_xdr()?;
         let buying = self.buying.to_xdr()?;
@@ -59,6 +90,7 @@ impl CreatePassiveSellOfferOperation {
         Ok(xdr::OperationBody::CreatePassiveSellOffer(inner))
     }
 
+    /// Creates from the xdr operation body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
         x: &xdr::CreatePassiveSellOfferOp,

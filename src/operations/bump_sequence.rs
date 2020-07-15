@@ -19,20 +19,34 @@ pub struct BumpSequenceOperationBuilder {
 }
 
 impl BumpSequenceOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Retrieves the operatino bump to.
     pub fn bump_to(&self) -> &i64 {
         &self.bump_to
     }
 
+    /// Retrieves the operatino bump to.
+    pub fn bump_to_mut(&mut self) -> &mut i64 {
+        &mut self.bump_to
+    }
+
+    /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let bump_to = xdr::SequenceNumber::new(xdr::Int64::new(self.bump_to));
         let inner = xdr::BumpSequenceOp { bump_to };
         Ok(xdr::OperationBody::BumpSequence(inner))
     }
 
+    /// Creates from the xdr operation body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
         x: &xdr::BumpSequenceOp,

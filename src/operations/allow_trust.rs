@@ -22,22 +22,47 @@ pub struct AllowTrustOperationBuilder {
 }
 
 impl AllowTrustOperation {
+    /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         &self.source_account
     }
 
+    /// Retrieves a reference to the operation source account.
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
+        &mut self.source_account
+    }
+
+    /// Retrieves the operation trustor.
     pub fn trustor(&self) -> &PublicKey {
         &self.trustor
     }
 
+    /// Retrieves a mutable reference to the operation trustor.
+    pub fn trustor_mut(&mut self) -> &mut PublicKey {
+        &mut self.trustor
+    }
+
+    /// Retrieves the operation asset.
     pub fn asset(&self) -> &CreditAssetType {
         &self.asset
     }
 
+    /// Retrieves a mutable reference to the operation asset.
+    pub fn asset_mut(&mut self) -> &mut CreditAssetType {
+        &mut self.asset
+    }
+
+    /// Retrieves the operation authorize flags.
     pub fn authorize_flags(&self) -> &TrustLineFlags {
         &self.authorize
     }
 
+    /// Retrieves a mutable reference to the operation authorize flags.
+    pub fn authorize_flags_mut(&mut self) -> &mut TrustLineFlags {
+        &mut self.authorize
+    }
+
+    /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let trustor = self.trustor.to_xdr_account_id()?;
         let asset = match &self.asset {
@@ -68,6 +93,7 @@ impl AllowTrustOperation {
         Ok(xdr::OperationBody::AllowTrust(inner))
     }
 
+    /// Creates from xdr operation body.
     pub fn from_xdr_operation_body(
         source_account: Option<MuxedAccount>,
         x: &xdr::AllowTrustOp,
