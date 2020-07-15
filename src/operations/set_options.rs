@@ -1,12 +1,9 @@
 use crate::account::AccountFlags;
-use crate::amount::{Price, Stroops};
-use crate::asset::Asset;
 use crate::crypto::{MuxedAccount, PublicKey};
 use crate::error::{Error, Result};
 use crate::operations::Operation;
 use crate::signature::Signer;
 use crate::xdr;
-use std::convert::TryInto;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SetOptionsOperation {

@@ -1,11 +1,8 @@
 use crate::account::DataValue;
-use crate::amount::{Price, Stroops};
-use crate::asset::Asset;
 use crate::crypto::MuxedAccount;
 use crate::error::{Error, Result};
 use crate::operations::Operation;
 use crate::xdr;
-use std::convert::TryInto;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ManageDataOperation {

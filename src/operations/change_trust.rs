@@ -1,4 +1,4 @@
-use crate::amount::{Price, Stroops};
+use crate::amount::Stroops;
 use crate::asset::Asset;
 use crate::crypto::MuxedAccount;
 use crate::error::{Error, Result};
