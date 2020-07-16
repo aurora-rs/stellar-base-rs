@@ -63,8 +63,16 @@ impl AccountMergeOperationBuilder {
         }
     }
 
-    pub fn with_source_account(mut self, source: MuxedAccount) -> AccountMergeOperationBuilder {
-        self.source_account = Some(source);
+    pub fn with_source_account<S>(mut self, source: S) -> AccountMergeOperationBuilder
+    where
+        S: Into<MuxedAccount>,
+    {
+        self.source_account = Some(source.into());
+        self
+    }
+
+    pub fn with_destination(mut self, destination: MuxedAccount) -> AccountMergeOperationBuilder {
+        self.destination = Some(destination);
         self
     }
 
@@ -79,5 +87,84 @@ impl AccountMergeOperationBuilder {
                 "missing account merge destination".to_string(),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::account::{AccountFlags, DataValue, TrustLineFlags};
+    use crate::amount::{Amount, Price, Stroops};
+    use crate::asset::{Asset, CreditAssetType};
+    use crate::crypto::KeyPair;
+    use crate::memo::Memo;
+    use crate::network::Network;
+    use crate::operations::Operation;
+    use crate::time_bounds::TimeBounds;
+    use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
+    use crate::xdr::{XDRDeserialize, XDRSerialize};
+    use std::str::FromStr;
+
+    fn keypair0() -> KeyPair {
+        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
+        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
+            .unwrap()
+    }
+
+    fn keypair1() -> KeyPair {
+        // GAS4V4O2B7DW5T7IQRPEEVCRXMDZESKISR7DVIGKZQYYV3OSQ5SH5LVP
+        KeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
+            .unwrap()
+    }
+
+    fn keypair2() -> KeyPair {
+        // GB7BDSZU2Y27LYNLALKKALB52WS2IZWYBDGY6EQBLEED3TJOCVMZRH7H
+        KeyPair::from_secret_seed("SBZVMB74Z76QZ3ZOY7UTDFYKMEGKW5XFJEB6PFKBF4UYSSWHG4EDH7PY")
+            .unwrap()
+    }
+
+    #[test]
+    fn test_account_merge() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+
+        let op = Operation::new_account_merge()
+            .with_destination(kp1.public_key().to_muxed_account(123).clone())
+            .build()
+            .unwrap();
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::new_test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAIAAABAAAAAAAAAAB7Jcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAAAAAAAeoucsUAAABAsar7y6Xy4F1R8InkdOL21n646Z5Fe6dUUfhAkDf9GnIQKHcFzVoeo7z73S6V0zW1AxfR/wJDsFprWPhbllYhBw==";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn test_account_merge_with_source_account() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+        let kp2 = keypair2();
+
+        let op = Operation::new_account_merge()
+            .with_destination(kp1.public_key().to_muxed_account(123).clone())
+            .with_source_account(kp2.public_key().clone())
+            .build()
+            .unwrap();
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::new_test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAIAAABAAAAAAAAAAB7Jcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAAAAAAAeoucsUAAABAXZWyIftD9wZB7iI/CPWdye29ggvdwf20/WQr00IbTshuas0JDIbJhhfK8NUrEILhBspQjRx82XCrppZVrampAQ==";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
     }
 }

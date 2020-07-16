@@ -2601,8 +2601,10 @@ pub struct MuxedAccountMed25519 {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum MuxedAccount {
     // IDEN KEY_TYPE_ED25519
+    #[discriminant(value = "0")]
     KeyTypeEd25519(Uint256),
     // IDEN KEY_TYPE_MUXED_ED25519
+    #[discriminant(value = "256")]
     KeyTypeMuxedEd25519(MuxedAccountMed25519),
 }
 

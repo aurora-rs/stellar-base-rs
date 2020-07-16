@@ -61,6 +61,15 @@ impl PublicKey {
         strkey::encode_account_id(&self.key.0)
     }
 
+    pub fn into_muxed_account(self, id: u64) -> MuxedAccount {
+        let inner = MuxedEd25519PublicKey { key: self, id };
+        MuxedAccount::MuxedEd25519(inner)
+    }
+
+    pub fn to_muxed_account(&self, id: u64) -> MuxedAccount {
+        self.clone().into_muxed_account(id)
+    }
+
     pub fn to_xdr_uint256(&self) -> Result<xdr::Uint256> {
         let bytes = self.as_bytes().to_vec();
         Ok(xdr::Uint256::new(bytes))
@@ -109,6 +118,10 @@ impl SecretKey {
 }
 
 impl MuxedEd25519PublicKey {
+    pub fn new(key: PublicKey, id: u64) -> MuxedEd25519PublicKey {
+        MuxedEd25519PublicKey { key, id }
+    }
+
     pub fn from_account_id(account_id: &str) -> Result<MuxedEd25519PublicKey> {
         let (bytes, id) = strkey::decode_muxed_account(&account_id)?;
         Self::from_slice(&bytes, id)

@@ -145,8 +145,11 @@ impl ManageSellOfferOperationBuilder {
         }
     }
 
-    pub fn with_source_account(mut self, source: MuxedAccount) -> ManageSellOfferOperationBuilder {
-        self.source_account = Some(source);
+    pub fn with_source_account<S>(mut self, source: S) -> ManageSellOfferOperationBuilder
+    where
+        S: Into<MuxedAccount>,
+    {
+        self.source_account = Some(source.into());
         self
     }
 
@@ -160,10 +163,10 @@ impl ManageSellOfferOperationBuilder {
         self
     }
 
-    pub fn with_amount<A: TryInto<Stroops, Error = Error>>(
-        mut self,
-        amount: A,
-    ) -> Result<ManageSellOfferOperationBuilder> {
+    pub fn with_amount<A>(mut self, amount: A) -> Result<ManageSellOfferOperationBuilder>
+    where
+        A: TryInto<Stroops, Error = Error>,
+    {
         self.amount = Some(amount.try_into()?);
         Ok(self)
     }
@@ -211,5 +214,132 @@ impl ManageSellOfferOperationBuilder {
             price,
             offer_id: self.offer_id,
         }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::account::{AccountFlags, DataValue, TrustLineFlags};
+    use crate::amount::{Amount, Price, Stroops};
+    use crate::asset::{Asset, CreditAssetType};
+    use crate::crypto::KeyPair;
+    use crate::memo::Memo;
+    use crate::network::Network;
+    use crate::operations::Operation;
+    use crate::time_bounds::TimeBounds;
+    use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
+    use crate::xdr::{XDRDeserialize, XDRSerialize};
+    use std::str::FromStr;
+
+    fn keypair0() -> KeyPair {
+        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
+        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
+            .unwrap()
+    }
+
+    fn keypair1() -> KeyPair {
+        // GAS4V4O2B7DW5T7IQRPEEVCRXMDZESKISR7DVIGKZQYYV3OSQ5SH5LVP
+        KeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
+            .unwrap()
+    }
+
+    fn keypair2() -> KeyPair {
+        // GB7BDSZU2Y27LYNLALKKALB52WS2IZWYBDGY6EQBLEED3TJOCVMZRH7H
+        KeyPair::from_secret_seed("SBZVMB74Z76QZ3ZOY7UTDFYKMEGKW5XFJEB6PFKBF4UYSSWHG4EDH7PY")
+            .unwrap()
+    }
+
+    #[test]
+    fn test_manage_sell_offer() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+
+        let amount = Amount::from_str("100.0").unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
+        let price = Price::from_str("12.35").unwrap();
+
+        let op = Operation::new_manage_sell_offer()
+            .with_selling_asset(Asset::new_native())
+            .with_buying_asset(buying)
+            .with_amount(amount)
+            .unwrap()
+            .with_price(price)
+            .build()
+            .unwrap();
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::new_test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAAAAAAAAAAAAAHqLnLFAAAAQPhJ8gbyJpZmlbKl5ItaNi7KAGF0BH3Dfe3ZT/f9liF1JtsEFKeoNq8ea0me2y59AH78iahdkLLxVc4oq1ROcw4=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn test_manage_sell_offer_with_offer_id() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+
+        let amount = Amount::from_str("100.0").unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
+        let price = Price::from_str("12.35").unwrap();
+
+        let op = Operation::new_manage_sell_offer()
+            .with_selling_asset(Asset::new_native())
+            .with_buying_asset(buying)
+            .with_amount(amount)
+            .unwrap()
+            .with_price(price)
+            .with_offer_id(Some(888))
+            .build()
+            .unwrap();
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::new_test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQI9ZDQtGLZFCFgqd/6dLqznGWwAI4/LOwrNS7JkO5Rbx8j1cG60rWFylW9v0i40yk7Z5HleAncBJzrvcDeHhDAA=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn test_manage_sell_offer_with_source_account() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+        let kp2 = keypair2();
+
+        let amount = Amount::from_str("100.0").unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
+        let price = Price::from_str("12.35").unwrap();
+
+        let op = Operation::new_manage_sell_offer()
+            .with_source_account(kp2.public_key().clone())
+            .with_selling_asset(Asset::new_native())
+            .with_buying_asset(buying)
+            .with_amount(amount)
+            .unwrap()
+            .with_price(price)
+            .with_offer_id(Some(888))
+            .build()
+            .unwrap();
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::new_test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQBJhFxneImX3Z8FW+UO5xM1kAQhkwVVxSbpVqsafWaeFzcY8KWTlopVYqgoJrXnHRQq3KAstTiRktSg5zZbppgQ=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
     }
 }

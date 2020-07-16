@@ -156,18 +156,18 @@ impl PathPaymentStrictSendOperationBuilder {
         }
     }
 
-    pub fn with_source_account(
-        mut self,
-        source: MuxedAccount,
-    ) -> PathPaymentStrictSendOperationBuilder {
-        self.source_account = Some(source);
+    pub fn with_source_account<S>(mut self, source: S) -> PathPaymentStrictSendOperationBuilder
+    where
+        S: Into<MuxedAccount>,
+    {
+        self.source_account = Some(source.into());
         self
     }
 
-    pub fn with_destination<A: Into<MuxedAccount>>(
-        mut self,
-        destination: A,
-    ) -> PathPaymentStrictSendOperationBuilder {
+    pub fn with_destination<A>(mut self, destination: A) -> PathPaymentStrictSendOperationBuilder
+    where
+        A: Into<MuxedAccount>,
+    {
         self.destination = Some(destination.into());
         self
     }
@@ -177,10 +177,13 @@ impl PathPaymentStrictSendOperationBuilder {
         self
     }
 
-    pub fn with_send_amount<A: TryInto<Stroops>>(
+    pub fn with_send_amount<A>(
         mut self,
         send_amount: A,
-    ) -> Result<PathPaymentStrictSendOperationBuilder> {
+    ) -> Result<PathPaymentStrictSendOperationBuilder>
+    where
+        A: TryInto<Stroops>,
+    {
         self.send_amount = Some(
             send_amount
                 .try_into()
@@ -197,10 +200,13 @@ impl PathPaymentStrictSendOperationBuilder {
         self
     }
 
-    pub fn with_destination_min<A: TryInto<Stroops>>(
+    pub fn with_destination_min<A>(
         mut self,
         dest_min: A,
-    ) -> Result<PathPaymentStrictSendOperationBuilder> {
+    ) -> Result<PathPaymentStrictSendOperationBuilder>
+    where
+        A: TryInto<Stroops>,
+    {
         self.destination_min = Some(
             dest_min
                 .try_into()
@@ -254,5 +260,113 @@ impl PathPaymentStrictSendOperationBuilder {
                 path: self.path,
             },
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::account::{AccountFlags, DataValue, TrustLineFlags};
+    use crate::amount::{Amount, Price, Stroops};
+    use crate::asset::{Asset, CreditAssetType};
+    use crate::crypto::KeyPair;
+    use crate::memo::Memo;
+    use crate::network::Network;
+    use crate::operations::Operation;
+    use crate::time_bounds::TimeBounds;
+    use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
+    use crate::xdr::{XDRDeserialize, XDRSerialize};
+    use std::str::FromStr;
+
+    fn keypair0() -> KeyPair {
+        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
+        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
+            .unwrap()
+    }
+
+    fn keypair1() -> KeyPair {
+        // GAS4V4O2B7DW5T7IQRPEEVCRXMDZESKISR7DVIGKZQYYV3OSQ5SH5LVP
+        KeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
+            .unwrap()
+    }
+
+    fn keypair2() -> KeyPair {
+        // GB7BDSZU2Y27LYNLALKKALB52WS2IZWYBDGY6EQBLEED3TJOCVMZRH7H
+        KeyPair::from_secret_seed("SBZVMB74Z76QZ3ZOY7UTDFYKMEGKW5XFJEB6PFKBF4UYSSWHG4EDH7PY")
+            .unwrap()
+    }
+
+    #[test]
+    fn test_path_payment_strict_send() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+        let kp2 = keypair2();
+        let dest = kp1.public_key();
+
+        let dest_amount = Amount::from_str("12.301").unwrap();
+        let send_amount = Amount::from_str("0.333").unwrap();
+
+        let abcd = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
+        let dest_asset = Asset::new_credit("DESTASSET", kp2.public_key().clone()).unwrap();
+
+        let op = Operation::new_path_payment_strict_send()
+            .with_destination(dest.clone())
+            .with_send_asset(Asset::new_native())
+            .with_send_amount(send_amount)
+            .unwrap()
+            .with_destination_asset(dest_asset)
+            .with_destination_min(dest_amount)
+            .unwrap()
+            .add_asset(abcd)
+            .build()
+            .unwrap();
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::new_test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAANAAAAAAAAAAAAMs/QAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAkRFU1RBU1NFVAAAAAAAAAB+Ecs01jX14asC1KAsPdWlpGbYCM2PEgFZCD3NLhVZmAAAAAAHVPvQAAAAAQAAAAFBQkNEAAAAAH4RyzTWNfXhqwLUoCw91aWkZtgIzY8SAVkIPc0uFVmYAAAAAAAAAAHqLnLFAAAAQKDDuyBJaD3+y98EloB5VJi1wYamH+poOoaOhxGGFcH4ZhFI04TRAY3Ahggs3bMV7pcOmw120oZ4P4vA0aFjWgk=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
+    }
+
+    #[test]
+    fn test_path_payment_strict_send_with_source_account() {
+        let kp = keypair0();
+        let kp1 = keypair1();
+        let kp2 = keypair2();
+        let dest = kp1.public_key();
+
+        let dest_amount = Amount::from_str("12.301").unwrap();
+        let send_amount = Amount::from_str("0.333").unwrap();
+
+        let abcd = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
+        let dest_asset = Asset::new_credit("DESTASSET", kp2.public_key().clone()).unwrap();
+
+        let op = Operation::new_path_payment_strict_send()
+            .with_source_account(kp1.public_key().clone())
+            .with_destination(dest.clone())
+            .with_send_asset(Asset::new_native())
+            .with_send_amount(send_amount)
+            .unwrap()
+            .with_destination_asset(dest_asset)
+            .with_destination_min(dest_amount)
+            .unwrap()
+            .add_asset(abcd)
+            .build()
+            .unwrap();
+        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+            .add_operation(op)
+            .to_transaction()
+            .unwrap();
+        tx.sign(&kp, &Network::new_test());
+        let envelope = tx.to_envelope();
+        let xdr = envelope.xdr_base64().unwrap();
+        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAANAAAAAAAAAAAAMs/QAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAkRFU1RBU1NFVAAAAAAAAAB+Ecs01jX14asC1KAsPdWlpGbYCM2PEgFZCD3NLhVZmAAAAAAHVPvQAAAAAQAAAAFBQkNEAAAAAH4RyzTWNfXhqwLUoCw91aWkZtgIzY8SAVkIPc0uFVmYAAAAAAAAAAHqLnLFAAAAQI4En43OnB/OEQ9ZAjymT8dGwnHVah2gqkq1AQuwJ89e7kVvwWPl/axspv25B0x9NnEdNZd+KKhoZfmA4B5EWwg=";
+        assert_eq!(expected, xdr);
+        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(envelope, back);
     }
 }
