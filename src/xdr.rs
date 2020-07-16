@@ -1,3 +1,4 @@
+//! Traits for XDR serialization and deserialization.
 use crate::error::Result;
 pub use crate::xdr_generated::*;
 

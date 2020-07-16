@@ -1,3 +1,4 @@
+//! Operations that mutate the ledger state.
 use crate::crypto::MuxedAccount;
 use crate::error::{Error, Result};
 use crate::xdr;

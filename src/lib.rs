@@ -87,3 +87,10 @@ pub mod time_bounds;
 pub mod transaction;
 pub mod xdr;
 mod xdr_generated;
+
+pub use self::asset::Asset;
+pub use self::crypto::{KeyPair, PublicKey};
+pub use self::memo::Memo;
+pub use self::network::Network;
+pub use self::operations::Operation;
+pub use self::transaction::Transaction;

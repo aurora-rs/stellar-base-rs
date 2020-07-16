@@ -1,3 +1,4 @@
+//! Stellar Network.
 use crate::crypto;
 
 pub const PUBLIC_PASSPHRASE: &str = "Public Global Stellar Network ; September 2015";

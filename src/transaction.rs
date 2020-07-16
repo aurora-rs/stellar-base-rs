@@ -1,3 +1,4 @@
+//! Transaction that changes the ledger state.
 use crate::amount::Stroops;
 use crate::crypto::{hash, KeyPair, MuxedAccount};
 use crate::error::{Error, Result};

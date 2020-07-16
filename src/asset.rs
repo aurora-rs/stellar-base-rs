@@ -1,3 +1,4 @@
+//! Assets on the network.
 use crate::crypto::PublicKey;
 use crate::error::{Error, Result};
 use crate::xdr;

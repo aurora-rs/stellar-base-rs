@@ -1,8 +1,10 @@
+//! Account data and flags.
 use crate::error::{Error, Result};
 use crate::xdr;
 use base64;
 
 bitflags! {
+    /// Account flags.
     pub struct AccountFlags: u32 {
         const AUTH_REQUIRED = xdr::AccountFlags::AuthRequiredFlag as u32;
         const AUTH_REVOCABLE = xdr::AccountFlags::AuthRevocableFlag as u32;
@@ -11,6 +13,7 @@ bitflags! {
 }
 
 bitflags! {
+    /// Account trust line flags.
     pub struct TrustLineFlags: u32 {
         const AUTHORIZED = xdr::TrustLineFlags::AuthorizedFlag as u32;
         const AUTHORIZED_TO_MAINTAIN_LIABILITIES = xdr::TrustLineFlags::AuthorizedToMaintainLiabilitiesFlag as u32;

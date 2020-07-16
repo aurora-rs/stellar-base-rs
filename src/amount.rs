@@ -1,3 +1,4 @@
+//! Represent monetary values and prices.
 use crate::error::{Error, Result};
 use crate::xdr;
 use crate::xdr::{XDRDeserialize, XDRSerialize};
@@ -12,11 +13,11 @@ use xdr_rs_serialize::ser::XDROut;
 
 const STELLAR_SCALE: u32 = 7;
 
-/// Amount in base units.
+/// Amount in base units. For example, 2 XLM.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Amount(pub(crate) Decimal);
 
-/// Amount in stroops.
+/// Amount in stroops. This is the smallest amount unit.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Stroops(pub(crate) i64);
 

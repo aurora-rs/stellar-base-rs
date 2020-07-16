@@ -1,3 +1,4 @@
+//! Error and Result definitions.
 use xdr_rs_serialize::error::Error as XdrError;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -91,4 +92,7 @@ pub enum Error {
     /// Base64 decode error
     #[error("base64 decode error")]
     Base64DecodeError(#[from] base64::DecodeError),
+    /// Sodium init failed.
+    #[error("sodium init failed")]
+    SodiumInitFailed,
 }

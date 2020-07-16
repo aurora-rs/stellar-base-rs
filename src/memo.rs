@@ -1,3 +1,4 @@
+//! Transaction memo.
 use crate::error::{Error, Result};
 use crate::xdr;
 use crate::xdr::{XDRDeserialize, XDRSerialize};

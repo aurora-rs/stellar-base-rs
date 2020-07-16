@@ -1,3 +1,18 @@
+//! Cryptographic functions.
+//!
+//! For long running programs, you should initialize the sodium
+//! library for optimal performance.
+//!
+//! ```rust
+//! use stellar_base::crypto;
+//!
+//! # fn run() -> stellar_base::error::Result<()> {
+//! crypto::init()?;
+//! // your program here.
+//! # Ok(())
+//! # }
+//! ```
+use crate::error::{Error, Result};
 use sodiumoxide::crypto::hash::sha256;
 use sodiumoxide::randombytes;
 
@@ -26,6 +41,6 @@ pub fn random_bytes(size: usize) -> Vec<u8> {
 /// if possible.
 ///
 /// `init` also makes `KeyPair::random()` thread-safe.
-pub fn init() -> Result<(), ()> {
-    sodiumoxide::init()
+pub fn init() -> Result<()> {
+    sodiumoxide::init().map_err(|_| Error::SodiumInitFailed)
 }

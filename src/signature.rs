@@ -1,3 +1,4 @@
+//! Transaction signatures.
 use crate::crypto::{PublicKey, SecretKey};
 use crate::error::{Error, Result};
 use crate::xdr;
