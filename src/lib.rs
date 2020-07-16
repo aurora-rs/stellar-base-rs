@@ -6,7 +6,7 @@
 //!  - Encode and decode Stellar objects from XDR
 //!
 //! If you are looking for a way to interact with Horizon, take a
-//! look at [`stellar-horizon`](https::/docs.rs/stellar-horizon).
+//! look at [`stellar-horizon`](https://docs.rs/stellar-horizon).
 //!
 //!
 //! ## Creating a KeyPair
