@@ -13,7 +13,7 @@ pub struct AllowTrustOperation {
     authorize: TrustLineFlags,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct AllowTrustOperationBuilder {
     source_account: Option<MuxedAccount>,
     trustor: Option<PublicKey>,
@@ -68,16 +68,14 @@ impl AllowTrustOperation {
         let asset = match &self.asset {
             CreditAssetType::CreditAlphaNum4(code) => {
                 let code_len = code.len();
-                let mut code_bytes = Vec::with_capacity(4);
-                code_bytes.resize(4, 0);
+                let mut code_bytes = vec![0; 4];
                 code_bytes[..code_len].copy_from_slice(code.as_bytes());
                 let asset_code = xdr::AssetCode4::new(code_bytes);
                 xdr::AllowTrustOpAsset::AssetTypeCreditAlphanum4(asset_code)
             }
             CreditAssetType::CreditAlphaNum12(code) => {
                 let code_len = code.len();
-                let mut code_bytes = Vec::with_capacity(12);
-                code_bytes.resize(12, 0);
+                let mut code_bytes = vec![0; 12];
                 code_bytes[..code_len].copy_from_slice(code.as_bytes());
                 let asset_code = xdr::AssetCode12::new(code_bytes);
                 xdr::AllowTrustOpAsset::AssetTypeCreditAlphanum12(asset_code)
@@ -123,12 +121,7 @@ impl AllowTrustOperation {
 
 impl AllowTrustOperationBuilder {
     pub fn new() -> AllowTrustOperationBuilder {
-        AllowTrustOperationBuilder {
-            source_account: None,
-            trustor: None,
-            asset: None,
-            authorize: None,
-        }
+        Default::default()
     }
 
     pub fn with_source_account<S>(mut self, source: S) -> AllowTrustOperationBuilder
@@ -217,7 +210,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -243,7 +236,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();

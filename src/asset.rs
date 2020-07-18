@@ -82,8 +82,7 @@ impl Asset {
             Asset::Credit(credit) => match credit {
                 CreditAsset::AlphaNum4 { code, issuer } => {
                     let code_len = code.len();
-                    let mut code_bytes = Vec::with_capacity(4);
-                    code_bytes.resize(4, 0);
+                    let mut code_bytes = vec![0; 4];
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
                     let asset_code = xdr::AssetCode4::new(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
@@ -92,8 +91,7 @@ impl Asset {
                 }
                 CreditAsset::AlphaNum12 { code, issuer } => {
                     let code_len = code.len();
-                    let mut code_bytes = Vec::with_capacity(12);
-                    code_bytes.resize(12, 0);
+                    let mut code_bytes = vec![0; 12];
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
                     let asset_code = xdr::AssetCode12::new(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
@@ -184,8 +182,8 @@ impl XDRDeserialize for Asset {
 /// Create new String from asset code. Make sure not to copy zero bytes.
 pub(crate) fn xdr_code_to_string(x: &[u8]) -> String {
     let mut pos = 0;
-    for i in 0..x.len() {
-        if x[i] == 0 {
+    for b in x {
+        if *b == 0 {
             break;
         }
         pos += 1;

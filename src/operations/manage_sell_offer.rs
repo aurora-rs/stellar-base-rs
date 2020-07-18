@@ -16,7 +16,7 @@ pub struct ManageSellOfferOperation {
     offer_id: Option<i64>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ManageSellOfferOperationBuilder {
     source_account: Option<MuxedAccount>,
     selling: Option<Asset>,
@@ -135,14 +135,7 @@ impl ManageSellOfferOperation {
 
 impl ManageSellOfferOperationBuilder {
     pub fn new() -> ManageSellOfferOperationBuilder {
-        ManageSellOfferOperationBuilder {
-            source_account: None,
-            selling: None,
-            buying: None,
-            amount: None,
-            price: None,
-            offer_id: None,
-        }
+        Default::default()
     }
 
     pub fn with_source_account<S>(mut self, source: S) -> ManageSellOfferOperationBuilder
@@ -265,7 +258,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -296,7 +289,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -329,7 +322,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();

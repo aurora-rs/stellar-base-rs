@@ -17,7 +17,7 @@ pub struct PathPaymentStrictSendOperation {
     path: Vec<Asset>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct PathPaymentStrictSendOperationBuilder {
     source_account: Option<MuxedAccount>,
     destination: Option<MuxedAccount>,
@@ -145,15 +145,7 @@ impl PathPaymentStrictSendOperation {
 
 impl PathPaymentStrictSendOperationBuilder {
     pub fn new() -> PathPaymentStrictSendOperationBuilder {
-        PathPaymentStrictSendOperationBuilder {
-            source_account: None,
-            destination: None,
-            send_asset: None,
-            send_amount: None,
-            destination_asset: None,
-            destination_min: None,
-            path: Vec::new(),
-        }
+        Default::default()
     }
 
     pub fn with_source_account<S>(mut self, source: S) -> PathPaymentStrictSendOperationBuilder
@@ -318,7 +310,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -356,7 +348,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();

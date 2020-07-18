@@ -650,10 +650,10 @@ impl TransactionBuilder {
         self
     }
 
-    pub fn to_transaction(mut self) -> Result<Transaction> {
+    pub fn into_transaction(mut self) -> Result<Transaction> {
         let mut error = None;
         if let Ok(ref mut tx) = self.tx {
-            if tx.operations().len() == 0 {
+            if tx.operations().is_empty() {
                 error = Some(Err(Error::MissingOperations));
             }
             let fee = self
@@ -686,7 +686,7 @@ impl XDRDeserialize for TransactionEnvelope {
     }
 }
 
-fn signatures_to_xdr(signatures: &Vec<DecoratedSignature>) -> Result<Vec<xdr::DecoratedSignature>> {
+fn signatures_to_xdr(signatures: &[DecoratedSignature]) -> Result<Vec<xdr::DecoratedSignature>> {
     let mut xdr_signatures = Vec::new();
     for signature in signatures {
         let xdr_signature = signature.to_xdr()?;
@@ -696,7 +696,7 @@ fn signatures_to_xdr(signatures: &Vec<DecoratedSignature>) -> Result<Vec<xdr::De
 }
 
 fn signatures_from_xdr(
-    xdr_signatures: &Vec<xdr::DecoratedSignature>,
+    xdr_signatures: &[xdr::DecoratedSignature],
 ) -> Result<Vec<DecoratedSignature>> {
     let mut signatures = Vec::new();
     for xdr_signature in xdr_signatures {
@@ -722,7 +722,7 @@ mod tests {
             .with_memo(Memo::new_id(987))
             .with_time_bounds(TimeBounds::always_valid())
             .add_operation(Operation::new_inflation().build())
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         assert_eq!(123, *tx.sequence());
         assert_eq!(&Stroops::new(100), tx.fee());

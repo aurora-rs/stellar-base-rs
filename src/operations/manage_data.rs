@@ -11,7 +11,7 @@ pub struct ManageDataOperation {
     data_value: Option<DataValue>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ManageDataOperationBuilder {
     source_account: Option<MuxedAccount>,
     data_name: Option<String>,
@@ -82,11 +82,7 @@ impl ManageDataOperation {
 
 impl ManageDataOperationBuilder {
     pub fn new() -> ManageDataOperationBuilder {
-        ManageDataOperationBuilder {
-            source_account: None,
-            data_name: None,
-            data_value: None,
-        }
+        Default::default()
     }
 
     pub fn with_source_account<S>(mut self, source: S) -> ManageDataOperationBuilder
@@ -153,7 +149,7 @@ mod tests {
 
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -178,7 +174,7 @@ mod tests {
 
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();

@@ -14,7 +14,7 @@ pub struct PaymentOperation {
     asset: Asset,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct PaymentOperationBuilder {
     source_account: Option<MuxedAccount>,
     destination: Option<MuxedAccount>,
@@ -95,12 +95,7 @@ impl PaymentOperation {
 
 impl PaymentOperationBuilder {
     pub fn new() -> PaymentOperationBuilder {
-        PaymentOperationBuilder {
-            source_account: None,
-            destination: None,
-            amount: None,
-            asset: None,
-        }
+        Default::default()
     }
 
     pub fn with_source_account<S>(mut self, source: S) -> PaymentOperationBuilder
@@ -199,7 +194,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -228,7 +223,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();

@@ -13,7 +13,7 @@ pub struct ChangeTrustOperation {
     limit: Option<Stroops>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ChangeTrustOperationBuilder {
     source_account: Option<MuxedAccount>,
     asset: Option<Asset>,
@@ -84,11 +84,7 @@ impl ChangeTrustOperation {
 
 impl ChangeTrustOperationBuilder {
     pub fn new() -> ChangeTrustOperationBuilder {
-        ChangeTrustOperationBuilder {
-            source_account: None,
-            asset: None,
-            limit: None,
-        }
+        Default::default()
     }
 
     pub fn with_source_account<S>(mut self, source: S) -> ChangeTrustOperationBuilder
@@ -177,7 +173,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -203,7 +199,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -231,7 +227,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();

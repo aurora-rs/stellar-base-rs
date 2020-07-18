@@ -1,7 +1,6 @@
 //! Account data and flags.
 use crate::error::{Error, Result};
 use crate::xdr;
-use base64;
 
 bitflags! {
     /// Account flags.

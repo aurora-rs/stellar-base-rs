@@ -57,7 +57,7 @@
 //! let mut tx = Transaction::builder(source_kp.public_key().clone(), 1234, MIN_BASE_FEE)
 //!     .with_memo(Memo::new_id(7483792))
 //!     .add_operation(payment)
-//!     .to_transaction()?;
+//!     .into_transaction()?;
 //!
 //! tx.sign(&source_kp, &Network::new_test());
 //! let xdr = tx.into_envelope().xdr_base64()?;
