@@ -1,8 +1,12 @@
 //! Transaction signatures.
-use crate::crypto::{PublicKey, SecretKey};
+use crate::crypto::{hash, PublicKey, SecretKey};
 use crate::error::{Error, Result};
-use crate::xdr;
+use crate::network::Network;
+use crate::transaction::TransactionEnvelope;
+use crate::xdr::{self, XDRDeserialize, XDRSerialize};
 use sodiumoxide::crypto::sign::ed25519;
+use xdr_rs_serialize::de::XDRIn;
+use xdr_rs_serialize::ser::XDROut;
 
 /// A signature.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,11 +27,11 @@ pub struct DecoratedSignature {
 
 /// A pre authorized transaction hash.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PreAuthTxHash(pub Vec<u8>);
+pub struct PreAuthTxHash(Vec<u8>);
 
 /// Hash(x)
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct HashX(pub Vec<u8>);
+pub struct HashX(Vec<u8>);
 
 /// A transaction signer key.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -136,6 +140,13 @@ impl DecoratedSignature {
         DecoratedSignature { hint, signature }
     }
 
+    /// Creates a new `DecoratedSignature` from the pre image.
+    pub fn new_from_preimage(preimage: &[u8]) -> Result<DecoratedSignature> {
+        let hint = SignatureHint::from_slice(&preimage[preimage.len() - 4..])?;
+        let signature = Signature::from_slice(&preimage)?;
+        Ok(DecoratedSignature::new(hint, signature))
+    }
+
     /// Returns the decorated signature `hint`.
     pub fn hint(&self) -> &SignatureHint {
         &self.hint
@@ -172,6 +183,99 @@ impl DecoratedSignature {
 }
 
 impl SignerKey {
+    /// Creates a `SignerKey` with ed25519 key.
+    pub fn new_from_public_key(key: PublicKey) -> SignerKey {
+        SignerKey::Ed25519(key)
+    }
+
+    /// Creates a `SignerKey` with hash(x) key.
+    pub fn new_from_hashx(hashx: HashX) -> SignerKey {
+        SignerKey::HashX(hashx)
+    }
+
+    /// Creates a `SignerKey` with the hash of the preimage as key.
+    pub fn new_with_hashx(preimage: &[u8]) -> SignerKey {
+        let hashx = HashX::new_from_preimage(preimage);
+        SignerKey::new_from_hashx(hashx)
+    }
+
+    /// Creates a `SignerKey` from the pre authorized transaction hash.
+    pub fn new_from_pre_authorized_transaction(preauthtx: PreAuthTxHash) -> SignerKey {
+        SignerKey::PreAuthTx(preauthtx)
+    }
+
+    /// Creates a `SignerKey` from the transaction envelope as pre authorized transaction.
+    pub fn new_from_transaction_envelope(
+        tx: &TransactionEnvelope,
+        network: &Network,
+    ) -> Result<SignerKey> {
+        let preauthtx = PreAuthTxHash::new_from_transaction_envelope(&tx, &network)?;
+        Ok(SignerKey::new_from_pre_authorized_transaction(preauthtx))
+    }
+
+    /// If the signer is a Ed25519 key, returns its value. Returns None otherwise.
+    pub fn as_ed25519(&self) -> Option<&PublicKey> {
+        match *self {
+            SignerKey::Ed25519(ref key) => Some(key),
+            _ => None,
+        }
+    }
+
+    /// If the signer is a Ed25519 key, returns its mutable value. Returns None otherwise.
+    pub fn as_ed25519_mut(&mut self) -> Option<&mut PublicKey> {
+        match *self {
+            SignerKey::Ed25519(ref mut key) => Some(key),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the signer is a Ed25519 key.
+    pub fn is_ed25519(&self) -> bool {
+        self.as_ed25519().is_some()
+    }
+
+    /// If the signer is a PreAuthTx, returns its value. Returns None otherwise.
+    pub fn as_pre_authorized_transaction(&self) -> Option<&PreAuthTxHash> {
+        match *self {
+            SignerKey::PreAuthTx(ref hash) => Some(hash),
+            _ => None,
+        }
+    }
+
+    /// If the signer is a PreAuthTx, returns its mutable value. Returns None otherwise.
+    pub fn as_pre_authorized_transaction_mut(&mut self) -> Option<&mut PreAuthTxHash> {
+        match *self {
+            SignerKey::PreAuthTx(ref mut hash) => Some(hash),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the signer is a PreAuthTx.
+    pub fn is_pre_authorized_transaction(&self) -> bool {
+        self.as_pre_authorized_transaction().is_some()
+    }
+
+    /// If the signer is a HashX, returns its value. Returns None otherwise.
+    pub fn as_hashx(&self) -> Option<&HashX> {
+        match *self {
+            SignerKey::HashX(ref hash) => Some(hash),
+            _ => None,
+        }
+    }
+
+    /// If the signer is a HashX, returns its mutable value. Returns None otherwise.
+    pub fn as_hashx_mut(&mut self) -> Option<&mut HashX> {
+        match *self {
+            SignerKey::HashX(ref mut hash) => Some(hash),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the signer is a HashX.
+    pub fn is_hashx(&self) -> bool {
+        self.as_hashx().is_some()
+    }
+
     /// Returns the xdr object.
     pub fn to_xdr(&self) -> Result<xdr::SignerKey> {
         match self {
@@ -248,5 +352,167 @@ impl Signer {
         let weight = x.weight.value;
         let key = SignerKey::from_xdr(&x.key)?;
         Ok(Signer { key, weight })
+    }
+}
+
+impl PreAuthTxHash {
+    /// Creates a `PreAuthTxHash` from the transaction hash.
+    ///
+    /// The `hash` must be exactly 32 bytes.
+    pub fn new(hash: Vec<u8>) -> Result<PreAuthTxHash> {
+        if hash.len() != 32 {
+            return Err(Error::InvalidPreAuthTx);
+        }
+        Ok(PreAuthTxHash(hash))
+    }
+
+    /// Creates a `PreAuthTxHash` from the transaction envelope.
+    pub fn new_from_transaction_envelope(
+        tx: &TransactionEnvelope,
+        network: &Network,
+    ) -> Result<PreAuthTxHash> {
+        let hash = tx.hash(&network)?;
+        PreAuthTxHash::new(hash)
+    }
+
+    /// Returns the pre authorized transaction hash as bytes.
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl HashX {
+    /// Creates a `HashX` from a vector of bytes.
+    ///
+    /// `hashx` must be exactly 32 bytes.
+    pub fn new(hashx: Vec<u8>) -> Result<HashX> {
+        if hashx.len() != 32 {
+            return Err(Error::InvalidHashX);
+        }
+        Ok(HashX(hashx))
+    }
+
+    /// Creates a `HashX` from the `preimage`.
+    pub fn new_from_preimage(preimage: &[u8]) -> HashX {
+        // hash always returns a 32 byte value.
+        // no need to check length.
+        HashX(hash(preimage))
+    }
+
+    /// Returns the hashx as bytes.
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl XDRSerialize for SignerKey {
+    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+        let xdr_signer = self.to_xdr()?;
+        xdr_signer.write_xdr(&mut out).map_err(Error::XdrError)
+    }
+}
+
+impl XDRDeserialize for SignerKey {
+    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
+        let (xdr_signer, bytes_read) =
+            xdr::SignerKey::read_xdr(&buffer).map_err(Error::XdrError)?;
+        let res = SignerKey::from_xdr(&xdr_signer)?;
+        Ok((res, bytes_read))
+    }
+}
+
+impl XDRSerialize for Signer {
+    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+        let xdr_signer = self.to_xdr()?;
+        xdr_signer.write_xdr(&mut out).map_err(Error::XdrError)
+    }
+}
+
+impl XDRDeserialize for Signer {
+    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
+        let (xdr_signer, bytes_read) = xdr::Signer::read_xdr(&buffer).map_err(Error::XdrError)?;
+        let res = Signer::from_xdr(&xdr_signer)?;
+        Ok((res, bytes_read))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SignerKey;
+    use crate::crypto::PublicKey;
+    use crate::network::Network;
+    use crate::operations::Operation;
+    use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
+    use crate::xdr::{XDRDeserialize, XDRSerialize};
+    use base64;
+
+    #[test]
+    fn test_signer_key_from_public_key() {
+        let key =
+            PublicKey::from_account_id("GCEE2MAVLB3D5J64TTHR3T4ZYK4BZJEYIPE7FMG4NAXHY3VQRHW55BNX")
+                .unwrap();
+        let signer_key = SignerKey::new_from_public_key(key);
+        assert!(signer_key.is_ed25519());
+        assert!(!signer_key.is_pre_authorized_transaction());
+        assert!(!signer_key.is_hashx());
+
+        let xdr = signer_key.xdr_base64().unwrap();
+        let expected_xdr = "AAAAAIhNMBVYdj6n3JzPHc+ZwrgcpJhDyfKw3GgufG6wie3e";
+        assert_eq!(expected_xdr, xdr);
+
+        let back = SignerKey::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(back, signer_key);
+    }
+
+    #[test]
+    fn test_signer_key_with_hashx() {
+        let data = "hello".to_string();
+        let signer_key = SignerKey::new_with_hashx(data.as_bytes());
+
+        assert!(!signer_key.is_ed25519());
+        assert!(!signer_key.is_pre_authorized_transaction());
+        assert!(signer_key.is_hashx());
+
+        let hashx = signer_key.as_hashx().unwrap();
+
+        assert_eq!(
+            "LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=".to_string(),
+            base64::encode(hashx.as_bytes())
+        );
+
+        let xdr = signer_key.xdr_base64().unwrap();
+        let expected_xdr = "AAAAAizyTbpfsKMOJug7KsW54p4bFh5cH6dCXnMEM2KTi5gk";
+        assert_eq!(expected_xdr, xdr);
+
+        let back = SignerKey::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(back, signer_key);
+    }
+
+    #[test]
+    fn test_signer_key_with_pre_authorized_transaction() {
+        let tx = TransactionEnvelope::from_xdr_base64("AAAAAgAAAACITTAVWHY+p9yczx3PmcK4HKSYQ8nysNxoLnxusInt3gAAAGQAAAAAAAAAewAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAABQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").unwrap();
+        let signer_key =
+            SignerKey::new_from_transaction_envelope(&tx, &Network::new_test()).unwrap();
+
+        assert!(!signer_key.is_ed25519());
+        assert!(signer_key.is_pre_authorized_transaction());
+        assert!(!signer_key.is_hashx());
+
+        let tx_hash = signer_key
+            .as_pre_authorized_transaction()
+            .unwrap()
+            .as_bytes();
+        // Checked in stellar laboraty
+        assert_eq!(
+            "xkhj28AGwJ4ykWcbjN4347wQFhOKXg1qKFKwiXiKtzY=",
+            base64::encode(tx_hash)
+        );
+
+        let xdr = signer_key.xdr_base64().unwrap();
+        let expected_xdr = "AAAAAcZIY9vABsCeMpFnG4zeN+O8EBYTil4NaihSsIl4irc2";
+        assert_eq!(expected_xdr, xdr);
+
+        let back = SignerKey::from_xdr_base64(&xdr).unwrap();
+        assert_eq!(back, signer_key);
     }
 }

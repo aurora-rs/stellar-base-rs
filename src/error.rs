@@ -56,6 +56,12 @@ pub enum Error {
     /// Invalid public key.
     #[error("invalid public key")]
     InvalidPublicKey,
+    /// Invalid pre auth tx.
+    #[error("invalid pre auth tx")]
+    InvalidPreAuthTx,
+    /// Invalid hash(x).
+    #[error("invalid hash(x)")]
+    InvalidHashX,
     /// Invalid time bounds.
     #[error("invalid time bounds")]
     InvalidTimeBounds,

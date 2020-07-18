@@ -5,7 +5,7 @@ use crate::error::{Error, Result};
 use crate::memo::Memo;
 use crate::network::Network;
 use crate::operations::Operation;
-use crate::signature::DecoratedSignature;
+use crate::signature::{DecoratedSignature, Signature, SignatureHint};
 use crate::time_bounds::TimeBounds;
 use crate::xdr;
 use crate::xdr::{XDRDeserialize, XDRSerialize};
@@ -145,11 +145,30 @@ impl Transaction {
         TransactionEnvelope::Transaction(self)
     }
 
+    /// Sign transaction with `preimage` for `network`, and add signature.
+    ///
+    /// This signs the transaction with the preimage `x` of `hash(x)`.
+    pub fn sign_hashx(&mut self, preimage: &[u8], network: &Network) -> Result<()> {
+        let signature = self.decorated_signature_from_preimage(&preimage, &network)?;
+        self.signatures.push(signature);
+        Ok(())
+    }
+
     /// Sign transaction with `key` for `network`, and add signature.
     pub fn sign(&mut self, key: &KeyPair, network: &Network) -> Result<()> {
         let signature = self.decorated_signature(&key, &network)?;
         self.signatures.push(signature);
         Ok(())
+    }
+
+    /// Returns the decorated signature of the transaction create with `image` for `network`.
+    pub fn decorated_signature_from_preimage(
+        &self,
+        image: &[u8],
+        network: &Network,
+    ) -> Result<DecoratedSignature> {
+        let tx_hash = self.hash(&network)?;
+        DecoratedSignature::new_from_preimage(&image)
     }
 
     /// Returns the decorated signature of the transaction create with `key` for `network`.
