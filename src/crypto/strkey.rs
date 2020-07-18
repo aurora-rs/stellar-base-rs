@@ -121,6 +121,8 @@ mod tests {
     use super::{decode_pre_auth_tx, encode_pre_auth_tx};
     use super::{decode_secret_seed, encode_secret_seed};
     use super::{decode_sha256_hash, encode_sha256_hash};
+    use crate::crypto::KeyPair;
+    use crate::network::Network;
 
     #[test]
     fn test_encode_decode_secret_seed() {
@@ -204,5 +206,25 @@ mod tests {
             let result = decode_muxed_account(&addr);
             assert!(result.is_err());
         }
+    }
+
+    #[test]
+    fn test_pre_auth_tx() {
+        let keypair = KeyPair::from_network(&Network::new_test()).unwrap();
+        let bytes = keypair.public_key().as_bytes();
+        let encoded = encode_pre_auth_tx(&bytes);
+        assert_eq!('T', encoded.chars().next().unwrap());
+        let decoded = decode_pre_auth_tx(&encoded).unwrap();
+        assert_eq!(bytes.to_vec(), decoded);
+    }
+
+    #[test]
+    fn test_sha256_hash() {
+        let keypair = KeyPair::from_network(&Network::new_test()).unwrap();
+        let bytes = keypair.public_key().as_bytes();
+        let encoded = encode_sha256_hash(&bytes);
+        assert_eq!('X', encoded.chars().next().unwrap());
+        let decoded = decode_sha256_hash(&encoded).unwrap();
+        assert_eq!(bytes.to_vec(), decoded);
     }
 }
