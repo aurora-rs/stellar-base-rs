@@ -9,7 +9,7 @@ pub struct AccountMergeOperation {
     destination: MuxedAccount,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct AccountMergeOperationBuilder {
     source_account: Option<MuxedAccount>,
     destination: Option<MuxedAccount>,
@@ -57,10 +57,7 @@ impl AccountMergeOperation {
 
 impl AccountMergeOperationBuilder {
     pub fn new() -> AccountMergeOperationBuilder {
-        AccountMergeOperationBuilder {
-            source_account: None,
-            destination: None,
-        }
+        Default::default()
     }
 
     pub fn with_source_account<S>(mut self, source: S) -> AccountMergeOperationBuilder
@@ -127,7 +124,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -151,7 +148,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();

@@ -8,7 +8,7 @@ pub struct InflationOperation {
     source_account: Option<MuxedAccount>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct InflationOperationBuilder {
     source_account: Option<MuxedAccount>,
 }
@@ -39,9 +39,7 @@ impl InflationOperation {
 
 impl InflationOperationBuilder {
     pub fn new() -> InflationOperationBuilder {
-        InflationOperationBuilder {
-            source_account: None,
-        }
+        Default::default()
     }
 
     pub fn with_source_account<S>(mut self, source: S) -> InflationOperationBuilder
@@ -84,7 +82,7 @@ mod tests {
         let kp = keypair0();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(Operation::new_inflation().build())
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -106,7 +104,7 @@ mod tests {
                     .with_source_account(kp1.public_key().clone())
                     .build(),
             )
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();

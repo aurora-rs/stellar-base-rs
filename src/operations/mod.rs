@@ -467,9 +467,7 @@ impl Operation {
     }
 
     /// Retrieves a mutable reference to the operation source account.
-    pub fn source_account_mut(&self) -> &mut Option<MuxedAccount> {
-        todo!()
-        /*
+    pub fn source_account_mut(&mut self) -> &mut Option<MuxedAccount> {
         match self {
             Operation::CreateAccount(op) => op.source_account_mut(),
             Operation::Payment(op) => op.source_account_mut(),
@@ -486,7 +484,6 @@ impl Operation {
             Operation::ManageBuyOffer(op) => op.source_account_mut(),
             Operation::PathPaymentStrictSend(op) => op.source_account_mut(),
         }
-        */
     }
 
     /// Returns the xdr object.

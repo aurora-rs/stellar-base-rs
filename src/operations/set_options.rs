@@ -19,7 +19,7 @@ pub struct SetOptionsOperation {
     signer: Option<Signer>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SetOptionsOperationBuilder {
     source_account: Option<MuxedAccount>,
     inflation_destination: Option<PublicKey>,
@@ -143,10 +143,10 @@ impl SetOptionsOperation {
             .transpose()?;
         let clear_flags = self.clear_flags.map(|f| xdr::Uint32::new(f.bits()));
         let set_flags = self.set_flags.map(|f| xdr::Uint32::new(f.bits()));
-        let master_weight = self.master_weight.map(|w| xdr::Uint32::new(w));
-        let low_threshold = self.low_threshold.map(|t| xdr::Uint32::new(t));
-        let med_threshold = self.medium_threshold.map(|t| xdr::Uint32::new(t));
-        let high_threshold = self.high_threshold.map(|t| xdr::Uint32::new(t));
+        let master_weight = self.master_weight.map(xdr::Uint32::new);
+        let low_threshold = self.low_threshold.map(xdr::Uint32::new);
+        let med_threshold = self.medium_threshold.map(xdr::Uint32::new);
+        let high_threshold = self.high_threshold.map(xdr::Uint32::new);
         let signer = self.signer.as_ref().map(|s| s.to_xdr()).transpose()?;
 
         if let Some(home_domain) = &self.home_domain {
@@ -222,18 +222,7 @@ impl SetOptionsOperation {
 
 impl SetOptionsOperationBuilder {
     pub fn new() -> SetOptionsOperationBuilder {
-        SetOptionsOperationBuilder {
-            source_account: None,
-            inflation_destination: None,
-            clear_flags: None,
-            set_flags: None,
-            master_weight: None,
-            low_threshold: None,
-            medium_threshold: None,
-            high_threshold: None,
-            home_domain: None,
-            signer: None,
-        }
+        Default::default()
     }
 
     pub fn with_source_account<S>(mut self, source: S) -> SetOptionsOperationBuilder
@@ -344,7 +333,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -366,7 +355,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -389,7 +378,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -412,7 +401,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -436,7 +425,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
@@ -461,7 +450,7 @@ mod tests {
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
-            .to_transaction()
+            .into_transaction()
             .unwrap();
         tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
