@@ -1,8 +1,9 @@
 # Rust Stellar Base
 
-![CI](https://github.com/aurora-rs/stellar-base-rs/workflows/CI/badge.svg)
+[![CI](https://github.com/aurora-rs/stellar-base-rs/workflows/CI/badge.svg)](https://github.com/aurora-rs/stellar-base-rs/actions?query=branch:master)
+[![version](https://img.shields.io/crates/v/stellar-base)](https://crates.io/crates/stellar-base)
 [![codecov](https://codecov.io/gh/aurora-rs/stellar-base-rs/branch/master/graph/badge.svg?token=3DR7ZYCPTQ)](https://codecov.io/gh/aurora-rs/stellar-base-rs)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](https://github.com/aurora-rs/stellar-base-rs/blob/master/LICENSE)
+[![License](https://img.shields.io/crates/l/stellar-base)](https://github.com/aurora-rs/stellar-base-rs/blob/master/LICENSE)
 
 
 ## Introduction
@@ -26,19 +27,6 @@ If you are looking for a crate to interact with Stellar Horizon, look at
 
 You can find the documentation on [docs.rs](https://docs.rs/stellar-base).
 
-
-## Roadmap
-
-The library is fairly complete, so we should be able to stabilise the
-API soon.
-
- - [ ] Consider making all types possibly mutable
- - [ ] Implement signigning transactions with hashX and preauthtx
- - [ ] Improve `Amount` and `Stroops` to behave like numbers
- - [ ] Remove unnecessary `Result<_>` return types
- - [ ] Remove unused crypto types
- - [ ] Cleanup api, e.g. turn `String` into `Into<String>`, and
-       `Stroops` into `TryInto<Stroops>`
 
 ## Generating XDR types
 
