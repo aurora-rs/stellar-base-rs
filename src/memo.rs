@@ -214,7 +214,6 @@ impl XDRDeserialize for Memo {
 #[cfg(test)]
 mod tests {
     use super::Memo;
-    use crate::error::Error;
     use crate::xdr::{XDRDeserialize, XDRSerialize};
 
     #[test]
@@ -258,7 +257,7 @@ mod tests {
 
     #[test]
     fn test_memo_text() {
-        let mut memo = Memo::new_text("Short text memo").unwrap();
+        let memo = Memo::new_text("Short text memo").unwrap();
         assert!(!memo.is_none());
         assert!(!memo.is_id());
         assert!(memo.is_text());

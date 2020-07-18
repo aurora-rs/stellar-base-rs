@@ -219,14 +219,11 @@ impl ManageSellOfferOperationBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::account::{AccountFlags, DataValue, TrustLineFlags};
-    use crate::amount::{Amount, Price, Stroops};
-    use crate::asset::{Asset, CreditAssetType};
+    use crate::amount::{Amount, Price};
+    use crate::asset::Asset;
     use crate::crypto::KeyPair;
-    use crate::memo::Memo;
     use crate::network::Network;
     use crate::operations::Operation;
-    use crate::time_bounds::TimeBounds;
     use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
     use crate::xdr::{XDRDeserialize, XDRSerialize};
     use std::str::FromStr;
@@ -270,7 +267,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAAAAAAAAAAAAAHqLnLFAAAAQPhJ8gbyJpZmlbKl5ItaNi7KAGF0BH3Dfe3ZT/f9liF1JtsEFKeoNq8ea0me2y59AH78iahdkLLxVc4oq1ROcw4=";
@@ -301,7 +298,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQI9ZDQtGLZFCFgqd/6dLqznGWwAI4/LOwrNS7JkO5Rbx8j1cG60rWFylW9v0i40yk7Z5HleAncBJzrvcDeHhDAA=";
@@ -334,7 +331,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQBJhFxneImX3Z8FW+UO5xM1kAQhkwVVxSbpVqsafWaeFzcY8KWTlopVYqgoJrXnHRQq3KAstTiRktSg5zZbppgQ=";

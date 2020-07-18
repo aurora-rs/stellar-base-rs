@@ -145,7 +145,6 @@ fn ensure_valid_timestamp(dt: &DateTime<Utc>) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::TimeBounds;
-    use crate::error::Error;
     use crate::xdr::{XDRDeserialize, XDRSerialize};
     use chrono::{DateTime, Datelike, Duration, NaiveDateTime, Utc};
 

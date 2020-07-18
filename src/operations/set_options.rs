@@ -304,18 +304,13 @@ impl SetOptionsOperationBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::account::{AccountFlags, DataValue, TrustLineFlags};
-    use crate::amount::{Amount, Price, Stroops};
-    use crate::asset::{Asset, CreditAssetType};
+    use crate::account::AccountFlags;
     use crate::crypto::KeyPair;
-    use crate::memo::Memo;
     use crate::network::Network;
     use crate::operations::Operation;
     use crate::signature::{Signer, SignerKey};
-    use crate::time_bounds::TimeBounds;
     use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-    use std::str::FromStr;
 
     fn keypair0() -> KeyPair {
         // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
@@ -351,7 +346,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAQAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfgAAAAAAAAABAAAABQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6i5yxQAAAEBtYhsjGguNMF06uqEn/cUIdy9eAp/X2jlhTRiVcIGUQJ2U/45eFGXZ8AjgE5P/fWoQYlsUihurccOMwu891EAD";
@@ -363,7 +358,6 @@ mod tests {
     #[test]
     fn test_set_options_with_source_account() {
         let kp = keypair0();
-        let kp1 = keypair1();
         let kp2 = keypair2();
 
         let op = Operation::new_set_options()
@@ -374,7 +368,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHqLnLFAAAAQBf+wJNmYicge0JOI5iRVzprRG7AXpfQWCHRCIjqiXvJ0MRv71eSyPdJgUVlcStKM8prTF2TPuO8uWPk2kIRKAo=";
@@ -386,7 +380,6 @@ mod tests {
     #[test]
     fn test_set_options_with_set_flags() {
         let kp = keypair0();
-        let kp1 = keypair1();
 
         let op = Operation::new_set_options()
             .with_set_flags(Some(
@@ -398,7 +391,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAAAAAAAAAAABAAAABQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6i5yxQAAAECKOes75G40HX5JiVxydn+pu/DTZSGRf0A9eKdDXdS3Znog4kDjnw0vgZ7efMGl8NYW165N13sBub8Dnrc1E+MA";
@@ -410,7 +403,6 @@ mod tests {
     #[test]
     fn test_set_options_with_clear_flags() {
         let kp = keypair0();
-        let kp1 = keypair1();
 
         let op = Operation::new_set_options()
             .with_clear_flags(Some(
@@ -422,7 +414,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAAAAAAEAAAAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6i5yxQAAAEAXg+D6BNKJyRzCHu2np0PSWoAcFanuZa2gfS8a1iAB62buUwxezc/RULixb5W2rQwBxbSyaIrFA/3QJBf480UA";
@@ -434,7 +426,6 @@ mod tests {
     #[test]
     fn test_set_options_with_weights() {
         let kp = keypair0();
-        let kp1 = keypair1();
 
         let op = Operation::new_set_options()
             .with_master_weight(Some(1))
@@ -447,7 +438,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAAAAQAAAAEAAAABAAAAAgAAAAEAAAADAAAAAQAAAAQAAAAAAAAAAAAAAAAAAAAB6i5yxQAAAECfQ+WZfpgizILpZL84nvzoDM5+JMQOlA0+9FQZjj6Xr+njvLP/84HFz+lgK3/orX/1MdoBQb61sybrfC1kjdcA";
@@ -459,11 +450,10 @@ mod tests {
     #[test]
     fn test_set_options_with_signer() {
         let kp = keypair0();
-        let kp1 = keypair1();
         let kp2 = keypair2();
 
-        let signerKey = SignerKey::Ed25519(kp2.public_key().clone());
-        let signer = Signer::new(signerKey, 8);
+        let signer_key = SignerKey::Ed25519(kp2.public_key().clone());
+        let signer = Signer::new(signer_key, 8);
 
         let op = Operation::new_set_options()
             .with_signer(Some(signer))
@@ -473,7 +463,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAH4RyzTWNfXhqwLUoCw91aWkZtgIzY8SAVkIPc0uFVmYAAAACAAAAAAAAAAB6i5yxQAAAEDlGdxaTcfjFp4ukgepGrUe2ALXJZvDRBIGWw3ROBsQlxFV9kgx2YvszPy4DWtXQNvc3i0KxrUrR+r2liPGr/QJ";

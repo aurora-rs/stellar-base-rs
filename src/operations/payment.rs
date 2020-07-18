@@ -156,14 +156,11 @@ impl PaymentOperationBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::account::{AccountFlags, DataValue, TrustLineFlags};
-    use crate::amount::{Amount, Price, Stroops};
-    use crate::asset::{Asset, CreditAssetType};
+    use crate::amount::Amount;
+    use crate::asset::Asset;
     use crate::crypto::KeyPair;
-    use crate::memo::Memo;
     use crate::network::Network;
     use crate::operations::Operation;
-    use crate::time_bounds::TimeBounds;
     use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
     use crate::xdr::{XDRDeserialize, XDRSerialize};
     use std::str::FromStr;
@@ -204,7 +201,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAABAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAAAAAAAHVPvQAAAAAAAAAAHqLnLFAAAAQFOPIvnhDoRtPKJl7mJGPD69z2riRwZCJJcLRD+QaJ1Wg+yMiDHLiheBZv/BodiTqEvFHFxcmSxo7pjyzoc7mQ8=";
@@ -233,7 +230,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAABAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAAAAAAAHVPvQAAAAAAAAAAHqLnLFAAAAQE6H/Nqe7xqcdepF+y5PxXJaGn6aG1xzKXDqWQajo3lsPec0puxpaFvOKs2shgjKap4BgzREPyIs9st4IKq9kAo=";
