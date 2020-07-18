@@ -16,14 +16,10 @@ use crate::error::{Error, Result};
 use sodiumoxide::crypto::hash::sha256;
 use sodiumoxide::randombytes;
 
-mod ecdh;
 mod keypair;
-mod sha;
 mod strkey;
 
-pub use self::ecdh::{Curve25519Public, Curve25519Secret};
 pub use self::keypair::{KeyPair, MuxedAccount, MuxedEd25519PublicKey, PublicKey, SecretKey};
-pub use self::sha::{HmacSha256Key, HmacSha256Mac};
 pub use self::strkey::*;
 
 /// Compute sha256 hash of `m`.
