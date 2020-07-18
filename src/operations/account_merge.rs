@@ -92,17 +92,11 @@ impl AccountMergeOperationBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::account::{AccountFlags, DataValue, TrustLineFlags};
-    use crate::amount::{Amount, Price, Stroops};
-    use crate::asset::{Asset, CreditAssetType};
     use crate::crypto::KeyPair;
-    use crate::memo::Memo;
     use crate::network::Network;
     use crate::operations::Operation;
-    use crate::time_bounds::TimeBounds;
     use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-    use std::str::FromStr;
 
     fn keypair0() -> KeyPair {
         // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
@@ -135,7 +129,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAIAAABAAAAAAAAAAB7Jcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAAAAAAAeoucsUAAABAsar7y6Xy4F1R8InkdOL21n646Z5Fe6dUUfhAkDf9GnIQKHcFzVoeo7z73S6V0zW1AxfR/wJDsFprWPhbllYhBw==";
@@ -159,7 +153,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAIAAABAAAAAAAAAAB7Jcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAAAAAAAeoucsUAAABAXZWyIftD9wZB7iI/CPWdye29ggvdwf20/WQr00IbTshuas0JDIbJhhfK8NUrEILhBspQjRx82XCrppZVrampAQ==";

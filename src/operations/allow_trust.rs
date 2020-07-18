@@ -178,17 +178,13 @@ impl AllowTrustOperationBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::account::{AccountFlags, DataValue, TrustLineFlags};
-    use crate::amount::{Amount, Price, Stroops};
-    use crate::asset::{Asset, CreditAssetType};
+    use crate::account::TrustLineFlags;
+    use crate::asset::CreditAssetType;
     use crate::crypto::KeyPair;
-    use crate::memo::Memo;
     use crate::network::Network;
     use crate::operations::Operation;
-    use crate::time_bounds::TimeBounds;
     use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-    use std::str::FromStr;
 
     fn keypair0() -> KeyPair {
         // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
@@ -223,7 +219,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAHAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAUFCQ0QAAAABAAAAAAAAAAHqLnLFAAAAQNhV5kJkZryrHEq8jgx9O76dchfHSkS99FTAcR6D2cjSoy6dbPuGsiPpTbwbMMV+lYTigEmv5vTVV+rWcLfr0Q0=";
@@ -249,7 +245,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAHAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAUFCQ0QAAAABAAAAAAAAAAHqLnLFAAAAQOGeHFq7smaQekF9Cu+duxVIGbMiGvT5CccilyMmB7WELOn85XuYIY6qfDKCnjgH47ga1Yve8qnA5hdD2A+iAgA=";

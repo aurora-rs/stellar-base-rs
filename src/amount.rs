@@ -315,7 +315,7 @@ mod tests {
     fn test_price_from_str() {
         let one_22 = "1".repeat(22);
         let one_big = "1".repeat(1000000);
-        let zero_one = "0.".to_string() + &"1".repeat(1000);
+        //let zero_one = "0.".to_string() + &"1".repeat(1000);
         let test_cases = vec![
             ("0.1", Some((1, 10))),
             ("0.01", Some((1, 100))),

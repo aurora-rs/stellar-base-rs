@@ -122,17 +122,12 @@ impl ManageDataOperationBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::account::{AccountFlags, DataValue, TrustLineFlags};
-    use crate::amount::{Amount, Price, Stroops};
-    use crate::asset::{Asset, CreditAssetType};
+    use crate::account::DataValue;
     use crate::crypto::KeyPair;
-    use crate::memo::Memo;
     use crate::network::Network;
     use crate::operations::Operation;
-    use crate::time_bounds::TimeBounds;
     use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-    use std::str::FromStr;
 
     fn keypair0() -> KeyPair {
         // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
@@ -143,12 +138,6 @@ mod tests {
     fn keypair1() -> KeyPair {
         // GAS4V4O2B7DW5T7IQRPEEVCRXMDZESKISR7DVIGKZQYYV3OSQ5SH5LVP
         KeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
-            .unwrap()
-    }
-
-    fn keypair2() -> KeyPair {
-        // GB7BDSZU2Y27LYNLALKKALB52WS2IZWYBDGY6EQBLEED3TJOCVMZRH7H
-        KeyPair::from_secret_seed("SBZVMB74Z76QZ3ZOY7UTDFYKMEGKW5XFJEB6PFKBF4UYSSWHG4EDH7PY")
             .unwrap()
     }
 
@@ -166,7 +155,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAKAAAACVRFU1QgVEVTVAAAAAAAAAEAAAALdmFsdWUgdmFsdWUAAAAAAAAAAAHqLnLFAAAAQLxeb1DkXDTXi/rOffnHpyxuJhl8vN/GDMKLtxFFTGn5b99FNHmWUyUoxb4KTE9bBguIe33SEQ/npj32f2vt/gY=";
@@ -191,7 +180,7 @@ mod tests {
             .add_operation(op)
             .to_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test());
+        tx.sign(&kp, &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAKAAAACVRFU1QgVEVTVAAAAAAAAAEAAAALdmFsdWUgdmFsdWUAAAAAAAAAAAHqLnLFAAAAQBQKnwjKQ1RbYg0rk7G9VV1jHwM29YEp1EoOug960nTVWga6aFmPlQ0mDDudEsbSMq+9G8eYX5mcu9EHTjZUBQI=";

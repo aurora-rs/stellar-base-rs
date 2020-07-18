@@ -441,8 +441,7 @@ mod tests {
     use super::SignerKey;
     use crate::crypto::PublicKey;
     use crate::network::Network;
-    use crate::operations::Operation;
-    use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
+    use crate::transaction::TransactionEnvelope;
     use crate::xdr::{XDRDeserialize, XDRSerialize};
     use base64;
 
