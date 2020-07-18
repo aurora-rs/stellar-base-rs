@@ -5,7 +5,7 @@ use crate::error::{Error, Result};
 use crate::memo::Memo;
 use crate::network::Network;
 use crate::operations::Operation;
-use crate::signature::{DecoratedSignature, Signature, SignatureHint};
+use crate::signature::DecoratedSignature;
 use crate::time_bounds::TimeBounds;
 use crate::xdr;
 use crate::xdr::{XDRDeserialize, XDRSerialize};
@@ -145,11 +145,11 @@ impl Transaction {
         TransactionEnvelope::Transaction(self)
     }
 
-    /// Sign transaction with `preimage` for `network`, and add signature.
+    /// Sign transaction with `preimage`, and add signature.
     ///
     /// This signs the transaction with the preimage `x` of `hash(x)`.
-    pub fn sign_hashx(&mut self, preimage: &[u8], network: &Network) -> Result<()> {
-        let signature = self.decorated_signature_from_preimage(&preimage, &network)?;
+    pub fn sign_hashx(&mut self, preimage: &[u8]) -> Result<()> {
+        let signature = self.decorated_signature_from_preimage(&preimage)?;
         self.signatures.push(signature);
         Ok(())
     }
@@ -161,14 +161,9 @@ impl Transaction {
         Ok(())
     }
 
-    /// Returns the decorated signature of the transaction create with `image` for `network`.
-    pub fn decorated_signature_from_preimage(
-        &self,
-        image: &[u8],
-        network: &Network,
-    ) -> Result<DecoratedSignature> {
-        let tx_hash = self.hash(&network)?;
-        DecoratedSignature::new_from_preimage(&image)
+    /// Returns the decorated signature of the transaction create with `image`.
+    pub fn decorated_signature_from_preimage(&self, preimage: &[u8]) -> Result<DecoratedSignature> {
+        DecoratedSignature::new_from_preimage(&preimage)
     }
 
     /// Returns the decorated signature of the transaction create with `key` for `network`.
@@ -348,11 +343,25 @@ impl FeeBumpTransaction {
         self.clone().into_envelope()
     }
 
+    /// Sign transaction with `preimage`, and add signature.
+    ///
+    /// This signs the transaction with the preimage `x` of `hash(x)`.
+    pub fn sign_hashx(&mut self, preimage: &[u8]) -> Result<()> {
+        let signature = self.decorated_signature_from_preimage(&preimage)?;
+        self.signatures.push(signature);
+        Ok(())
+    }
+
     /// Sign transaction with `key` for `network`, and add signature.
     pub fn sign(&mut self, key: &KeyPair, network: &Network) -> Result<()> {
         let signature = self.decorated_signature(&key, &network)?;
         self.signatures.push(signature);
         Ok(())
+    }
+
+    /// Returns the decorated signature of the transaction create with `image`.
+    pub fn decorated_signature_from_preimage(&self, preimage: &[u8]) -> Result<DecoratedSignature> {
+        DecoratedSignature::new_from_preimage(&preimage)
     }
 
     /// Returns the decorated signature of the transaction create with `key` for `network`.
@@ -487,11 +496,31 @@ impl TransactionEnvelope {
         self.as_fee_bump_transaction().is_some()
     }
 
+    /// Sign transaction with `preimage`, and add signature.
+    ///
+    /// This signs the transaction with the preimage `x` of `hash(x)`.
+    pub fn sign_hashx(&mut self, preimage: &[u8]) -> Result<()> {
+        match self {
+            TransactionEnvelope::Transaction(tx) => tx.sign_hashx(&preimage),
+            TransactionEnvelope::FeeBumpTransaction(tx) => tx.sign_hashx(&preimage),
+        }
+    }
+
     /// Sign transaction with `key` for `network`, and add signature.
     pub fn sign(&mut self, key: &KeyPair, network: &Network) -> Result<()> {
         match self {
             TransactionEnvelope::Transaction(tx) => tx.sign(&key, &network),
             TransactionEnvelope::FeeBumpTransaction(tx) => tx.sign(&key, &network),
+        }
+    }
+
+    /// Returns the decorated signature of the transaction create with `image`.
+    pub fn decorated_signature_from_preimage(&self, preimage: &[u8]) -> Result<DecoratedSignature> {
+        match self {
+            TransactionEnvelope::Transaction(tx) => tx.decorated_signature_from_preimage(&preimage),
+            TransactionEnvelope::FeeBumpTransaction(tx) => {
+                tx.decorated_signature_from_preimage(&preimage)
+            }
         }
     }
 
