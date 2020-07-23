@@ -6,14 +6,15 @@ This guide will help you get started.
 
 ## Before you start
 
-Before starting to work on a feature or fix, please open an issue on
-GitHub to discuss it. This will help avoid the unfortunate situation
-in which your patch is rejected.
+Before starting to work on a feature or fix, please start a discussion
+on our mailing list at `~aurora/stellar-sdk@lists.sr.ht`. You can,
+alternatively, open an issue on GitHub. This will help avoid the
+unfortunate situation in which your patch is rejected.
 
 ### Security issues
 
-Please do not report security issues on GitHub. Contact me by email at
-francesco@ceccon.me.
+Please do not report security issues on GitHub. Send the security report
+to our security mailing list at `~aurora/security@lists.sr.ht`.
 
 ### Feature requests
 
@@ -41,6 +42,13 @@ This can be done using the `-s` flag on `git commit`.
 This project uses [conventional commits](https://www.conventionalcommits.org/en/v1.0.0-beta.2/).
 Before opening a Pull Request, make sure to [rebase](https://git-scm.com/book/en/v2/Git-Branching-Rebasing)
 your commits in a single one.
+
+
+## Contributing Changes
+
+You can [send your patch by email](https://git-send-email.io/) to
+`~aurora/stellar-sdk@lists.sr.ht`. Alternatively, you can open a Pull
+Request on GitHub.
 
 
 ## Changelog

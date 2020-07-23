@@ -16,6 +16,12 @@ If you are looking for a crate to interact with Stellar Horizon, look at
 [stellar-horizon](https://github.com/aurora-rs/stellar-horizon-rs).
 
 
+## Need help? Do you want to provide feeback?
+
+You can join the discussion on our mailing list at
+[`~aurora/stellar-sdk@lists.sr.ht`](https://lists.sr.ht/~aurora/stellar-sdk).
+
+
 ## Features
 
  * Working XDR definitions for all Stellar types.
