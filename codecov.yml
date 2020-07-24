@@ -2,6 +2,9 @@ coverage:
   precision: 2
   round: down
   range: "70...100"
+  status:
+    project: off
+    patch: off
 
 ignore:
   - src/xdr_generated.rs
