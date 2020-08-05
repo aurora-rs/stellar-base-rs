@@ -258,10 +258,35 @@ impl From<MuxedEd25519PublicKey> for MuxedAccount {
     }
 }
 
+impl std::str::FromStr for PublicKey {
+    type Err = crate::error::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let pk = PublicKey::from_account_id(s)?;
+        Ok(pk)
+    }
+}
+
+impl std::fmt::Display for PublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.account_id())
+    }
+}
+
+impl std::str::FromStr for KeyPair {
+    type Err = crate::error::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let sk = KeyPair::from_secret_seed(&s)?;
+        Ok(sk)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::KeyPair;
+    use super::{KeyPair, PublicKey};
     use crate::network::Network;
+    use std::str::FromStr;
 
     #[test]
     fn test_from_secret_seed() {
@@ -310,8 +335,12 @@ mod tests {
 
         for &(secret, address) in keypairs.iter() {
             let keypair = KeyPair::from_secret_seed(&secret).unwrap();
+            let keypair2 = KeyPair::from_str(&secret).unwrap();
+            assert_eq!(&keypair2.secret_key().secret_seed(), secret);
             let account_id = keypair.public_key().account_id();
             assert_eq!(&account_id, address);
+            let parsed = PublicKey::from_str(&account_id).unwrap();
+            assert_eq!(account_id, parsed.to_string());
         }
     }
 
