@@ -1,6 +1,6 @@
 [package]
 name = "stellar-base"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Francesco Ceccon <francesco@ceccon.me>"]
 edition = "2018"
 description = "Low level Stellar types"
