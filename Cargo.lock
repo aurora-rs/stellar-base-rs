@@ -309,7 +309,7 @@ dependencies = [
 
 [[package]]
 name = "stellar-base"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "base32",
  "base64 0.12.3",
@@ -451,9 +451,9 @@ dependencies = [
 
 [[package]]
 name = "xdr-rs-serialize"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87982228d726c5bf8d0452cb5711802ccfdca742f04417cc920d022fda4c942f"
+checksum = "f19f22ed1082f325eea7207be3b0c632860a939f254ee988a769339860f85b43"
 dependencies = [
  "base64 0.11.0",
  "hex",

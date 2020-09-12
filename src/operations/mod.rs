@@ -11,6 +11,7 @@ mod allow_trust;
 mod bump_sequence;
 mod change_trust;
 mod create_account;
+mod create_claimable_balance;
 mod create_passive_sell_offer;
 mod inflation;
 mod manage_buy_offer;
@@ -26,6 +27,9 @@ pub use allow_trust::{AllowTrustOperation, AllowTrustOperationBuilder};
 pub use bump_sequence::{BumpSequenceOperation, BumpSequenceOperationBuilder};
 pub use change_trust::{ChangeTrustOperation, ChangeTrustOperationBuilder};
 pub use create_account::{CreateAccountOperation, CreateAccountOperationBuilder};
+pub use create_claimable_balance::{
+    CreateClaimableBalanceOperation, CreateClaimableBalanceOperationBuilder,
+};
 pub use create_passive_sell_offer::{
     CreatePassiveSellOfferOperation, CreatePassiveSellOfferOperationBuilder,
 };
@@ -73,6 +77,8 @@ pub enum Operation {
     ManageBuyOffer(ManageBuyOfferOperation),
     /// Send the specified amount of asset, optionally through a path.
     PathPaymentStrictSend(PathPaymentStrictSendOperation),
+    /// Create a new claimable balance.
+    CreateClaimableBalance(CreateClaimableBalanceOperation),
 }
 
 impl Operation {
@@ -144,6 +150,11 @@ impl Operation {
     /// Creates a new path payment strict send operation builder.
     pub fn new_path_payment_strict_send() -> PathPaymentStrictSendOperationBuilder {
         PathPaymentStrictSendOperationBuilder::new()
+    }
+
+    /// Creates a new create claimable balance operation builder.
+    pub fn new_create_claimable_balance() -> CreateClaimableBalanceOperationBuilder {
+        CreateClaimableBalanceOperationBuilder::new()
     }
 
     /// If the operation is a CreateAccount, returns its value. Returns None otherwise.
@@ -463,6 +474,7 @@ impl Operation {
             Operation::BumpSequence(op) => op.source_account(),
             Operation::ManageBuyOffer(op) => op.source_account(),
             Operation::PathPaymentStrictSend(op) => op.source_account(),
+            Operation::CreateClaimableBalance(op) => op.source_account(),
         }
     }
 
@@ -483,6 +495,7 @@ impl Operation {
             Operation::BumpSequence(op) => op.source_account_mut(),
             Operation::ManageBuyOffer(op) => op.source_account_mut(),
             Operation::PathPaymentStrictSend(op) => op.source_account_mut(),
+            Operation::CreateClaimableBalance(op) => op.source_account_mut(),
         }
     }
 
@@ -507,6 +520,7 @@ impl Operation {
             Operation::BumpSequence(op) => op.to_xdr_operation_body()?,
             Operation::ManageBuyOffer(op) => op.to_xdr_operation_body()?,
             Operation::PathPaymentStrictSend(op) => op.to_xdr_operation_body()?,
+            Operation::CreateClaimableBalance(op) => op.to_xdr_operation_body()?,
         };
         Ok(xdr::Operation {
             source_account,
@@ -580,6 +594,15 @@ impl Operation {
                     PathPaymentStrictSendOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::PathPaymentStrictSend(inner))
             }
+            xdr::OperationBody::CreateClaimableBalance(op) => {
+                let inner =
+                    CreateClaimableBalanceOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::CreateClaimableBalance(inner))
+            }
+            xdr::OperationBody::ClaimClaimableBalance(op) => todo!(),
+            xdr::OperationBody::BeginSponsoringFutureReserves(op) => todo!(),
+            xdr::OperationBody::EndSponsoringFutureReserves(op) => todo!(),
+            xdr::OperationBody::RevokeSponsorship(op) => todo!(),
         }
     }
 }

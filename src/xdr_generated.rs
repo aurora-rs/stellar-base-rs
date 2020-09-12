@@ -309,7 +309,8 @@ pub enum ThresholdIndexes {
 //        ACCOUNT = 0,
 //        TRUSTLINE = 1,
 //        OFFER = 2,
-//        DATA = 3
+//        DATA = 3,
+//        CLAIMABLE_BALANCE = 4
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -318,6 +319,7 @@ pub enum LedgerEntryType {
     Trustline = 1,
     Offer = 2,
     Data = 3,
+    ClaimableBalance = 4,
 }
 
 // Signer is an XDR Struct defines as:
@@ -365,41 +367,112 @@ pub enum AccountFlags {
 //
 const MASK_ACCOUNT_FLAGS: u64 = 0x7;
 
-// AccountEntryV1Ext is an XDR NestedUnion defines as:
+// MaxSigners is an XDR Const defines as:
+//
+//   const MAX_SIGNERS = 20;
+//
+const MAX_SIGNERS: u64 = 20;
+
+// SponsorshipDescriptor is an XDR Typedef defines as:
+//
+//   typedef AccountID* SponsorshipDescriptor;
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct SponsorshipDescriptor {
+    // TODO
+    pub value: Option<AccountId>,
+}
+
+impl SponsorshipDescriptor {
+    pub fn new(value: Option<AccountId>) -> SponsorshipDescriptor {
+        SponsorshipDescriptor { value }
+    }
+}
+
+// AccountEntryExtensionV2Ext is an XDR NestedUnion defines as:
 //
 //   union switch (int v)
-//                {
-//                case 0:
-//                    void;
-//                }
+//        {
+//        case 0:
+//            void;
+//        }
 //
 // union
 #[derive(Debug, XDROut, XDRIn)]
-pub enum AccountEntryV1Ext {
+pub enum AccountEntryExtensionV2Ext {
     // NO IDEN 0
     V0(()),
 }
 
-// AccountEntryV1 is an XDR NestedStruct defines as:
+// AccountEntryExtensionV2 is an XDR Struct defines as:
 //
-//   struct
-//            {
-//                Liabilities liabilities;
+//   struct AccountEntryExtensionV2
+//    {
+//        uint32 numSponsored;
+//        uint32 numSponsoring;
+//        SponsorshipDescriptor signerSponsoringIDs<MAX_SIGNERS>;
 //
-//                union switch (int v)
-//                {
-//                case 0:
-//                    void;
-//                }
-//                ext;
-//            }
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//        ext;
+//    };
 //
 #[derive(Debug, XDROut, XDRIn)]
-pub struct AccountEntryV1 {
+pub struct AccountEntryExtensionV2 {
+    // TODO
+    pub num_sponsored: Uint32,
+    // TODO
+    pub num_sponsoring: Uint32,
+    // TODO
+    pub signer_sponsoring_i_ds: Vec<SponsorshipDescriptor>,
+    // TODO
+    pub ext: AccountEntryExtensionV2Ext,
+}
+
+// AccountEntryExtensionV1Ext is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        case 2:
+//            AccountEntryExtensionV2 v2;
+//        }
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum AccountEntryExtensionV1Ext {
+    // NO IDEN 0
+    V0(()),
+    // NO IDEN 2
+    V2(AccountEntryExtensionV2),
+}
+
+// AccountEntryExtensionV1 is an XDR Struct defines as:
+//
+//   struct AccountEntryExtensionV1
+//    {
+//        Liabilities liabilities;
+//
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        case 2:
+//            AccountEntryExtensionV2 v2;
+//        }
+//        ext;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct AccountEntryExtensionV1 {
     // TODO
     pub liabilities: Liabilities,
     // TODO
-    pub ext: AccountEntryV1Ext,
+    pub ext: AccountEntryExtensionV1Ext,
 }
 
 // AccountEntryExt is an XDR NestedUnion defines as:
@@ -409,17 +482,7 @@ pub struct AccountEntryV1 {
 //        case 0:
 //            void;
 //        case 1:
-//            struct
-//            {
-//                Liabilities liabilities;
-//
-//                union switch (int v)
-//                {
-//                case 0:
-//                    void;
-//                }
-//                ext;
-//            } v1;
+//            AccountEntryExtensionV1 v1;
 //        }
 //
 // union
@@ -428,7 +491,7 @@ pub enum AccountEntryExt {
     // NO IDEN 0
     V0(()),
     // NO IDEN 1
-    V1(AccountEntryV1),
+    V1(AccountEntryExtensionV1),
 }
 
 // AccountEntry is an XDR Struct defines as:
@@ -449,7 +512,7 @@ pub enum AccountEntryExt {
 //        // thresholds stores unsigned bytes: [weight of master|low|medium|high]
 //        Thresholds thresholds;
 //
-//        Signer signers<20>; // possible signers for this account
+//        Signer signers<MAX_SIGNERS>; // possible signers for this account
 //
 //        // reserved for future use
 //        union switch (int v)
@@ -457,17 +520,7 @@ pub enum AccountEntryExt {
 //        case 0:
 //            void;
 //        case 1:
-//            struct
-//            {
-//                Liabilities liabilities;
-//
-//                union switch (int v)
-//                {
-//                case 0:
-//                    void;
-//                }
-//                ext;
-//            } v1;
+//            AccountEntryExtensionV1 v1;
 //        }
 //        ext;
 //    };
@@ -765,6 +818,229 @@ pub struct DataEntry {
     pub ext: DataEntryExt,
 }
 
+// ClaimPredicateType is an XDR Enum defines as:
+//
+//   enum ClaimPredicateType
+//    {
+//        CLAIM_PREDICATE_UNCONDITIONAL = 0,
+//        CLAIM_PREDICATE_AND = 1,
+//        CLAIM_PREDICATE_OR = 2,
+//        CLAIM_PREDICATE_NOT = 3,
+//        CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME = 4,
+//        CLAIM_PREDICATE_BEFORE_RELATIVE_TIME = 5
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimPredicateType {
+    ClaimPredicateUnconditional = 0,
+    ClaimPredicateAnd = 1,
+    ClaimPredicateOr = 2,
+    ClaimPredicateNot = 3,
+    ClaimPredicateBeforeAbsoluteTime = 4,
+    ClaimPredicateBeforeRelativeTime = 5,
+}
+
+// ClaimPredicate is an XDR Union defines as:
+//
+//   union ClaimPredicate switch (ClaimPredicateType type)
+//    {
+//    case CLAIM_PREDICATE_UNCONDITIONAL:
+//        void;
+//    case CLAIM_PREDICATE_AND:
+//        ClaimPredicate andPredicates<2>;
+//    case CLAIM_PREDICATE_OR:
+//        ClaimPredicate orPredicates<2>;
+//    case CLAIM_PREDICATE_NOT:
+//        ClaimPredicate* notPredicate;
+//    case CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME:
+//        int64 absBefore; // Predicate will be true if closeTime < absBefore
+//    case CLAIM_PREDICATE_BEFORE_RELATIVE_TIME:
+//        int64 relBefore; // Seconds since closeTime of the ledger in which the
+//                         // ClaimableBalanceEntry was created
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimPredicate {
+    // IDEN CLAIM_PREDICATE_UNCONDITIONAL
+    ClaimPredicateUnconditional(()),
+    // IDEN CLAIM_PREDICATE_AND
+    ClaimPredicateAnd(Vec<Box<ClaimPredicate>>),
+    // IDEN CLAIM_PREDICATE_OR
+    ClaimPredicateOr(Vec<Box<ClaimPredicate>>),
+    // IDEN CLAIM_PREDICATE_NOT
+    ClaimPredicateNot(Option<Box<ClaimPredicate>>),
+    // IDEN CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME
+    ClaimPredicateBeforeAbsoluteTime(Int64),
+    // IDEN CLAIM_PREDICATE_BEFORE_RELATIVE_TIME
+    ClaimPredicateBeforeRelativeTime(Int64),
+}
+
+// ClaimantType is an XDR Enum defines as:
+//
+//   enum ClaimantType
+//    {
+//        CLAIMANT_TYPE_V0 = 0
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimantType {
+    ClaimantTypeV0 = 0,
+}
+
+// ClaimantV0 is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            AccountID destination;    // The account that can use this condition
+//            ClaimPredicate predicate; // Claimable if predicate is true
+//        }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct ClaimantV0 {
+    // TODO
+    pub destination: AccountId,
+    // TODO
+    pub predicate: ClaimPredicate,
+}
+
+// Claimant is an XDR Union defines as:
+//
+//   union Claimant switch (ClaimantType type)
+//    {
+//    case CLAIMANT_TYPE_V0:
+//        struct
+//        {
+//            AccountID destination;    // The account that can use this condition
+//            ClaimPredicate predicate; // Claimable if predicate is true
+//        } v0;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum Claimant {
+    // IDEN CLAIMANT_TYPE_V0
+    ClaimantTypeV0(ClaimantV0),
+}
+
+// ClaimableBalanceIdType is an XDR Enum defines as:
+//
+//   enum ClaimableBalanceIDType
+//    {
+//        CLAIMABLE_BALANCE_ID_TYPE_V0 = 0
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimableBalanceIdType {
+    ClaimableBalanceIdTypeV0 = 0,
+}
+
+// ClaimableBalanceId is an XDR Union defines as:
+//
+//   union ClaimableBalanceID switch (ClaimableBalanceIDType type)
+//    {
+//    case CLAIMABLE_BALANCE_ID_TYPE_V0:
+//        Hash v0;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimableBalanceId {
+    // IDEN CLAIMABLE_BALANCE_ID_TYPE_V0
+    ClaimableBalanceIdTypeV0(Hash),
+}
+
+// ClaimableBalanceEntryExt is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimableBalanceEntryExt {
+    // NO IDEN 0
+    V0(()),
+}
+
+// ClaimableBalanceEntry is an XDR Struct defines as:
+//
+//   struct ClaimableBalanceEntry
+//    {
+//        // Unique identifier for this ClaimableBalanceEntry
+//        ClaimableBalanceID balanceID;
+//
+//        // List of claimants with associated predicate
+//        Claimant claimants<10>;
+//
+//        // Any asset including native
+//        Asset asset;
+//
+//        // Amount of asset
+//        int64 amount;
+//
+//        // reserved for future use
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//        ext;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct ClaimableBalanceEntry {
+    // TODO
+    pub balance_id: ClaimableBalanceId,
+    // TODO
+    pub claimants: Vec<Claimant>,
+    // TODO
+    pub asset: Asset,
+    // TODO
+    pub amount: Int64,
+    // TODO
+    pub ext: ClaimableBalanceEntryExt,
+}
+
+// LedgerEntryExtensionV1Ext is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum LedgerEntryExtensionV1Ext {
+    // NO IDEN 0
+    V0(()),
+}
+
+// LedgerEntryExtensionV1 is an XDR Struct defines as:
+//
+//   struct LedgerEntryExtensionV1
+//    {
+//        SponsorshipDescriptor sponsoringID;
+//
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//        ext;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LedgerEntryExtensionV1 {
+    // TODO
+    pub sponsoring_id: SponsorshipDescriptor,
+    // TODO
+    pub ext: LedgerEntryExtensionV1Ext,
+}
+
 // LedgerEntryData is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerEntryType type)
@@ -777,6 +1053,8 @@ pub struct DataEntry {
 //            OfferEntry offer;
 //        case DATA:
 //            DataEntry data;
+//        case CLAIMABLE_BALANCE:
+//            ClaimableBalanceEntry claimableBalance;
 //        }
 //
 // union
@@ -790,6 +1068,8 @@ pub enum LedgerEntryData {
     Offer(OfferEntry),
     // IDEN DATA
     Data(DataEntry),
+    // IDEN CLAIMABLE_BALANCE
+    ClaimableBalance(ClaimableBalanceEntry),
 }
 
 // LedgerEntryExt is an XDR NestedUnion defines as:
@@ -798,6 +1078,8 @@ pub enum LedgerEntryData {
 //        {
 //        case 0:
 //            void;
+//        case 1:
+//            LedgerEntryExtensionV1 v1;
 //        }
 //
 // union
@@ -805,6 +1087,8 @@ pub enum LedgerEntryData {
 pub enum LedgerEntryExt {
     // NO IDEN 0
     V0(()),
+    // NO IDEN 1
+    V1(LedgerEntryExtensionV1),
 }
 
 // LedgerEntry is an XDR Struct defines as:
@@ -823,6 +1107,8 @@ pub enum LedgerEntryExt {
 //            OfferEntry offer;
 //        case DATA:
 //            DataEntry data;
+//        case CLAIMABLE_BALANCE:
+//            ClaimableBalanceEntry claimableBalance;
 //        }
 //        data;
 //
@@ -831,6 +1117,8 @@ pub enum LedgerEntryExt {
 //        {
 //        case 0:
 //            void;
+//        case 1:
+//            LedgerEntryExtensionV1 v1;
 //        }
 //        ext;
 //    };
@@ -845,6 +1133,133 @@ pub struct LedgerEntry {
     pub ext: LedgerEntryExt,
 }
 
+// LedgerKeyAccount is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            AccountID accountID;
+//        }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LedgerKeyAccount {
+    // TODO
+    pub account_id: AccountId,
+}
+
+// LedgerKeyTrustLine is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            AccountID accountID;
+//            Asset asset;
+//        }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LedgerKeyTrustLine {
+    // TODO
+    pub account_id: AccountId,
+    // TODO
+    pub asset: Asset,
+}
+
+// LedgerKeyOffer is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            AccountID sellerID;
+//            int64 offerID;
+//        }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LedgerKeyOffer {
+    // TODO
+    pub seller_id: AccountId,
+    // TODO
+    pub offer_id: Int64,
+}
+
+// LedgerKeyData is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            AccountID accountID;
+//            string64 dataName;
+//        }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LedgerKeyData {
+    // TODO
+    pub account_id: AccountId,
+    // TODO
+    pub data_name: String64,
+}
+
+// LedgerKeyClaimableBalance is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            ClaimableBalanceID balanceID;
+//        }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LedgerKeyClaimableBalance {
+    // TODO
+    pub balance_id: ClaimableBalanceId,
+}
+
+// LedgerKey is an XDR Union defines as:
+//
+//   union LedgerKey switch (LedgerEntryType type)
+//    {
+//    case ACCOUNT:
+//        struct
+//        {
+//            AccountID accountID;
+//        } account;
+//
+//    case TRUSTLINE:
+//        struct
+//        {
+//            AccountID accountID;
+//            Asset asset;
+//        } trustLine;
+//
+//    case OFFER:
+//        struct
+//        {
+//            AccountID sellerID;
+//            int64 offerID;
+//        } offer;
+//
+//    case DATA:
+//        struct
+//        {
+//            AccountID accountID;
+//            string64 dataName;
+//        } data;
+//
+//    case CLAIMABLE_BALANCE:
+//        struct
+//        {
+//            ClaimableBalanceID balanceID;
+//        } claimableBalance;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum LedgerKey {
+    // IDEN ACCOUNT
+    Account(LedgerKeyAccount),
+    // IDEN TRUSTLINE
+    Trustline(LedgerKeyTrustLine),
+    // IDEN OFFER
+    Offer(LedgerKeyOffer),
+    // IDEN DATA
+    Data(LedgerKeyData),
+    // IDEN CLAIMABLE_BALANCE
+    ClaimableBalance(LedgerKeyClaimableBalance),
+}
+
 // EnvelopeType is an XDR Enum defines as:
 //
 //   enum EnvelopeType
@@ -854,7 +1269,8 @@ pub struct LedgerEntry {
 //        ENVELOPE_TYPE_TX = 2,
 //        ENVELOPE_TYPE_AUTH = 3,
 //        ENVELOPE_TYPE_SCPVALUE = 4,
-//        ENVELOPE_TYPE_TX_FEE_BUMP = 5
+//        ENVELOPE_TYPE_TX_FEE_BUMP = 5,
+//        ENVELOPE_TYPE_OP_ID = 6
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -865,6 +1281,7 @@ pub enum EnvelopeType {
     EnvelopeTypeAuth = 3,
     EnvelopeTypeScpvalue = 4,
     EnvelopeTypeTxFeeBump = 5,
+    EnvelopeTypeOpId = 6,
 }
 
 // UpgradeType is an XDR Typedef defines as:
@@ -1101,112 +1518,6 @@ pub enum LedgerUpgrade {
     LedgerUpgradeMaxTxSetSize(Uint32),
     // IDEN LEDGER_UPGRADE_BASE_RESERVE
     LedgerUpgradeBaseReserve(Uint32),
-}
-
-// LedgerKeyAccount is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            AccountID accountID;
-//        }
-//
-#[derive(Debug, XDROut, XDRIn)]
-pub struct LedgerKeyAccount {
-    // TODO
-    pub account_id: AccountId,
-}
-
-// LedgerKeyTrustLine is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            AccountID accountID;
-//            Asset asset;
-//        }
-//
-#[derive(Debug, XDROut, XDRIn)]
-pub struct LedgerKeyTrustLine {
-    // TODO
-    pub account_id: AccountId,
-    // TODO
-    pub asset: Asset,
-}
-
-// LedgerKeyOffer is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            AccountID sellerID;
-//            int64 offerID;
-//        }
-//
-#[derive(Debug, XDROut, XDRIn)]
-pub struct LedgerKeyOffer {
-    // TODO
-    pub seller_id: AccountId,
-    // TODO
-    pub offer_id: Int64,
-}
-
-// LedgerKeyData is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//            AccountID accountID;
-//            string64 dataName;
-//        }
-//
-#[derive(Debug, XDROut, XDRIn)]
-pub struct LedgerKeyData {
-    // TODO
-    pub account_id: AccountId,
-    // TODO
-    pub data_name: String64,
-}
-
-// LedgerKey is an XDR Union defines as:
-//
-//   union LedgerKey switch (LedgerEntryType type)
-//    {
-//    case ACCOUNT:
-//        struct
-//        {
-//            AccountID accountID;
-//        } account;
-//
-//    case TRUSTLINE:
-//        struct
-//        {
-//            AccountID accountID;
-//            Asset asset;
-//        } trustLine;
-//
-//    case OFFER:
-//        struct
-//        {
-//            AccountID sellerID;
-//            int64 offerID;
-//        } offer;
-//
-//    case DATA:
-//        struct
-//        {
-//            AccountID accountID;
-//            string64 dataName;
-//        } data;
-//    };
-//
-// union
-#[derive(Debug, XDROut, XDRIn)]
-pub enum LedgerKey {
-    // IDEN ACCOUNT
-    Account(LedgerKeyAccount),
-    // IDEN TRUSTLINE
-    Trustline(LedgerKeyTrustLine),
-    // IDEN OFFER
-    Offer(LedgerKeyOffer),
-    // IDEN DATA
-    Data(LedgerKeyData),
 }
 
 // BucketEntryType is an XDR Enum defines as:
@@ -2641,7 +2952,12 @@ pub struct DecoratedSignature {
 //        MANAGE_DATA = 10,
 //        BUMP_SEQUENCE = 11,
 //        MANAGE_BUY_OFFER = 12,
-//        PATH_PAYMENT_STRICT_SEND = 13
+//        PATH_PAYMENT_STRICT_SEND = 13,
+//        CREATE_CLAIMABLE_BALANCE = 14,
+//        CLAIM_CLAIMABLE_BALANCE = 15,
+//        BEGIN_SPONSORING_FUTURE_RESERVES = 16,
+//        END_SPONSORING_FUTURE_RESERVES = 17,
+//        REVOKE_SPONSORSHIP = 18
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -2660,6 +2976,11 @@ pub enum OperationType {
     BumpSequence = 11,
     ManageBuyOffer = 12,
     PathPaymentStrictSend = 13,
+    CreateClaimableBalance = 14,
+    ClaimClaimableBalance = 15,
+    BeginSponsoringFutureReserves = 16,
+    EndSponsoringFutureReserves = 17,
+    RevokeSponsorship = 18,
 }
 
 // CreateAccountOp is an XDR Struct defines as:
@@ -2986,6 +3307,105 @@ pub struct BumpSequenceOp {
     pub bump_to: SequenceNumber,
 }
 
+// CreateClaimableBalanceOp is an XDR Struct defines as:
+//
+//   struct CreateClaimableBalanceOp
+//    {
+//        Asset asset;
+//        int64 amount;
+//        Claimant claimants<10>;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct CreateClaimableBalanceOp {
+    // TODO
+    pub asset: Asset,
+    // TODO
+    pub amount: Int64,
+    // TODO
+    pub claimants: Vec<Claimant>,
+}
+
+// ClaimClaimableBalanceOp is an XDR Struct defines as:
+//
+//   struct ClaimClaimableBalanceOp
+//    {
+//        ClaimableBalanceID balanceID;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct ClaimClaimableBalanceOp {
+    // TODO
+    pub balance_id: ClaimableBalanceId,
+}
+
+// BeginSponsoringFutureReservesOp is an XDR Struct defines as:
+//
+//   struct BeginSponsoringFutureReservesOp
+//    {
+//        AccountID sponsoredID;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct BeginSponsoringFutureReservesOp {
+    // TODO
+    pub sponsored_id: AccountId,
+}
+
+// RevokeSponsorshipType is an XDR Enum defines as:
+//
+//   enum RevokeSponsorshipType
+//    {
+//        REVOKE_SPONSORSHIP_LEDGER_ENTRY = 0,
+//        REVOKE_SPONSORSHIP_SIGNER = 1
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum RevokeSponsorshipType {
+    RevokeSponsorshipLedgerEntry = 0,
+    RevokeSponsorshipSigner = 1,
+}
+
+// RevokeSponsorshipOpSigner is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            AccountID accountID;
+//            SignerKey signerKey;
+//        }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct RevokeSponsorshipOpSigner {
+    // TODO
+    pub account_id: AccountId,
+    // TODO
+    pub signer_key: SignerKey,
+}
+
+// RevokeSponsorshipOp is an XDR Union defines as:
+//
+//   union RevokeSponsorshipOp switch (RevokeSponsorshipType type)
+//    {
+//    case REVOKE_SPONSORSHIP_LEDGER_ENTRY:
+//        LedgerKey ledgerKey;
+//    case REVOKE_SPONSORSHIP_SIGNER:
+//        struct
+//        {
+//            AccountID accountID;
+//            SignerKey signerKey;
+//        }
+//        signer;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum RevokeSponsorshipOp {
+    // IDEN REVOKE_SPONSORSHIP_LEDGER_ENTRY
+    RevokeSponsorshipLedgerEntry(LedgerKey),
+    // IDEN REVOKE_SPONSORSHIP_SIGNER
+    RevokeSponsorshipSigner(RevokeSponsorshipOpSigner),
+}
+
 // OperationBody is an XDR NestedUnion defines as:
 //
 //   union switch (OperationType type)
@@ -3018,6 +3438,16 @@ pub struct BumpSequenceOp {
 //            ManageBuyOfferOp manageBuyOfferOp;
 //        case PATH_PAYMENT_STRICT_SEND:
 //            PathPaymentStrictSendOp pathPaymentStrictSendOp;
+//        case CREATE_CLAIMABLE_BALANCE:
+//            CreateClaimableBalanceOp createClaimableBalanceOp;
+//        case CLAIM_CLAIMABLE_BALANCE:
+//            ClaimClaimableBalanceOp claimClaimableBalanceOp;
+//        case BEGIN_SPONSORING_FUTURE_RESERVES:
+//            BeginSponsoringFutureReservesOp beginSponsoringFutureReservesOp;
+//        case END_SPONSORING_FUTURE_RESERVES:
+//            void;
+//        case REVOKE_SPONSORSHIP:
+//            RevokeSponsorshipOp revokeSponsorshipOp;
 //        }
 //
 // union
@@ -3051,6 +3481,16 @@ pub enum OperationBody {
     ManageBuyOffer(ManageBuyOfferOp),
     // IDEN PATH_PAYMENT_STRICT_SEND
     PathPaymentStrictSend(PathPaymentStrictSendOp),
+    // IDEN CREATE_CLAIMABLE_BALANCE
+    CreateClaimableBalance(CreateClaimableBalanceOp),
+    // IDEN CLAIM_CLAIMABLE_BALANCE
+    ClaimClaimableBalance(ClaimClaimableBalanceOp),
+    // IDEN BEGIN_SPONSORING_FUTURE_RESERVES
+    BeginSponsoringFutureReserves(BeginSponsoringFutureReservesOp),
+    // IDEN END_SPONSORING_FUTURE_RESERVES
+    EndSponsoringFutureReserves(()),
+    // IDEN REVOKE_SPONSORSHIP
+    RevokeSponsorship(RevokeSponsorshipOp),
 }
 
 // Operation is an XDR Struct defines as:
@@ -3092,6 +3532,16 @@ pub enum OperationBody {
 //            ManageBuyOfferOp manageBuyOfferOp;
 //        case PATH_PAYMENT_STRICT_SEND:
 //            PathPaymentStrictSendOp pathPaymentStrictSendOp;
+//        case CREATE_CLAIMABLE_BALANCE:
+//            CreateClaimableBalanceOp createClaimableBalanceOp;
+//        case CLAIM_CLAIMABLE_BALANCE:
+//            ClaimClaimableBalanceOp claimClaimableBalanceOp;
+//        case BEGIN_SPONSORING_FUTURE_RESERVES:
+//            BeginSponsoringFutureReservesOp beginSponsoringFutureReservesOp;
+//        case END_SPONSORING_FUTURE_RESERVES:
+//            void;
+//        case REVOKE_SPONSORSHIP:
+//            RevokeSponsorshipOp revokeSponsorshipOp;
 //        }
 //        body;
 //    };
@@ -3102,6 +3552,45 @@ pub struct Operation {
     pub source_account: Option<MuxedAccount>,
     // TODO
     pub body: OperationBody,
+}
+
+// OperationIdId is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            MuxedAccount sourceAccount;
+//            SequenceNumber seqNum;
+//            uint32 opNum;
+//        }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct OperationIdId {
+    // TODO
+    pub source_account: MuxedAccount,
+    // TODO
+    pub seq_num: SequenceNumber,
+    // TODO
+    pub op_num: Uint32,
+}
+
+// OperationId is an XDR Union defines as:
+//
+//   union OperationID switch (EnvelopeType type)
+//    {
+//    case ENVELOPE_TYPE_OP_ID:
+//        struct
+//        {
+//            MuxedAccount sourceAccount;
+//            SequenceNumber seqNum;
+//            uint32 opNum;
+//        } id;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum OperationId {
+    // IDEN ENVELOPE_TYPE_OP_ID
+    EnvelopeTypeOpId(OperationIdId),
 }
 
 // MemoType is an XDR Enum defines as:
@@ -3554,7 +4043,7 @@ pub enum CreateAccountResult {
     // IDEN CREATE_ACCOUNT_SUCCESS
     CreateAccountSuccess(()),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187f68b468>
+    // #<Xdrgen::AST::Identifier:0x0000558a7fdf41e8>
     Void,
 }
 
@@ -3607,7 +4096,7 @@ pub enum PaymentResult {
     // IDEN PAYMENT_SUCCESS
     PaymentSuccess(()),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187f7ac1d0>
+    // #<Xdrgen::AST::Identifier:0x0000558a7f745c48>
     Void,
 }
 
@@ -3718,7 +4207,7 @@ pub enum PathPaymentStrictReceiveResult {
     // IDEN PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER
     PathPaymentStrictReceiveNoIssuer(Asset),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187f979b48>
+    // #<Xdrgen::AST::Identifier:0x0000558a80281148>
     Void,
 }
 
@@ -3809,7 +4298,7 @@ pub enum PathPaymentStrictSendResult {
     // IDEN PATH_PAYMENT_STRICT_SEND_NO_ISSUER
     PathPaymentStrictSendNoIssuer(Asset),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187fb66b90>
+    // #<Xdrgen::AST::Identifier:0x0000558a7ff53598>
     Void,
 }
 
@@ -3894,7 +4383,7 @@ pub enum ManageOfferSuccessResultOffer {
     // IDEN MANAGE_OFFER_UPDATED
     ManageOfferUpdated(OfferEntry),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187f787c68>
+    // #<Xdrgen::AST::Identifier:0x0000558a8033ef68>
     Void,
 }
 
@@ -3940,7 +4429,7 @@ pub enum ManageSellOfferResult {
     // IDEN MANAGE_SELL_OFFER_SUCCESS
     ManageSellOfferSuccess(ManageOfferSuccessResult),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187f7dbf48>
+    // #<Xdrgen::AST::Identifier:0x0000558a8026a420>
     Void,
 }
 
@@ -4003,7 +4492,7 @@ pub enum ManageBuyOfferResult {
     // IDEN MANAGE_BUY_OFFER_SUCCESS
     ManageBuyOfferSuccess(ManageOfferSuccessResult),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187fa0f940>
+    // #<Xdrgen::AST::Identifier:0x0000558a7f9b3868>
     Void,
 }
 
@@ -4055,7 +4544,7 @@ pub enum SetOptionsResult {
     // IDEN SET_OPTIONS_SUCCESS
     SetOptionsSuccess(()),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187ec289f8>
+    // #<Xdrgen::AST::Identifier:0x0000558a802b7d88>
     Void,
 }
 
@@ -4101,7 +4590,7 @@ pub enum ChangeTrustResult {
     // IDEN CHANGE_TRUST_SUCCESS
     ChangeTrustSuccess(()),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187f83a840>
+    // #<Xdrgen::AST::Identifier:0x0000558a803e0cc8>
     Void,
 }
 
@@ -4146,7 +4635,7 @@ pub enum AllowTrustResult {
     // IDEN ALLOW_TRUST_SUCCESS
     AllowTrustSuccess(()),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187e4f00a0>
+    // #<Xdrgen::AST::Identifier:0x0000558a803763f0>
     Void,
 }
 
@@ -4162,8 +4651,9 @@ pub enum AllowTrustResult {
 //        ACCOUNT_MERGE_IMMUTABLE_SET = -3,   // source account has AUTH_IMMUTABLE set
 //        ACCOUNT_MERGE_HAS_SUB_ENTRIES = -4, // account has trust lines/offers
 //        ACCOUNT_MERGE_SEQNUM_TOO_FAR = -5,  // sequence number is over max allowed
-//        ACCOUNT_MERGE_DEST_FULL = -6        // can't add source balance to
+//        ACCOUNT_MERGE_DEST_FULL = -6,       // can't add source balance to
 //                                            // destination balance
+//        ACCOUNT_MERGE_IS_SPONSOR = -7       // can't merge account that is a sponsor
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -4175,6 +4665,7 @@ pub enum AccountMergeResultCode {
     AccountMergeHasSubEntries = -4,
     AccountMergeSeqnumTooFar = -5,
     AccountMergeDestFull = -6,
+    AccountMergeIsSponsor = -7,
 }
 
 // AccountMergeResult is an XDR Union defines as:
@@ -4193,7 +4684,7 @@ pub enum AccountMergeResult {
     // IDEN ACCOUNT_MERGE_SUCCESS
     AccountMergeSuccess(Int64),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187f849bd8>
+    // #<Xdrgen::AST::Identifier:0x0000558a8096f6a8>
     Void,
 }
 
@@ -4245,7 +4736,7 @@ pub enum InflationResult {
     // IDEN INFLATION_SUCCESS
     InflationSuccess(Vec<InflationPayout>),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187fb1e520>
+    // #<Xdrgen::AST::Identifier:0x0000558a80292a10>
     Void,
 }
 
@@ -4289,7 +4780,7 @@ pub enum ManageDataResult {
     // IDEN MANAGE_DATA_SUCCESS
     ManageDataSuccess(()),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187f6af9a8>
+    // #<Xdrgen::AST::Identifier:0x0000558a80223660>
     Void,
 }
 
@@ -4325,7 +4816,213 @@ pub enum BumpSequenceResult {
     // IDEN BUMP_SEQUENCE_SUCCESS
     BumpSequenceSuccess(()),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187f7d8618>
+    // #<Xdrgen::AST::Identifier:0x0000558a80abe810>
+    Void,
+}
+
+// CreateClaimableBalanceResultCode is an XDR Enum defines as:
+//
+//   enum CreateClaimableBalanceResultCode
+//    {
+//        CREATE_CLAIMABLE_BALANCE_SUCCESS = 0,
+//        CREATE_CLAIMABLE_BALANCE_MALFORMED = -1,
+//        CREATE_CLAIMABLE_BALANCE_LOW_RESERVE = -2,
+//        CREATE_CLAIMABLE_BALANCE_NO_TRUST = -3,
+//        CREATE_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -4,
+//        CREATE_CLAIMABLE_BALANCE_UNDERFUNDED = -5
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum CreateClaimableBalanceResultCode {
+    CreateClaimableBalanceSuccess = 0,
+    CreateClaimableBalanceMalformed = -1,
+    CreateClaimableBalanceLowReserve = -2,
+    CreateClaimableBalanceNoTrust = -3,
+    CreateClaimableBalanceNotAuthorized = -4,
+    CreateClaimableBalanceUnderfunded = -5,
+}
+
+// CreateClaimableBalanceResult is an XDR Union defines as:
+//
+//   union CreateClaimableBalanceResult switch (CreateClaimableBalanceResultCode code)
+//    {
+//    case CREATE_CLAIMABLE_BALANCE_SUCCESS:
+//        ClaimableBalanceID balanceID;
+//    default:
+//        void;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum CreateClaimableBalanceResult {
+    // IDEN CREATE_CLAIMABLE_BALANCE_SUCCESS
+    CreateClaimableBalanceSuccess(ClaimableBalanceId),
+    // default
+    // #<Xdrgen::AST::Identifier:0x0000558a80b09270>
+    Void,
+}
+
+// ClaimClaimableBalanceResultCode is an XDR Enum defines as:
+//
+//   enum ClaimClaimableBalanceResultCode
+//    {
+//        CLAIM_CLAIMABLE_BALANCE_SUCCESS = 0,
+//        CLAIM_CLAIMABLE_BALANCE_DOES_NOT_EXIST = -1,
+//        CLAIM_CLAIMABLE_BALANCE_CANNOT_CLAIM = -2,
+//        CLAIM_CLAIMABLE_BALANCE_LINE_FULL = -3,
+//        CLAIM_CLAIMABLE_BALANCE_NO_TRUST = -4,
+//        CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -5
+//
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimClaimableBalanceResultCode {
+    ClaimClaimableBalanceSuccess = 0,
+    ClaimClaimableBalanceDoesNotExist = -1,
+    ClaimClaimableBalanceCannotClaim = -2,
+    ClaimClaimableBalanceLineFull = -3,
+    ClaimClaimableBalanceNoTrust = -4,
+    ClaimClaimableBalanceNotAuthorized = -5,
+}
+
+// ClaimClaimableBalanceResult is an XDR Union defines as:
+//
+//   union ClaimClaimableBalanceResult switch (ClaimClaimableBalanceResultCode code)
+//    {
+//    case CLAIM_CLAIMABLE_BALANCE_SUCCESS:
+//        void;
+//    default:
+//        void;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimClaimableBalanceResult {
+    // IDEN CLAIM_CLAIMABLE_BALANCE_SUCCESS
+    ClaimClaimableBalanceSuccess(()),
+    // default
+    // #<Xdrgen::AST::Identifier:0x0000558a80b60840>
+    Void,
+}
+
+// BeginSponsoringFutureReservesResultCode is an XDR Enum defines as:
+//
+//   enum BeginSponsoringFutureReservesResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        BEGIN_SPONSORING_FUTURE_RESERVES_MALFORMED = -1,
+//        BEGIN_SPONSORING_FUTURE_RESERVES_ALREADY_SPONSORED = -2,
+//        BEGIN_SPONSORING_FUTURE_RESERVES_RECURSIVE = -3
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum BeginSponsoringFutureReservesResultCode {
+    BeginSponsoringFutureReservesSuccess = 0,
+    BeginSponsoringFutureReservesMalformed = -1,
+    BeginSponsoringFutureReservesAlreadySponsored = -2,
+    BeginSponsoringFutureReservesRecursive = -3,
+}
+
+// BeginSponsoringFutureReservesResult is an XDR Union defines as:
+//
+//   union BeginSponsoringFutureReservesResult switch (BeginSponsoringFutureReservesResultCode code)
+//    {
+//    case BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS:
+//        void;
+//    default:
+//        void;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum BeginSponsoringFutureReservesResult {
+    // IDEN BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS
+    BeginSponsoringFutureReservesSuccess(()),
+    // default
+    // #<Xdrgen::AST::Identifier:0x0000558a80bcf998>
+    Void,
+}
+
+// EndSponsoringFutureReservesResultCode is an XDR Enum defines as:
+//
+//   enum EndSponsoringFutureReservesResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        END_SPONSORING_FUTURE_RESERVES_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED = -1
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum EndSponsoringFutureReservesResultCode {
+    EndSponsoringFutureReservesSuccess = 0,
+    EndSponsoringFutureReservesNotSponsored = -1,
+}
+
+// EndSponsoringFutureReservesResult is an XDR Union defines as:
+//
+//   union EndSponsoringFutureReservesResult switch (EndSponsoringFutureReservesResultCode code)
+//    {
+//    case END_SPONSORING_FUTURE_RESERVES_SUCCESS:
+//        void;
+//    default:
+//        void;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum EndSponsoringFutureReservesResult {
+    // IDEN END_SPONSORING_FUTURE_RESERVES_SUCCESS
+    EndSponsoringFutureReservesSuccess(()),
+    // default
+    // #<Xdrgen::AST::Identifier:0x0000558a80c22d00>
+    Void,
+}
+
+// RevokeSponsorshipResultCode is an XDR Enum defines as:
+//
+//   enum RevokeSponsorshipResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        REVOKE_SPONSORSHIP_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        REVOKE_SPONSORSHIP_DOES_NOT_EXIST = -1,
+//        REVOKE_SPONSORSHIP_NOT_SPONSOR = -2,
+//        REVOKE_SPONSORSHIP_LOW_RESERVE = -3,
+//        REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE = -4
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum RevokeSponsorshipResultCode {
+    RevokeSponsorshipSuccess = 0,
+    RevokeSponsorshipDoesNotExist = -1,
+    RevokeSponsorshipNotSponsor = -2,
+    RevokeSponsorshipLowReserve = -3,
+    RevokeSponsorshipOnlyTransferable = -4,
+}
+
+// RevokeSponsorshipResult is an XDR Union defines as:
+//
+//   union RevokeSponsorshipResult switch (RevokeSponsorshipResultCode code)
+//    {
+//    case REVOKE_SPONSORSHIP_SUCCESS:
+//        void;
+//    default:
+//        void;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum RevokeSponsorshipResult {
+    // IDEN REVOKE_SPONSORSHIP_SUCCESS
+    RevokeSponsorshipSuccess(()),
+    // default
+    // #<Xdrgen::AST::Identifier:0x0000558a80c9f198>
     Void,
 }
 
@@ -4339,7 +5036,8 @@ pub enum BumpSequenceResult {
 //        opNO_ACCOUNT = -2,          // source account was not found
 //        opNOT_SUPPORTED = -3,       // operation not supported at this time
 //        opTOO_MANY_SUBENTRIES = -4, // max number of subentries already reached
-//        opEXCEEDED_WORK_LIMIT = -5  // operation did too much work
+//        opEXCEEDED_WORK_LIMIT = -5, // operation did too much work
+//        opTOO_MANY_SPONSORING = -6  // account is sponsoring too many entries
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -4350,6 +5048,7 @@ pub enum OperationResultCode {
     OpNotSupported = -3,
     OpTooManySubentries = -4,
     OpExceededWorkLimit = -5,
+    OpTooManySponsoring = -6,
 }
 
 // OperationResultTr is an XDR NestedUnion defines as:
@@ -4384,6 +5083,16 @@ pub enum OperationResultCode {
 //            ManageBuyOfferResult manageBuyOfferResult;
 //        case PATH_PAYMENT_STRICT_SEND:
 //            PathPaymentStrictSendResult pathPaymentStrictSendResult;
+//        case CREATE_CLAIMABLE_BALANCE:
+//            CreateClaimableBalanceResult createClaimableBalanceResult;
+//        case CLAIM_CLAIMABLE_BALANCE:
+//            ClaimClaimableBalanceResult claimClaimableBalanceResult;
+//        case BEGIN_SPONSORING_FUTURE_RESERVES:
+//            BeginSponsoringFutureReservesResult beginSponsoringFutureReservesResult;
+//        case END_SPONSORING_FUTURE_RESERVES:
+//            EndSponsoringFutureReservesResult endSponsoringFutureReservesResult;
+//        case REVOKE_SPONSORSHIP:
+//            RevokeSponsorshipResult revokeSponsorshipResult;
 //        }
 //
 // union
@@ -4417,6 +5126,16 @@ pub enum OperationResultTr {
     ManageBuyOffer(ManageBuyOfferResult),
     // IDEN PATH_PAYMENT_STRICT_SEND
     PathPaymentStrictSend(PathPaymentStrictSendResult),
+    // IDEN CREATE_CLAIMABLE_BALANCE
+    CreateClaimableBalance(CreateClaimableBalanceResult),
+    // IDEN CLAIM_CLAIMABLE_BALANCE
+    ClaimClaimableBalance(ClaimClaimableBalanceResult),
+    // IDEN BEGIN_SPONSORING_FUTURE_RESERVES
+    BeginSponsoringFutureReserves(BeginSponsoringFutureReservesResult),
+    // IDEN END_SPONSORING_FUTURE_RESERVES
+    EndSponsoringFutureReserves(EndSponsoringFutureReservesResult),
+    // IDEN REVOKE_SPONSORSHIP
+    RevokeSponsorship(RevokeSponsorshipResult),
 }
 
 // OperationResult is an XDR Union defines as:
@@ -4454,6 +5173,16 @@ pub enum OperationResultTr {
 //            ManageBuyOfferResult manageBuyOfferResult;
 //        case PATH_PAYMENT_STRICT_SEND:
 //            PathPaymentStrictSendResult pathPaymentStrictSendResult;
+//        case CREATE_CLAIMABLE_BALANCE:
+//            CreateClaimableBalanceResult createClaimableBalanceResult;
+//        case CLAIM_CLAIMABLE_BALANCE:
+//            ClaimClaimableBalanceResult claimClaimableBalanceResult;
+//        case BEGIN_SPONSORING_FUTURE_RESERVES:
+//            BeginSponsoringFutureReservesResult beginSponsoringFutureReservesResult;
+//        case END_SPONSORING_FUTURE_RESERVES:
+//            EndSponsoringFutureReservesResult endSponsoringFutureReservesResult;
+//        case REVOKE_SPONSORSHIP:
+//            RevokeSponsorshipResult revokeSponsorshipResult;
 //        }
 //        tr;
 //    default:
@@ -4466,7 +5195,7 @@ pub enum OperationResult {
     // IDEN opINNER
     OpInner(OperationResultTr),
     // default
-    // #<Xdrgen::AST::Identifier:0x000056187f9db640>
+    // #<Xdrgen::AST::Identifier:0x0000558a80d1c238>
     Void,
 }
 
@@ -4491,8 +5220,9 @@ pub enum OperationResult {
 //        txBAD_AUTH_EXTRA = -10,      // unused signatures attached to transaction
 //        txINTERNAL_ERROR = -11,      // an unknown error occured
 //
-//        txNOT_SUPPORTED = -12,        // transaction type not supported
-//        txFEE_BUMP_INNER_FAILED = -13 // fee bump inner transaction failed
+//        txNOT_SUPPORTED = -12,         // transaction type not supported
+//        txFEE_BUMP_INNER_FAILED = -13, // fee bump inner transaction failed
+//        txBAD_SPONSORSHIP = -14        // sponsorship not confirmed
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -4512,6 +5242,7 @@ pub enum TransactionResultCode {
     TxInternalError = -11,
     TxNotSupported = -12,
     TxFeeBumpInnerFailed = -13,
+    TxBadSponsorship = -14,
 }
 
 // InnerTransactionResultResult is an XDR NestedUnion defines as:
@@ -4533,7 +5264,8 @@ pub enum TransactionResultCode {
 //        case txBAD_AUTH_EXTRA:
 //        case txINTERNAL_ERROR:
 //        case txNOT_SUPPORTED:
-//            // txFEE_BUMP_INNER_FAILED is not included
+//        // txFEE_BUMP_INNER_FAILED is not included
+//        case txBAD_SPONSORSHIP:
 //            void;
 //        }
 //
@@ -4566,6 +5298,8 @@ pub enum InnerTransactionResultResult {
     TxInternalError(()),
     // IDEN txNOT_SUPPORTED
     TxNotSupported(()),
+    // IDEN txBAD_SPONSORSHIP
+    TxBadSponsorship(()),
 }
 
 // InnerTransactionResultExt is an XDR NestedUnion defines as:
@@ -4607,7 +5341,8 @@ pub enum InnerTransactionResultExt {
 //        case txBAD_AUTH_EXTRA:
 //        case txINTERNAL_ERROR:
 //        case txNOT_SUPPORTED:
-//            // txFEE_BUMP_INNER_FAILED is not included
+//        // txFEE_BUMP_INNER_FAILED is not included
+//        case txBAD_SPONSORSHIP:
 //            void;
 //        }
 //        result;
@@ -4673,7 +5408,7 @@ pub enum TransactionResultResult {
     // IDEN txFAILED
     TxFailed(Vec<OperationResult>),
     // default
-    // #<Xdrgen::AST::Identifier:0x00005618802114e0>
+    // #<Xdrgen::AST::Identifier:0x0000558a7f931ca0>
     Void,
 }
 

@@ -95,6 +95,9 @@ pub enum Error {
     /// Xdr serialization error
     #[error("xdr serialization error")]
     XdrError(XdrError),
+    /// Invalid xdr claim predicate
+    #[error("Invalid xdr claim predicate")]
+    XdrClaimPredicateError,
     /// Base64 decode error
     #[error("base64 decode error")]
     Base64DecodeError(#[from] base64::DecodeError),

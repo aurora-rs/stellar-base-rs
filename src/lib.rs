@@ -77,6 +77,7 @@ extern crate xdr_rs_serialize;
 pub mod account;
 pub mod amount;
 pub mod asset;
+pub mod claim;
 pub mod crypto;
 pub mod error;
 pub mod memo;
