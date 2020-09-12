@@ -10,6 +10,7 @@ mod account_merge;
 mod allow_trust;
 mod bump_sequence;
 mod change_trust;
+mod claim_claimable_balance;
 mod create_account;
 mod create_claimable_balance;
 mod create_passive_sell_offer;
@@ -26,6 +27,9 @@ pub use account_merge::{AccountMergeOperation, AccountMergeOperationBuilder};
 pub use allow_trust::{AllowTrustOperation, AllowTrustOperationBuilder};
 pub use bump_sequence::{BumpSequenceOperation, BumpSequenceOperationBuilder};
 pub use change_trust::{ChangeTrustOperation, ChangeTrustOperationBuilder};
+pub use claim_claimable_balance::{
+    ClaimClaimableBalanceOperation, ClaimClaimableBalanceOperationBuilder,
+};
 pub use create_account::{CreateAccountOperation, CreateAccountOperationBuilder};
 pub use create_claimable_balance::{
     CreateClaimableBalanceOperation, CreateClaimableBalanceOperationBuilder,
@@ -79,6 +83,8 @@ pub enum Operation {
     PathPaymentStrictSend(PathPaymentStrictSendOperation),
     /// Create a new claimable balance.
     CreateClaimableBalance(CreateClaimableBalanceOperation),
+    /// Claim a claimable balance.
+    ClaimClaimableBalance(ClaimClaimableBalanceOperation),
 }
 
 impl Operation {
@@ -155,6 +161,11 @@ impl Operation {
     /// Creates a new create claimable balance operation builder.
     pub fn new_create_claimable_balance() -> CreateClaimableBalanceOperationBuilder {
         CreateClaimableBalanceOperationBuilder::new()
+    }
+
+    /// Creates a new claim claimable balance operation builder.
+    pub fn new_claim_claimable_balance() -> ClaimClaimableBalanceOperationBuilder {
+        ClaimClaimableBalanceOperationBuilder::new()
     }
 
     /// If the operation is a CreateAccount, returns its value. Returns None otherwise.
@@ -457,6 +468,52 @@ impl Operation {
         self.as_path_payment_strict_send().is_some()
     }
 
+    /// If the operation is a CreateClaimableBalance, returns its value. Returns None otherwise.
+    pub fn as_create_claimable_balance(&self) -> Option<&CreateClaimableBalanceOperation> {
+        match *self {
+            Operation::CreateClaimableBalance(ref op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// If the operation is a CreateClaimableBalance, returns its mutable value. Returns None otherwise.
+    pub fn as_create_claimable_balance_mut(
+        &mut self,
+    ) -> Option<&mut CreateClaimableBalanceOperation> {
+        match *self {
+            Operation::CreateClaimableBalance(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a CreateClaimableBalance.
+    pub fn is_create_claimable_balance(&self) -> bool {
+        self.as_create_claimable_balance().is_some()
+    }
+
+    /// If the operation is a ClaimClaimableBalance, returns its value. Returns None otherwise.
+    pub fn as_claim_claimable_balance(&self) -> Option<&ClaimClaimableBalanceOperation> {
+        match *self {
+            Operation::ClaimClaimableBalance(ref op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// If the operation is a ClaimClaimableBalance, returns its mutable value. Returns None otherwise.
+    pub fn as_claim_claimable_balance_mut(
+        &mut self,
+    ) -> Option<&mut ClaimClaimableBalanceOperation> {
+        match *self {
+            Operation::ClaimClaimableBalance(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a ClaimClaimableBalance.
+    pub fn is_claim_claimable_balance(&self) -> bool {
+        self.as_claim_claimable_balance().is_some()
+    }
+
     /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         match self {
@@ -475,6 +532,7 @@ impl Operation {
             Operation::ManageBuyOffer(op) => op.source_account(),
             Operation::PathPaymentStrictSend(op) => op.source_account(),
             Operation::CreateClaimableBalance(op) => op.source_account(),
+            Operation::ClaimClaimableBalance(op) => op.source_account(),
         }
     }
 
@@ -496,6 +554,7 @@ impl Operation {
             Operation::ManageBuyOffer(op) => op.source_account_mut(),
             Operation::PathPaymentStrictSend(op) => op.source_account_mut(),
             Operation::CreateClaimableBalance(op) => op.source_account_mut(),
+            Operation::ClaimClaimableBalance(op) => op.source_account_mut(),
         }
     }
 
@@ -521,6 +580,7 @@ impl Operation {
             Operation::ManageBuyOffer(op) => op.to_xdr_operation_body()?,
             Operation::PathPaymentStrictSend(op) => op.to_xdr_operation_body()?,
             Operation::CreateClaimableBalance(op) => op.to_xdr_operation_body()?,
+            Operation::ClaimClaimableBalance(op) => op.to_xdr_operation_body()?,
         };
         Ok(xdr::Operation {
             source_account,
@@ -599,7 +659,11 @@ impl Operation {
                     CreateClaimableBalanceOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::CreateClaimableBalance(inner))
             }
-            xdr::OperationBody::ClaimClaimableBalance(op) => todo!(),
+            xdr::OperationBody::ClaimClaimableBalance(op) => {
+                let inner =
+                    ClaimClaimableBalanceOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::ClaimClaimableBalance(inner))
+            }
             xdr::OperationBody::BeginSponsoringFutureReserves(op) => todo!(),
             xdr::OperationBody::EndSponsoringFutureReserves(op) => todo!(),
             xdr::OperationBody::RevokeSponsorship(op) => todo!(),

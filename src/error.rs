@@ -65,6 +65,9 @@ pub enum Error {
     /// Invalid time bounds.
     #[error("invalid time bounds")]
     InvalidTimeBounds,
+    /// Invalid claimable balance id length. Length must be 32 bytes.
+    #[error("invalid claimable balance id length")]
+    InvalidClaimableBalanceIdLength,
     /// Error that can occur when parsing amounts.
     #[error("error parsing amount")]
     ParseAmountError(#[from] rust_decimal::Error),

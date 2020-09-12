@@ -8,6 +8,9 @@ use xdr_rs_serialize::de::XDRIn;
 use xdr_rs_serialize::ser::XDROut;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ClaimableBalanceId(Vec<u8>);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Claimant {
     destination: PublicKey,
     predicate: ClaimPredicate,
@@ -21,6 +24,37 @@ pub enum ClaimPredicate {
     Not(Box<ClaimPredicate>),
     BeforeAbsoluteTime(DateTime<Utc>),
     BeforeRelativeTime(Duration),
+}
+
+impl ClaimableBalanceId {
+    /// Returns a new claimable balance id, or Error if the hash length is not 32 bytes.
+    pub fn new(hash: Vec<u8>) -> Result<ClaimableBalanceId> {
+        if hash.len() != 32 {
+            Err(Error::InvalidClaimableBalanceIdLength)
+        } else {
+            Ok(ClaimableBalanceId(hash))
+        }
+    }
+
+    /// Retrieves the claimable balance id bytes.
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0
+    }
+
+    /// Returns the xdr object.
+    pub fn to_xdr(&self) -> xdr::ClaimableBalanceId {
+        let hash = xdr::Hash::new(self.0.clone());
+        xdr::ClaimableBalanceId::ClaimableBalanceIdTypeV0(hash)
+    }
+
+    /// Creates from the xdr object.
+    pub fn from_xdr(x: &xdr::ClaimableBalanceId) -> Result<ClaimableBalanceId> {
+        match x {
+            xdr::ClaimableBalanceId::ClaimableBalanceIdTypeV0(hash) => {
+                ClaimableBalanceId::new(hash.value.clone())
+            }
+        }
+    }
 }
 
 impl Claimant {
@@ -203,110 +237,5 @@ impl XDRDeserialize for ClaimPredicate {
             xdr::ClaimPredicate::read_xdr(&buffer).map_err(Error::XdrError)?;
         let res = ClaimPredicate::from_xdr(&xdr_claim)?;
         Ok((res, bytes_read))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::amount::Amount;
-    use crate::asset::Asset;
-    use crate::claim::{ClaimPredicate, Claimant};
-    use crate::crypto::KeyPair;
-    use crate::network::Network;
-    use crate::operations::Operation;
-    use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
-    use crate::xdr::{XDRDeserialize, XDRSerialize};
-    use chrono::Duration;
-    use std::str::FromStr;
-
-    fn keypair0() -> KeyPair {
-        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
-        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
-            .unwrap()
-    }
-
-    fn keypair1() -> KeyPair {
-        // GAS4V4O2B7DW5T7IQRPEEVCRXMDZESKISR7DVIGKZQYYV3OSQ5SH5LVP
-        KeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
-            .unwrap()
-    }
-
-    fn keypair2() -> KeyPair {
-        // GB7BDSZU2Y27LYNLALKKALB52WS2IZWYBDGY6EQBLEED3TJOCVMZRH7H
-        KeyPair::from_secret_seed("SBZVMB74Z76QZ3ZOY7UTDFYKMEGKW5XFJEB6PFKBF4UYSSWHG4EDH7PY")
-            .unwrap()
-    }
-
-    #[test]
-    fn test_create_claimable_balance() {
-        let kp = keypair0();
-        let kp1 = keypair1();
-        let kp2 = keypair2();
-        let dest = kp1.public_key();
-
-        let amount = Amount::from_str("12.0333").unwrap();
-        let asset = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
-
-        let predicate =
-            ClaimPredicate::new_not(ClaimPredicate::new_before_relative_time(Duration::days(7)));
-
-        let claimant = Claimant::new(kp1.public_key().clone(), predicate);
-
-        let op = Operation::new_create_claimable_balance()
-            .with_asset(asset)
-            .with_amount(amount)
-            .unwrap()
-            .add_claimant(claimant)
-            .build()
-            .unwrap();
-
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
-            .add_operation(op)
-            .into_transaction()
-            .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
-        let envelope = tx.to_envelope();
-        let xdr = envelope.xdr_base64().unwrap();
-        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAOAAAAAUFCQ0QAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAABywiyAAAAAEAAAAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAwAAAAEAAAAFAAAAAAAJOoAAAAAAAAAAAeoucsUAAABAUA3iWSLubKZc6r4CL2s9WTr/xMS5zuWgzxvm2hBs9use/2ejCagSPlRBeRCe3Ky4R+tKMk8Qpa2LATvgUQS2BQ==";
-        assert_eq!(expected, xdr);
-        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
-        assert_eq!(envelope, back);
-    }
-
-    #[test]
-    fn test_create_claimable_balance_with_source_account() {
-        let kp = keypair0();
-        let kp1 = keypair1();
-        let kp2 = keypair2();
-        let dest = kp1.public_key();
-
-        let amount = Amount::from_str("12.0333").unwrap();
-        let asset = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
-
-        let predicate =
-            ClaimPredicate::new_not(ClaimPredicate::new_before_relative_time(Duration::days(7)));
-
-        let claimant = Claimant::new(kp1.public_key().clone(), predicate);
-
-        let op = Operation::new_create_claimable_balance()
-            .with_source_account(kp.public_key().clone())
-            .with_asset(asset)
-            .with_amount(amount)
-            .unwrap()
-            .add_claimant(claimant)
-            .build()
-            .unwrap();
-
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
-            .add_operation(op)
-            .into_transaction()
-            .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
-        let envelope = tx.to_envelope();
-        let xdr = envelope.xdr_base64().unwrap();
-        let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAA4Nxt4XJcrGZRYrUvrOc1sooiQ+QdEk1suS1wo+oucsUAAAAOAAAAAUFCQ0QAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAABywiyAAAAAEAAAAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAwAAAAEAAAAFAAAAAAAJOoAAAAAAAAAAAeoucsUAAABAcaaQuqZMwpwVMS9814lZPhjt43B3xwlGNfeyx2wU2EJSDJ0h0d2a7dxngMzq4/abNVCjBKspCU7XroelAhSNCw==";
-        assert_eq!(expected, xdr);
-        let back = TransactionEnvelope::from_xdr_base64(&xdr).unwrap();
-        assert_eq!(envelope, back);
     }
 }

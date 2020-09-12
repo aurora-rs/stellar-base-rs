@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+ - Add support for CAP-0023.
  - Add `CreateClaimableBalanceOperation`.
+ - Add `ClaimClaimableBalanceOperation`.
  - Add `Claimant` and `ClaimPredicate`.
 
 
