@@ -32,7 +32,7 @@ impl ClaimClaimableBalanceOperation {
         &self.balance_id
     }
 
-    /// Retrieves a mutable reference to claimable balance id.
+    /// Retrieves a mutable reference to the claimable balance id.
     pub fn balance_id_mut(&mut self) -> &mut ClaimableBalanceId {
         &mut self.balance_id
     }

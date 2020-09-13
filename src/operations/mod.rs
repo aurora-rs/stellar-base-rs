@@ -8,12 +8,14 @@ use xdr_rs_serialize::ser::XDROut;
 
 mod account_merge;
 mod allow_trust;
+mod begin_sponsoring_future_reserves;
 mod bump_sequence;
 mod change_trust;
 mod claim_claimable_balance;
 mod create_account;
 mod create_claimable_balance;
 mod create_passive_sell_offer;
+mod end_sponsoring_future_reserves;
 mod inflation;
 mod manage_buy_offer;
 mod manage_data;
@@ -21,10 +23,14 @@ mod manage_sell_offer;
 mod path_payment_strict_receive;
 mod path_payment_strict_send;
 mod payment;
+mod revoke_sponsorship;
 mod set_options;
 
 pub use account_merge::{AccountMergeOperation, AccountMergeOperationBuilder};
 pub use allow_trust::{AllowTrustOperation, AllowTrustOperationBuilder};
+pub use begin_sponsoring_future_reserves::{
+    BeginSponsoringFutureReservesOperation, BeginSponsoringFutureReservesOperationBuilder,
+};
 pub use bump_sequence::{BumpSequenceOperation, BumpSequenceOperationBuilder};
 pub use change_trust::{ChangeTrustOperation, ChangeTrustOperationBuilder};
 pub use claim_claimable_balance::{
@@ -37,6 +43,9 @@ pub use create_claimable_balance::{
 pub use create_passive_sell_offer::{
     CreatePassiveSellOfferOperation, CreatePassiveSellOfferOperationBuilder,
 };
+pub use end_sponsoring_future_reserves::{
+    EndSponsoringFutureReservesOperation, EndSponsoringFutureReservesOperationBuilder,
+};
 pub use inflation::{InflationOperation, InflationOperationBuilder};
 pub use manage_buy_offer::{ManageBuyOfferOperation, ManageBuyOfferOperationBuilder};
 pub use manage_data::{ManageDataOperation, ManageDataOperationBuilder};
@@ -48,6 +57,7 @@ pub use path_payment_strict_send::{
     PathPaymentStrictSendOperation, PathPaymentStrictSendOperationBuilder,
 };
 pub use payment::{PaymentOperation, PaymentOperationBuilder};
+pub use revoke_sponsorship::{RevokeSponsorshipOperation, RevokeSponsorshipOperationBuilder};
 pub use set_options::{SetOptionsOperation, SetOptionsOperationBuilder};
 
 /// Operations on a Stellar network.
@@ -85,6 +95,13 @@ pub enum Operation {
     CreateClaimableBalance(CreateClaimableBalanceOperation),
     /// Claim a claimable balance.
     ClaimClaimableBalance(ClaimClaimableBalanceOperation),
+    /// Begin sponsoring future reserves for an account.
+    /// Needs a matching EndSponsoringFutureReserves in the same transaction.
+    BeginSponsoringFutureReserves(BeginSponsoringFutureReservesOperation),
+    /// Ends a BeginSponsoringFutureReserves operation in the transaction.
+    EndSponsoringFutureReserves(EndSponsoringFutureReservesOperation),
+    /// Revoke a reserve sponsorship.
+    RevokeSponsorship(RevokeSponsorshipOperation),
 }
 
 impl Operation {
@@ -168,6 +185,21 @@ impl Operation {
         ClaimClaimableBalanceOperationBuilder::new()
     }
 
+    /// Creates a new begin sponsoring future reserves operation builder.
+    pub fn new_begin_sponsoring_future_reserves() -> BeginSponsoringFutureReservesOperationBuilder {
+        BeginSponsoringFutureReservesOperationBuilder::new()
+    }
+
+    /// Creates a new end sponsoring future reserves operation builder.
+    pub fn new_end_sponsoring_future_reserves() -> EndSponsoringFutureReservesOperationBuilder {
+        EndSponsoringFutureReservesOperationBuilder::new()
+    }
+
+    /// Creates a new revoke sponsorship operation builder.
+    pub fn new_revoke_sponsorship() -> RevokeSponsorshipOperationBuilder {
+        RevokeSponsorshipOperationBuilder::new()
+    }
+
     /// If the operation is a CreateAccount, returns its value. Returns None otherwise.
     pub fn as_create_account(&self) -> Option<&CreateAccountOperation> {
         match *self {
@@ -198,7 +230,7 @@ impl Operation {
     }
 
     /// If the operation is a Payment, returns its value. Returns None otherwise.
-    pub fn as_payment_mut(&mut self) -> Option<&PaymentOperation> {
+    pub fn as_payment_mut(&mut self) -> Option<&mut PaymentOperation> {
         match *self {
             Operation::Payment(ref mut op) => Some(op),
             _ => None,
@@ -514,6 +546,77 @@ impl Operation {
         self.as_claim_claimable_balance().is_some()
     }
 
+    /// If the operation is a BeginSponsoringFutureReserves, returns its value. Returns None otherwise.
+    pub fn as_begin_sponsoring_future_reserves(
+        &self,
+    ) -> Option<&BeginSponsoringFutureReservesOperation> {
+        match *self {
+            Operation::BeginSponsoringFutureReserves(ref op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// If the operation is a BeginSponsoringFutureReserves, returns its mutable value. Returns None otherwise.
+    pub fn as_begin_sponsoring_future_reserves_mut(
+        &mut self,
+    ) -> Option<&mut BeginSponsoringFutureReservesOperation> {
+        match *self {
+            Operation::BeginSponsoringFutureReserves(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a BeginSponsoringFutureReserves.
+    pub fn is_begin_sponsoring_future_reserves(&self) -> bool {
+        self.as_begin_sponsoring_future_reserves().is_some()
+    }
+
+    /// If the operation is a EndSponsoringFutureReserves, returns its value. Returns None otherwise.
+    pub fn as_end_sponsoring_future_reserves(
+        &self,
+    ) -> Option<&EndSponsoringFutureReservesOperation> {
+        match *self {
+            Operation::EndSponsoringFutureReserves(ref op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// If the operation is a EndSponsoringFutureReserves, returns its mutable value. Returns None otherwise.
+    pub fn as_end_sponsoring_future_reserves_mut(
+        &mut self,
+    ) -> Option<&mut EndSponsoringFutureReservesOperation> {
+        match *self {
+            Operation::EndSponsoringFutureReserves(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a EndSponsoringFutureReserves.
+    pub fn is_end_sponsoring_future_reserves(&self) -> bool {
+        self.as_end_sponsoring_future_reserves().is_some()
+    }
+
+    /// If the operation is a RevokeSponsorship, returns its value. Returns None otherwise.
+    pub fn as_revoke_sponsorship(&self) -> Option<&RevokeSponsorshipOperation> {
+        match *self {
+            Operation::RevokeSponsorship(ref op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// If the operation is a RevokeSponsorship, returns its mutable value. Returns None otherwise.
+    pub fn as_revoke_sponsorship_mut(&mut self) -> Option<&mut RevokeSponsorshipOperation> {
+        match *self {
+            Operation::RevokeSponsorship(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the operation is a RevokeSponsorship.
+    pub fn is_revoke_sponsorship(&self) -> bool {
+        self.as_revoke_sponsorship().is_some()
+    }
+
     /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         match self {
@@ -533,6 +636,9 @@ impl Operation {
             Operation::PathPaymentStrictSend(op) => op.source_account(),
             Operation::CreateClaimableBalance(op) => op.source_account(),
             Operation::ClaimClaimableBalance(op) => op.source_account(),
+            Operation::BeginSponsoringFutureReserves(op) => op.source_account(),
+            Operation::EndSponsoringFutureReserves(op) => op.source_account(),
+            Operation::RevokeSponsorship(op) => op.source_account(),
         }
     }
 
@@ -555,6 +661,9 @@ impl Operation {
             Operation::PathPaymentStrictSend(op) => op.source_account_mut(),
             Operation::CreateClaimableBalance(op) => op.source_account_mut(),
             Operation::ClaimClaimableBalance(op) => op.source_account_mut(),
+            Operation::BeginSponsoringFutureReserves(op) => op.source_account_mut(),
+            Operation::EndSponsoringFutureReserves(op) => op.source_account_mut(),
+            Operation::RevokeSponsorship(op) => op.source_account_mut(),
         }
     }
 
@@ -581,6 +690,9 @@ impl Operation {
             Operation::PathPaymentStrictSend(op) => op.to_xdr_operation_body()?,
             Operation::CreateClaimableBalance(op) => op.to_xdr_operation_body()?,
             Operation::ClaimClaimableBalance(op) => op.to_xdr_operation_body()?,
+            Operation::BeginSponsoringFutureReserves(op) => op.to_xdr_operation_body()?,
+            Operation::EndSponsoringFutureReserves(op) => op.to_xdr_operation_body()?,
+            Operation::RevokeSponsorship(op) => op.to_xdr_operation_body()?,
         };
         Ok(xdr::Operation {
             source_account,
@@ -664,9 +776,23 @@ impl Operation {
                     ClaimClaimableBalanceOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::ClaimClaimableBalance(inner))
             }
-            xdr::OperationBody::BeginSponsoringFutureReserves(op) => todo!(),
-            xdr::OperationBody::EndSponsoringFutureReserves(op) => todo!(),
-            xdr::OperationBody::RevokeSponsorship(op) => todo!(),
+            xdr::OperationBody::BeginSponsoringFutureReserves(op) => {
+                let inner = BeginSponsoringFutureReservesOperation::from_xdr_operation_body(
+                    source_account,
+                    op,
+                )?;
+                Ok(Operation::BeginSponsoringFutureReserves(inner))
+            }
+            xdr::OperationBody::EndSponsoringFutureReserves(()) => {
+                let inner =
+                    EndSponsoringFutureReservesOperation::from_xdr_operation_body(source_account)?;
+                Ok(Operation::EndSponsoringFutureReserves(inner))
+            }
+            xdr::OperationBody::RevokeSponsorship(op) => {
+                let inner =
+                    RevokeSponsorshipOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::RevokeSponsorship(inner))
+            }
         }
     }
 }
@@ -686,54 +812,3 @@ impl XDRDeserialize for Operation {
         Ok((res, bytes_read))
     }
 }
-
-/*
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::crypto::KeyPair;
-    use crate::xdr::{XDRDeserialize, XDRSerialize};
-
-    fn keypair0() -> KeyPair {
-        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
-        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
-            .unwrap()
-    }
-
-    fn keypair1() -> KeyPair {
-        // GAS4V4O2B7DW5T7IQRPEEVCRXMDZESKISR7DVIGKZQYYV3OSQ5SH5LVP
-        KeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
-            .unwrap()
-    }
-
-    fn keypair2() -> KeyPair {
-        // GB7BDSZU2Y27LYNLALKKALB52WS2IZWYBDGY6EQBLEED3TJOCVMZRH7H
-        KeyPair::from_secret_seed("SBZVMB74Z76QZ3ZOY7UTDFYKMEGKW5XFJEB6PFKBF4UYSSWHG4EDH7PY")
-            .unwrap()
-    }
-
-    #[test]
-    fn test_inflation_no_source() {
-        let op = inflation().build();
-        let encoded = op.xdr_base64().unwrap();
-        assert_eq!("AAAAAAAAAAk=", encoded);
-        let decoded = Operation::from_xdr_base64(&encoded).unwrap();
-        assert_eq!(op, decoded);
-    }
-
-    #[test]
-    fn test_inflation_with_source() {
-        let op = inflation()
-            .with_source_account(keypair0().public_key().clone())
-            .build();
-        let encoded = op.xdr_base64().unwrap();
-        assert_eq!(
-            "AAAAAQAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAAk=",
-            encoded
-        );
-        let decoded = Operation::from_xdr_base64(&encoded).unwrap();
-        assert_eq!(op, decoded);
-    }
-}
-
-*/
