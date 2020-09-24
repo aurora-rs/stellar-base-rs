@@ -309,7 +309,7 @@ dependencies = [
 
 [[package]]
 name = "stellar-base"
-version = "0.4.1"
+version = "0.5.0-beta.0"
 dependencies = [
  "base32",
  "base64 0.12.3",
