@@ -2,6 +2,7 @@ use crate::asset::Asset;
 use crate::claim::ClaimableBalanceId;
 use crate::crypto::{MuxedAccount, PublicKey};
 use crate::error::{Error, Result};
+use crate::ledger::LedgerKey;
 use crate::operations::Operation;
 use crate::signature::SignerKey;
 use crate::xdr;
@@ -23,15 +24,6 @@ pub struct RevokeSponsorshipSigner {
     source_account: Option<MuxedAccount>,
     account_id: PublicKey,
     signer_key: SignerKey,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum LedgerKey {
-    Account(PublicKey),
-    Trustline(PublicKey, Asset),
-    Offer(PublicKey, i64),
-    Data(PublicKey, String),
-    ClaimableBalance(ClaimableBalanceId),
 }
 
 #[derive(Debug, Default)]
@@ -306,8 +298,8 @@ mod tests {
     use crate::asset::Asset;
     use crate::claim::ClaimableBalanceId;
     use crate::crypto::KeyPair;
+    use crate::ledger::LedgerKey;
     use crate::network::Network;
-    use crate::operations::revoke_sponsorship::LedgerKey;
     use crate::operations::Operation;
     use crate::signature::SignerKey;
     use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};

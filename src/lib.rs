@@ -80,6 +80,7 @@ pub mod asset;
 pub mod claim;
 pub mod crypto;
 pub mod error;
+pub mod ledger;
 pub mod memo;
 pub mod network;
 pub mod operations;
