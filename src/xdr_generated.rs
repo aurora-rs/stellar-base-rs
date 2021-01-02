@@ -4041,10 +4041,16 @@ pub enum CreateAccountResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum CreateAccountResult {
     // IDEN CREATE_ACCOUNT_SUCCESS
+    #[discriminant(value = "0")]
     CreateAccountSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a7fdf41e8>
-    Void,
+    #[discriminant(value = "-1")]
+    CreateAccountMalformed(()),
+    #[discriminant(value = "-2")]
+    CreateAccountUnderfunded(()),
+    #[discriminant(value = "-3")]
+    CreateAccountLowReserve(()),
+    #[discriminant(value = "-4")]
+    CreateAccountAlreadyExist(()),
 }
 
 // PaymentResultCode is an XDR Enum defines as:
@@ -4094,10 +4100,26 @@ pub enum PaymentResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum PaymentResult {
     // IDEN PAYMENT_SUCCESS
+    #[discriminant(value = "0")]
     PaymentSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a7f745c48>
-    Void,
+    #[discriminant(value = "-1")]
+    PaymentMalformed(()),
+    #[discriminant(value = "-2")]
+    PaymentUnderfunded(()),
+    #[discriminant(value = "-3")]
+    PaymentSrcNoTrust(()),
+    #[discriminant(value = "-4")]
+    PaymentSrcNotAuthorized(()),
+    #[discriminant(value = "-5")]
+    PaymentNoDestination(()),
+    #[discriminant(value = "-6")]
+    PaymentNoTrust(()),
+    #[discriminant(value = "-7")]
+    PaymentNotAuthorized(()),
+    #[discriminant(value = "-8")]
+    PaymentLineFull(()),
+    #[discriminant(value = "-9")]
+    PaymentNoIssuer(()),
 }
 
 // PathPaymentStrictReceiveResultCode is an XDR Enum defines as:
@@ -4203,12 +4225,33 @@ pub struct PathPaymentStrictReceiveResultSuccess {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum PathPaymentStrictReceiveResult {
     // IDEN PATH_PAYMENT_STRICT_RECEIVE_SUCCESS
+    #[discriminant(value = "0")]
     PathPaymentStrictReceiveSuccess(PathPaymentStrictReceiveResultSuccess),
     // IDEN PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER
+    #[discriminant(value = "-9")]
     PathPaymentStrictReceiveNoIssuer(Asset),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a80281148>
-    Void,
+    #[discriminant(value = "-1")]
+    PathPaymentStrictReceiveMalformed(()),
+    #[discriminant(value = "-2")]
+    PathPaymentStrictReceiveUnderfunded(()),
+    #[discriminant(value = "-3")]
+    PathPaymentStrictReceiveSrcNoTrust(()),
+    #[discriminant(value = "-4")]
+    PathPaymentStrictReceiveSrcNotAuthorized(()),
+    #[discriminant(value = "-5")]
+    PathPaymentStrictReceiveNoDestination(()),
+    #[discriminant(value = "-6")]
+    PathPaymentStrictReceiveNoTrust(()),
+    #[discriminant(value = "-7")]
+    PathPaymentStrictReceiveNotAuthorized(()),
+    #[discriminant(value = "-8")]
+    PathPaymentStrictReceiveLineFull(()),
+    #[discriminant(value = "-10")]
+    PathPaymentStrictReceiveTooFewOffers(()),
+    #[discriminant(value = "-11")]
+    PathPaymentStrictReceiveOfferCrossSelf(()),
+    #[discriminant(value = "-12")]
+    PathPaymentStrictReceiveOverSendmax(()),
 }
 
 // PathPaymentStrictSendResultCode is an XDR Enum defines as:
@@ -4294,12 +4337,33 @@ pub struct PathPaymentStrictSendResultSuccess {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum PathPaymentStrictSendResult {
     // IDEN PATH_PAYMENT_STRICT_SEND_SUCCESS
+    #[discriminant(value = "0")]
     PathPaymentStrictSendSuccess(PathPaymentStrictSendResultSuccess),
     // IDEN PATH_PAYMENT_STRICT_SEND_NO_ISSUER
+    #[discriminant(value = "-9")]
     PathPaymentStrictSendNoIssuer(Asset),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a7ff53598>
-    Void,
+    #[discriminant(value = "-1")]
+    PathPaymentStrictSendMalformed(()),
+    #[discriminant(value = "-2")]
+    PathPaymentStrictSendUnderfunded(()),
+    #[discriminant(value = "-3")]
+    PathPaymentStrictSendSrcNoTrust(()),
+    #[discriminant(value = "-4")]
+    PathPaymentStrictSendSrcNotAuthorized(()),
+    #[discriminant(value = "-5")]
+    PathPaymentStrictSendNoDestination(()),
+    #[discriminant(value = "-6")]
+    PathPaymentStrictSendNoTrust(()),
+    #[discriminant(value = "-7")]
+    PathPaymentStrictSendNotAuthorized(()),
+    #[discriminant(value = "-8")]
+    PathPaymentStrictSendLineFull(()),
+    #[discriminant(value = "-10")]
+    PathPaymentStrictSendTooFewOffers(()),
+    #[discriminant(value = "-11")]
+    PathPaymentStrictSendOfferCrossSelf(()),
+    #[discriminant(value = "-12")]
+    PathPaymentStrictSendUnderDestmin(()),
 }
 
 // ManageSellOfferResultCode is an XDR Enum defines as:
@@ -4382,9 +4446,7 @@ pub enum ManageOfferSuccessResultOffer {
     ManageOfferCreated(OfferEntry),
     // IDEN MANAGE_OFFER_UPDATED
     ManageOfferUpdated(OfferEntry),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a8033ef68>
-    Void,
+    ManageOfferDeleted(()),
 }
 
 // ManageOfferSuccessResult is an XDR Struct defines as:
@@ -4427,10 +4489,32 @@ pub struct ManageOfferSuccessResult {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum ManageSellOfferResult {
     // IDEN MANAGE_SELL_OFFER_SUCCESS
+    #[discriminant(value = "0")]
     ManageSellOfferSuccess(ManageOfferSuccessResult),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a8026a420>
-    Void,
+    #[discriminant(value = "-1")]
+    ManageSellOfferMalformed(()),
+    #[discriminant(value = "-2")]
+    ManageSellOfferSellNoTrust(()),
+    #[discriminant(value = "-3")]
+    ManageSellOfferBuyNoTrust(()),
+    #[discriminant(value = "-4")]
+    ManageSellOfferSellNotAuthorized(()),
+    #[discriminant(value = "-5")]
+    ManageSellOfferBuyNotAuthorized(()),
+    #[discriminant(value = "-6")]
+    ManageSellOfferLineFull(()),
+    #[discriminant(value = "-7")]
+    ManageSellOfferUnderfunded(()),
+    #[discriminant(value = "-8")]
+    ManageSellOfferCrossSelf(()),
+    #[discriminant(value = "-9")]
+    ManageSellOfferSellNoIssuer(()),
+    #[discriminant(value = "-10")]
+    ManageSellOfferBuyNoIssuer(()),
+    #[discriminant(value = "-11")]
+    ManageSellOfferNotFound(()),
+    #[discriminant(value = "-12")]
+    ManageSellOfferLowReserve(()),
 }
 
 // ManageBuyOfferResultCode is an XDR Enum defines as:
@@ -4490,10 +4574,32 @@ pub enum ManageBuyOfferResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum ManageBuyOfferResult {
     // IDEN MANAGE_BUY_OFFER_SUCCESS
+    #[discriminant(value = "0")]
     ManageBuyOfferSuccess(ManageOfferSuccessResult),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a7f9b3868>
-    Void,
+    #[discriminant(value = "-1")]
+    ManageBuyOfferMalformed(()),
+    #[discriminant(value = "-2")]
+    ManageBuyOfferSellNoTrust(()),
+    #[discriminant(value = "-3")]
+    ManageBuyOfferBuyNoTrust(()),
+    #[discriminant(value = "-4")]
+    ManageBuyOfferSellNotAuthorized(()),
+    #[discriminant(value = "-5")]
+    ManageBuyOfferBuyNotAuthorized(()),
+    #[discriminant(value = "-6")]
+    ManageBuyOfferLineFull(()),
+    #[discriminant(value = "-7")]
+    ManageBuyOfferUnderfunded(()),
+    #[discriminant(value = "-8")]
+    ManageBuyOfferCrossSelf(()),
+    #[discriminant(value = "-9")]
+    ManageBuyOfferSellNoIssuer(()),
+    #[discriminant(value = "-10")]
+    ManageBuyOfferBuyNoIssuer(()),
+    #[discriminant(value = "-11")]
+    ManageBuyOfferNotFound(()),
+    #[discriminant(value = "-12")]
+    ManageBuyOfferLowReserve(()),
 }
 
 // SetOptionsResultCode is an XDR Enum defines as:
@@ -4542,10 +4648,26 @@ pub enum SetOptionsResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum SetOptionsResult {
     // IDEN SET_OPTIONS_SUCCESS
+    #[discriminant(value = "0")]
     SetOptionsSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a802b7d88>
-    Void,
+    #[discriminant(value = "-1")]
+    SetOptionsLowReserve(()),
+    #[discriminant(value = "-2")]
+    SetOptionsTooManySigners(()),
+    #[discriminant(value = "-3")]
+    SetOptionsBadFlags(()),
+    #[discriminant(value = "-4")]
+    SetOptionsInvalidInflation(()),
+    #[discriminant(value = "-5")]
+    SetOptionsCantChange(()),
+    #[discriminant(value = "-6")]
+    SetOptionsUnknownFlag(()),
+    #[discriminant(value = "-7")]
+    SetOptionsThresholdOutOfRange(()),
+    #[discriminant(value = "-8")]
+    SetOptionsBadSigner(()),
+    #[discriminant(value = "-9")]
+    SetOptionsInvalidHomeDomain(()),
 }
 
 // ChangeTrustResultCode is an XDR Enum defines as:
@@ -4588,10 +4710,18 @@ pub enum ChangeTrustResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum ChangeTrustResult {
     // IDEN CHANGE_TRUST_SUCCESS
+    #[discriminant(value = "0")]
     ChangeTrustSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a803e0cc8>
-    Void,
+    #[discriminant(value = "-1")]
+    ChangeTrustMalformed(()),
+    #[discriminant(value = "-2")]
+    ChangeTrustNoIssuer(()),
+    #[discriminant(value = "-3")]
+    ChangeTrustInvalidLimit(()),
+    #[discriminant(value = "-4")]
+    ChangeTrustLowReserve(()),
+    #[discriminant(value = "-5")]
+    ChangeTrustSelfNotAllowed(()),
 }
 
 // AllowTrustResultCode is an XDR Enum defines as:
@@ -4633,10 +4763,18 @@ pub enum AllowTrustResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum AllowTrustResult {
     // IDEN ALLOW_TRUST_SUCCESS
+    #[discriminant(value = "0")]
     AllowTrustSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a803763f0>
-    Void,
+    #[discriminant(value = "-1")]
+    AllowTrustMalformed(()),
+    #[discriminant(value = "-2")]
+    AllowTrustNoTrustLine(()),
+    #[discriminant(value = "-3")]
+    AllowTrustTrustNotRequired(()),
+    #[discriminant(value = "-4")]
+    AllowTrustCantRevoke(()),
+    #[discriminant(value = "-5")]
+    AllowTrustSelfNotAllowed(()),
 }
 
 // AccountMergeResultCode is an XDR Enum defines as:
@@ -4682,10 +4820,22 @@ pub enum AccountMergeResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum AccountMergeResult {
     // IDEN ACCOUNT_MERGE_SUCCESS
+    #[discriminant(value = "0")]
     AccountMergeSuccess(Int64),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a8096f6a8>
-    Void,
+    #[discriminant(value = "-1")]
+    AccountMergeMalformed(()),
+    #[discriminant(value = "-2")]
+    AccountMergeNoAccount(()),
+    #[discriminant(value = "-3")]
+    AccountMergeImmutableSet(()),
+    #[discriminant(value = "-4")]
+    AccountMergeHasSubEntries(()),
+    #[discriminant(value = "-5")]
+    AccountMergeSeqnumTooFar(()),
+    #[discriminant(value = "-6")]
+    AccountMergeDestFull(()),
+    #[discriminant(value = "-7")]
+    AccountMergeIsSponsor(()),
 }
 
 // InflationResultCode is an XDR Enum defines as:
@@ -4734,10 +4884,10 @@ pub struct InflationPayout {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum InflationResult {
     // IDEN INFLATION_SUCCESS
+    #[discriminant(value = "0")]
     InflationSuccess(Vec<InflationPayout>),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a80292a10>
-    Void,
+    #[discriminant(value = "-1")]
+    InflationNotTime(()),
 }
 
 // ManageDataResultCode is an XDR Enum defines as:
@@ -4778,10 +4928,16 @@ pub enum ManageDataResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum ManageDataResult {
     // IDEN MANAGE_DATA_SUCCESS
+    #[discriminant(value = "0")]
     ManageDataSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a80223660>
-    Void,
+    #[discriminant(value = "-1")]
+    ManageDataNotSupportedYet(()),
+    #[discriminant(value = "-2")]
+    ManageDataNameNotFound(()),
+    #[discriminant(value = "-3")]
+    ManageDataLowReserve(()),
+    #[discriminant(value = "-4")]
+    ManageDataInvalidName(()),
 }
 
 // BumpSequenceResultCode is an XDR Enum defines as:
@@ -4813,11 +4969,10 @@ pub enum BumpSequenceResultCode {
 // union
 #[derive(Debug, XDROut, XDRIn)]
 pub enum BumpSequenceResult {
-    // IDEN BUMP_SEQUENCE_SUCCESS
+    #[discriminant(value = "0")]
     BumpSequenceSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a80abe810>
-    Void,
+    #[discriminant(value = "-1")]
+    BumpSequenceBadSeq(()),
 }
 
 // CreateClaimableBalanceResultCode is an XDR Enum defines as:
@@ -4856,10 +5011,18 @@ pub enum CreateClaimableBalanceResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum CreateClaimableBalanceResult {
     // IDEN CREATE_CLAIMABLE_BALANCE_SUCCESS
+    #[discriminant(value = "0")]
     CreateClaimableBalanceSuccess(ClaimableBalanceId),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a80b09270>
-    Void,
+    #[discriminant(value = "-1")]
+    CreateClaimableBalanceMalformed(()),
+    #[discriminant(value = "-2")]
+    CreateClaimableBalanceLowReserve(()),
+    #[discriminant(value = "-3")]
+    CreateClaimableBalanceNoTrust(()),
+    #[discriminant(value = "-4")]
+    CreateClaimableBalanceNotAuthorized(()),
+    #[discriminant(value = "-5")]
+    CreateClaimableBalanceUnderfunded(()),
 }
 
 // ClaimClaimableBalanceResultCode is an XDR Enum defines as:
@@ -4899,10 +5062,18 @@ pub enum ClaimClaimableBalanceResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum ClaimClaimableBalanceResult {
     // IDEN CLAIM_CLAIMABLE_BALANCE_SUCCESS
+    #[discriminant(value = "0")]
     ClaimClaimableBalanceSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a80b60840>
-    Void,
+    #[discriminant(value = "-1")]
+    ClaimClaimableBalanceDoesNotExist(()),
+    #[discriminant(value = "-2")]
+    ClaimClaimableBalanceCannotClaim(()),
+    #[discriminant(value = "-3")]
+    ClaimClaimableBalanceLineFull(()),
+    #[discriminant(value = "-4")]
+    ClaimClaimableBalanceNoTrust(()),
+    #[discriminant(value = "-5")]
+    ClaimClaimableBalanceNotAuthorized(()),
 }
 
 // BeginSponsoringFutureReservesResultCode is an XDR Enum defines as:
@@ -4940,10 +5111,14 @@ pub enum BeginSponsoringFutureReservesResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum BeginSponsoringFutureReservesResult {
     // IDEN BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS
+    #[discriminant(value = "0")]
     BeginSponsoringFutureReservesSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a80bcf998>
-    Void,
+    #[discriminant(value = "-1")]
+    BeginSponsoringFutureReservesMalformed(()),
+    #[discriminant(value = "-2")]
+    BeginSponsoringFutureReservesAlreadySponsored(()),
+    #[discriminant(value = "-3")]
+    BeginSponsoringFutureReservesRecursive(()),
 }
 
 // EndSponsoringFutureReservesResultCode is an XDR Enum defines as:
@@ -4977,10 +5152,10 @@ pub enum EndSponsoringFutureReservesResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum EndSponsoringFutureReservesResult {
     // IDEN END_SPONSORING_FUTURE_RESERVES_SUCCESS
+    #[discriminant(value = "0")]
     EndSponsoringFutureReservesSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a80c22d00>
-    Void,
+    #[discriminant(value = "-1")]
+    EndSponsoringFutureReservesNotSponsored(()),
 }
 
 // RevokeSponsorshipResultCode is an XDR Enum defines as:
@@ -5020,10 +5195,16 @@ pub enum RevokeSponsorshipResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum RevokeSponsorshipResult {
     // IDEN REVOKE_SPONSORSHIP_SUCCESS
+    #[discriminant(value = "0")]
     RevokeSponsorshipSuccess(()),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a80c9f198>
-    Void,
+    #[discriminant(value = "-1")]
+    RevokeSponsorshipDoesNotExist(()),
+    #[discriminant(value = "-2")]
+    RevokeSponsorshipNotSponsor(()),
+    #[discriminant(value = "-3")]
+    RevokeSponsorshipLowReserve(()),
+    #[discriminant(value = "-4")]
+    RevokeSponsorshipOnlyTransferable(()),
 }
 
 // OperationResultCode is an XDR Enum defines as:
@@ -5193,10 +5374,20 @@ pub enum OperationResultTr {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum OperationResult {
     // IDEN opINNER
+    #[discriminant(value = "0")]
     OpInner(OperationResultTr),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a80d1c238>
-    Void,
+    #[discriminant(value = "-1")]
+    OpBadAuth(()),
+    #[discriminant(value = "-2")]
+    OpNoAccount(()),
+    #[discriminant(value = "-3")]
+    OpNotSupported(()),
+    #[discriminant(value = "-4")]
+    OpTooManySubentries(()),
+    #[discriminant(value = "-5")]
+    OpExceededWorkLimit(()),
+    #[discriminant(value = "-6")]
+    OpTooManySponsoring(()),
 }
 
 // TransactionResultCode is an XDR Enum defines as:
@@ -5273,32 +5464,46 @@ pub enum TransactionResultCode {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum InnerTransactionResultResult {
     // IDEN txSUCCESS
+    #[discriminant(value = "0")]
     TxSuccess(Vec<OperationResult>),
     // IDEN txFAILED
+    #[discriminant(value = "-1")]
     TxFailed(Vec<OperationResult>),
     // IDEN txTOO_EARLY
+    #[discriminant(value = "-2")]
     TxTooEarly(()),
     // IDEN txTOO_LATE
+    #[discriminant(value = "-3")]
     TxTooLate(()),
     // IDEN txMISSING_OPERATION
+    #[discriminant(value = "-4")]
     TxMissingOperation(()),
     // IDEN txBAD_SEQ
+    #[discriminant(value = "-5")]
     TxBadSeq(()),
     // IDEN txBAD_AUTH
+    #[discriminant(value = "-6")]
     TxBadAuth(()),
     // IDEN txINSUFFICIENT_BALANCE
+    #[discriminant(value = "-7")]
     TxInsufficientBalance(()),
     // IDEN txNO_ACCOUNT
+    #[discriminant(value = "-8")]
     TxNoAccount(()),
     // IDEN txINSUFFICIENT_FEE
+    #[discriminant(value = "-9")]
     TxInsufficientFee(()),
     // IDEN txBAD_AUTH_EXTRA
+    #[discriminant(value = "-10")]
     TxBadAuthExtra(()),
     // IDEN txINTERNAL_ERROR
+    #[discriminant(value = "-11")]
     TxInternalError(()),
     // IDEN txNOT_SUPPORTED
+    #[discriminant(value = "-12")]
     TxNotSupported(()),
     // IDEN txBAD_SPONSORSHIP
+    #[discriminant(value = "-14")]
     TxBadSponsorship(()),
 }
 
@@ -5400,16 +5605,41 @@ pub struct InnerTransactionResultPair {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum TransactionResultResult {
     // IDEN txFEE_BUMP_INNER_SUCCESS
+    #[discriminant(value = "1")]
     TxFeeBumpInnerSuccess(InnerTransactionResultPair),
     // IDEN txFEE_BUMP_INNER_FAILED
+    #[discriminant(value = "-13")]
     TxFeeBumpInnerFailed(InnerTransactionResultPair),
     // IDEN txSUCCESS
+    #[discriminant(value = "0")]
     TxSuccess(Vec<OperationResult>),
     // IDEN txFAILED
+    #[discriminant(value = "-1")]
     TxFailed(Vec<OperationResult>),
-    // default
-    // #<Xdrgen::AST::Identifier:0x0000558a7f931ca0>
-    Void,
+    #[discriminant(value = "-2")]
+    TxTooEarly(()),
+    #[discriminant(value = "-3")]
+    TxTooLate(()),
+    #[discriminant(value = "-4")]
+    TxMissingOperation(()),
+    #[discriminant(value = "-5")]
+    TxBadSeq(()),
+    #[discriminant(value = "-6")]
+    TxBadAuth(()),
+    #[discriminant(value = "-7")]
+    TxInsufficientBalance(()),
+    #[discriminant(value = "-8")]
+    TxNoAccount(()),
+    #[discriminant(value = "-9")]
+    TxInsufficientFee(()),
+    #[discriminant(value = "-10")]
+    TxBadAuthExtra(()),
+    #[discriminant(value = "-11")]
+    TxInternalError(()),
+    #[discriminant(value = "-12")]
+    TxNotSupported(()),
+    #[discriminant(value = "-14")]
+    TxBadSponsorship(()),
 }
 
 // TransactionResultExt is an XDR NestedUnion defines as:
