@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Add `BeginSponsoringFutureReservesOperation`.
  - Add `EndSponsoringFutureReservesOperation`.
  - Add `RevokeSponsorshipOperation`.
+ - Add `TransactionResult` and `OperationResult`.
 
 
 ## [0.4.1] - 2020-08-05
