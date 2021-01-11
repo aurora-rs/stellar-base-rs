@@ -6,7 +6,7 @@ edition = "2018"
 description = "Low level Stellar types"
 license = "Apache-2.0"
 documentation = "https://docs.rs/stellar-base"
-repository = "https://github.com/aurora-rs/stellar-sdk"
+repository = "https://github.com/aurora-rs/stellar-base-rs"
 readme = "README.md"
 keywords = ["stellar", "blockchain"]
 
