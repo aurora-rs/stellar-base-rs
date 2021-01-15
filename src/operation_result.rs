@@ -1913,41 +1913,129 @@ mod tests {
     // Create Claimable Balance Result
     //
 
-    /*
     impl_inner_op_result_test!(
         test_create_claimable_balance_success,
-        "",
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAOAAAAAAAAAAAHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwAAAAA=",
         InnerOperationResult::CreateClaimableBalance(CreateClaimableBalanceResult::Success(_))
     );
 
     impl_inner_op_result_test!(
         test_create_claimable_balance_malformed,
-        "",
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAO/////wAAAAA=",
         InnerOperationResult::CreateClaimableBalance(CreateClaimableBalanceResult::Malformed)
     );
 
     impl_inner_op_result_test!(
         test_create_claimable_balance_low_reserve,
-        "",
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAO/////gAAAAA=",
         InnerOperationResult::CreateClaimableBalance(CreateClaimableBalanceResult::LowReserve)
     );
 
     impl_inner_op_result_test!(
         test_create_claimable_balance_no_trust,
-        "",
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAO/////QAAAAA=",
         InnerOperationResult::CreateClaimableBalance(CreateClaimableBalanceResult::NoTrust)
     );
 
     impl_inner_op_result_test!(
         test_create_claimable_balance_not_authorized,
-        "",
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAO/////AAAAAA=",
         InnerOperationResult::CreateClaimableBalance(CreateClaimableBalanceResult::NotAuthorized)
     );
 
     impl_inner_op_result_test!(
         test_create_claimable_balance_underfunded,
-        "",
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAO////+wAAAAA=",
         InnerOperationResult::CreateClaimableBalance(CreateClaimableBalanceResult::Underfunded)
     );
-     */
+
+    //
+    // Begin Sponsoring Future Reserves Result
+    //
+
+    impl_inner_op_result_test!(
+        test_begin_sponsoring_future_reserves_success,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAQAAAAAAAAAAA=",
+        InnerOperationResult::BeginSponsoringFutureReserves(
+            BeginSponsoringFutureReservesResult::Success
+        )
+    );
+
+    impl_inner_op_result_test!(
+        test_begin_sponsoring_future_reserves_malformed,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAQ/////wAAAAA=",
+        InnerOperationResult::BeginSponsoringFutureReserves(
+            BeginSponsoringFutureReservesResult::Malformed
+        )
+    );
+
+    impl_inner_op_result_test!(
+        test_begin_sponsoring_future_reserves_already_sponsored,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAQ/////gAAAAA=",
+        InnerOperationResult::BeginSponsoringFutureReserves(
+            BeginSponsoringFutureReservesResult::AlreadySponsored
+        )
+    );
+
+    impl_inner_op_result_test!(
+        test_begin_sponsoring_future_reserves_recursive,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAQ/////QAAAAA=",
+        InnerOperationResult::BeginSponsoringFutureReserves(
+            BeginSponsoringFutureReservesResult::Recursive
+        )
+    );
+
+    //
+    // End Sponsoring Future Reserves Result
+    //
+
+    impl_inner_op_result_test!(
+        test_end_sponsoring_future_reserves_success,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAARAAAAAAAAAAA=",
+        InnerOperationResult::EndSponsoringFutureReserves(
+            EndSponsoringFutureReservesResult::Success
+        )
+    );
+
+    impl_inner_op_result_test!(
+        test_end_sponsoring_future_reserves_not_sponsored,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAR/////wAAAAA=",
+        InnerOperationResult::EndSponsoringFutureReserves(
+            EndSponsoringFutureReservesResult::NotSponsored
+        )
+    );
+
+    //
+    // Revoke Sponsorship Result
+    //
+
+    impl_inner_op_result_test!(
+        test_revoke_sponsorship_success,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAASAAAAAAAAAAA=",
+        InnerOperationResult::RevokeSponsorship(RevokeSponsorshipResult::Success)
+    );
+
+    impl_inner_op_result_test!(
+        test_revoke_sponsorship_does_not_exist,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAS/////wAAAAA=",
+        InnerOperationResult::RevokeSponsorship(RevokeSponsorshipResult::DoesNotExist)
+    );
+
+    impl_inner_op_result_test!(
+        test_revoke_sponsorship_not_sponsor,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAS/////gAAAAA=",
+        InnerOperationResult::RevokeSponsorship(RevokeSponsorshipResult::NotSponsor)
+    );
+
+    impl_inner_op_result_test!(
+        test_revoke_sponsorship_low_reserve,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAS/////QAAAAA=",
+        InnerOperationResult::RevokeSponsorship(RevokeSponsorshipResult::LowReserve)
+    );
+
+    impl_inner_op_result_test!(
+        test_revoke_sponsorship_only_transferable,
+        "AAAAAAAAA+j/////AAAAAQAAAAAAAAAS/////AAAAAA=",
+        InnerOperationResult::RevokeSponsorship(RevokeSponsorshipResult::OnlyTransferable)
+    );
 }
