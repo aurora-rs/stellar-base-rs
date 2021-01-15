@@ -1022,6 +1022,51 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_too_many_subentries() {
+        let xdr = "AAAAAAAAA+j/////AAAAAf////wAAAAA";
+        let result = TransactionResult::from_xdr_base64(&xdr)
+            .unwrap()
+            .as_failed()
+            .unwrap()
+            .clone();
+        assert_eq!(result.results.len(), 1);
+        match result.results[0] {
+            OperationResult::TooManySubentries => {}
+            _ => panic!("expected OperationResult::TooManySubentries"),
+        }
+    }
+
+    #[test]
+    fn test_exceeded_work_limit() {
+        let xdr = "AAAAAAAAA+j/////AAAAAf////sAAAAA";
+        let result = TransactionResult::from_xdr_base64(&xdr)
+            .unwrap()
+            .as_failed()
+            .unwrap()
+            .clone();
+        assert_eq!(result.results.len(), 1);
+        match result.results[0] {
+            OperationResult::ExceededWorkLimit => {}
+            _ => panic!("expected OperationResult::ExceededWorkLimit"),
+        }
+    }
+
+    #[test]
+    fn test_too_many_sponsoring() {
+        let xdr = "AAAAAAAAA+j/////AAAAAf////oAAAAA";
+        let result = TransactionResult::from_xdr_base64(&xdr)
+            .unwrap()
+            .as_failed()
+            .unwrap()
+            .clone();
+        assert_eq!(result.results.len(), 1);
+        match result.results[0] {
+            OperationResult::TooManySponsoring => {}
+            _ => panic!("expected OperationResult::TooManySponsoring"),
+        }
+    }
+
     //
     // Create Account Result
     //
@@ -1498,6 +1543,108 @@ mod tests {
         test_manage_buy_offer_low_reserve,
         "AAAAAACYloD/////AAAAAQAAAAAAAAAM////9AAAAAA=",
         InnerOperationResult::ManageBuyOffer(ManageBuyOfferResult::LowReserve)
+    );
+
+    //
+    // Create Passive Sell Offer Result
+    //
+    //"AAAAAA AAA+j /////AAAAAQAAAAAAAAAE/////wAAAAA=",
+    //    "AAAAAA CYloD /////AAAAAQAAAAAAAAAD/////wAAAAA=",
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_success_created,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAEAAAAAAAAAAEAAAAAKoNGsl81xj8D8XyekzKZXRuSU2KImhHkQj4QWhroY64AAAAAAAAE0gAAAAAAAAAAAJiWgAAAAAFVU0QAAAAAACqDRrJfNcY/A/F8npMymV0bklNiiJoR5EI+EFoa6GOuAAAAAAADDUAAAAAAAAAAACqDRrJfNcY/A/F8npMymV0bklNiiJoR5EI+EFoa6GOuAAAAAAAABNIAAAAAAAAAAVVTRAAAAAAAKoNGsl81xj8D8XyekzKZXRuSU2KImhHkQj4QWhroY64AAAAAAJiWgAAAA+gAABEYAAAAAQAAAAAAAAAA",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::Success(
+            ManageOfferResultSuccess { offer: OfferResult::Created(_), .. })
+        )
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_success_updated,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAEAAAAAAAAAAEAAAAAKoNGsl81xj8D8XyekzKZXRuSU2KImhHkQj4QWhroY64AAAAAAAAE0gAAAAAAAAAAAJiWgAAAAAFVU0QAAAAAACqDRrJfNcY/A/F8npMymV0bklNiiJoR5EI+EFoa6GOuAAAAAAADDUAAAAABAAAAACqDRrJfNcY/A/F8npMymV0bklNiiJoR5EI+EFoa6GOuAAAAAAAABNIAAAAAAAAAAVVTRAAAAAAAKoNGsl81xj8D8XyekzKZXRuSU2KImhHkQj4QWhroY64AAAAAAJiWgAAAA+gAABEYAAAAAQAAAAAAAAAA",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::Success(
+            ManageOfferResultSuccess { offer: OfferResult::Updated(_), .. })
+        )
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_success_deleted,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAEAAAAAAAAAAEAAAAAKoNGsl81xj8D8XyekzKZXRuSU2KImhHkQj4QWhroY64AAAAAAAAE0gAAAAAAAAAAAJiWgAAAAAFVU0QAAAAAACqDRrJfNcY/A/F8npMymV0bklNiiJoR5EI+EFoa6GOuAAAAAAADDUAAAAACAAAAAA==",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::Success(
+            ManageOfferResultSuccess { offer: OfferResult::Deleted, .. })
+        )
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_malformed,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE/////wAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::Malformed)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_sell_no_trust,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE/////gAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::SellNoTrust)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_buy_no_trust,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE/////QAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::BuyNoTrust)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_sell_not_authorized,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE/////AAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::SellNotAuthorized)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_buy_not_authorized,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE////+wAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::BuyNotAuthorized)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_line_full,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE////+gAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::LineFull)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_underfunded,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE////+QAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::Underfunded)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_cross_self,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE////+AAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::CrossSelf)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_sell_no_issuer,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE////9wAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::SellNoIssuer)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_buy_no_issuer,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE////9gAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::BuyNoIssuer)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_not_found,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE////9QAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::NotFound)
+    );
+
+    impl_inner_op_result_test!(
+        test_create_passive_sell_offer_low_reserve,
+        "AAAAAACYloD/////AAAAAQAAAAAAAAAE////9AAAAAA=",
+        InnerOperationResult::CreatePassiveSellOffer(ManageSellOfferResult::LowReserve)
     );
 
     //
