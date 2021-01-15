@@ -727,6 +727,34 @@ mod tests {
     use crate::xdr::XDRDeserialize;
 
     #[test]
+    fn test_fee_bump_success() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0AAAAAAAAAAAAAAAAAAAAAA=";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        assert!(result.is_fee_bump_success());
+    }
+
+    #[test]
+    fn test_fee_bump_failed() {
+        let xdr = "AAAAAAAAA+j////zAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0AAAAAAAAAAAAAAAAAAAAAA=";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        assert!(result.is_fee_bump_failed());
+    }
+
+    #[test]
+    fn test_success() {
+        let xdr = "AAAAAAAAA+gAAAAAAAAAAAAAAAA=";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        assert!(result.is_success());
+    }
+
+    #[test]
+    fn test_failed() {
+        let xdr = "AAAAAAAAA+j/////AAAAAAAAAAA=";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        assert!(result.is_failed());
+    }
+
+    #[test]
     fn test_too_early() {
         let xdr = "AAAAAAAPQkD////+AAAAAA==";
         let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
@@ -808,5 +836,117 @@ mod tests {
         let xdr = "AAAAAAAPQkD////yAAAAAA==";
         let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
         assert!(result.is_bad_sponsorship());
+    }
+
+    #[test]
+    fn test_inner_success() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0AAAAAAAAAAAAAAAAAAAAAA=";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_success());
+    }
+
+    #[test]
+    fn test_inner_failed() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////8AAAAAAAAAAAAAAAA=";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_failed());
+    }
+
+    #[test]
+    fn test_inner_too_early() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////4AAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_too_early());
+    }
+
+    #[test]
+    fn test_inner_too_late() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////0AAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_too_late());
+    }
+
+    #[test]
+    fn test_inner_missing_operation() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////wAAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_missing_operation());
+    }
+
+    #[test]
+    fn test_inner_bad_sequence() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////sAAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_bad_sequence());
+    }
+
+    #[test]
+    fn test_inner_bad_auth() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////oAAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_bad_auth());
+    }
+
+    #[test]
+    fn test_inner_insufficient_balance() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////kAAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_insufficient_balance());
+    }
+
+    #[test]
+    fn test_inner_no_account() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////gAAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_no_account());
+    }
+
+    #[test]
+    fn test_inner_insufficient_fee() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////cAAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_insufficient_fee());
+    }
+
+    #[test]
+    fn test_inner_bad_auth_extra() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////YAAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_bad_auth_extra());
+    }
+
+    #[test]
+    fn test_inner_internal_error() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////UAAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_internal_error());
+    }
+
+    #[test]
+    fn test_inner_not_supported() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////QAAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_not_supported());
+    }
+
+    #[test]
+    fn test_inner_bad_sponsorship() {
+        let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////IAAAAAAAAAAA==";
+        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let inner_result = result.as_fee_bump_success().unwrap().result.clone();
+        assert!(inner_result.is_bad_sponsorship());
     }
 }
