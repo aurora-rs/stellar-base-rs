@@ -25,6 +25,8 @@ mod path_payment_strict_send;
 mod payment;
 mod revoke_sponsorship;
 mod set_options;
+#[cfg(test)]
+pub mod tests;
 
 pub use account_merge::{AccountMergeOperation, AccountMergeOperationBuilder};
 pub use allow_trust::{AllowTrustOperation, AllowTrustOperationBuilder};
