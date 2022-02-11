@@ -1,8 +1,7 @@
 use crate::account::AccountFlags;
-use crate::crypto::{MuxedAccount, PublicKey};
+use crate::crypto::{MuxedAccount, PublicKey, Signer};
 use crate::error::{Error, Result};
 use crate::operations::Operation;
-use crate::signature::Signer;
 use crate::xdr;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -294,30 +293,12 @@ impl SetOptionsOperationBuilder {
 #[cfg(test)]
 mod tests {
     use crate::account::AccountFlags;
-    use crate::crypto::KeyPair;
+    use crate::crypto::{Signer, SignerKey};
     use crate::network::Network;
+    use crate::operations::tests::*;
     use crate::operations::Operation;
-    use crate::signature::{Signer, SignerKey};
     use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-
-    fn keypair0() -> KeyPair {
-        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
-        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
-            .unwrap()
-    }
-
-    fn keypair1() -> KeyPair {
-        // GAS4V4O2B7DW5T7IQRPEEVCRXMDZESKISR7DVIGKZQYYV3OSQ5SH5LVP
-        KeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
-            .unwrap()
-    }
-
-    fn keypair2() -> KeyPair {
-        // GB7BDSZU2Y27LYNLALKKALB52WS2IZWYBDGY6EQBLEED3TJOCVMZRH7H
-        KeyPair::from_secret_seed("SBZVMB74Z76QZ3ZOY7UTDFYKMEGKW5XFJEB6PFKBF4UYSSWHG4EDH7PY")
-            .unwrap()
-    }
 
     #[test]
     fn test_set_options() {
@@ -335,7 +316,7 @@ mod tests {
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
+        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAQAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfgAAAAAAAAABAAAABQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6i5yxQAAAEBtYhsjGguNMF06uqEn/cUIdy9eAp/X2jlhTRiVcIGUQJ2U/45eFGXZ8AjgE5P/fWoQYlsUihurccOMwu891EAD";
@@ -357,7 +338,7 @@ mod tests {
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
+        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHqLnLFAAAAQBf+wJNmYicge0JOI5iRVzprRG7AXpfQWCHRCIjqiXvJ0MRv71eSyPdJgUVlcStKM8prTF2TPuO8uWPk2kIRKAo=";
@@ -380,7 +361,7 @@ mod tests {
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
+        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAAAAAAAAAAABAAAABQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6i5yxQAAAECKOes75G40HX5JiVxydn+pu/DTZSGRf0A9eKdDXdS3Znog4kDjnw0vgZ7efMGl8NYW165N13sBub8Dnrc1E+MA";
@@ -403,7 +384,7 @@ mod tests {
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
+        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAAAAAAEAAAAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6i5yxQAAAEAXg+D6BNKJyRzCHu2np0PSWoAcFanuZa2gfS8a1iAB62buUwxezc/RULixb5W2rQwBxbSyaIrFA/3QJBf480UA";
@@ -427,7 +408,7 @@ mod tests {
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
+        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAAAAQAAAAEAAAABAAAAAgAAAAEAAAADAAAAAQAAAAQAAAAAAAAAAAAAAAAAAAAB6i5yxQAAAECfQ+WZfpgizILpZL84nvzoDM5+JMQOlA0+9FQZjj6Xr+njvLP/84HFz+lgK3/orX/1MdoBQb61sybrfC1kjdcA";
@@ -452,7 +433,7 @@ mod tests {
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
+        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAH4RyzTWNfXhqwLUoCw91aWkZtgIzY8SAVkIPc0uFVmYAAAACAAAAAAAAAAB6i5yxQAAAEDlGdxaTcfjFp4ukgepGrUe2ALXJZvDRBIGWw3ROBsQlxFV9kgx2YvszPy4DWtXQNvc3i0KxrUrR+r2liPGr/QJ";
