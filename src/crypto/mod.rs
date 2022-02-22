@@ -6,7 +6,9 @@ mod signature;
 mod sodium_oxide;
 mod strkey;
 
+use crate::error::Error;
 use sha2::Digest;
+use std::convert::TryInto;
 
 pub use self::public_key::{MuxedAccount, MuxedEd25519PublicKey, PublicKey};
 pub use self::signature::*;
@@ -69,6 +71,16 @@ where
 
     pub fn verify(&self, msg: &[u8], sig: &Signature) -> Result<(), ed25519::Error> {
         self.verifier.verify_key.verify(msg, sig)
+    }
+
+    pub fn public_key(&self) -> Result<PublicKey, Error> {
+        Ok(PublicKey(
+            self.verifier
+                .verify_key
+                .as_ref()
+                .try_into()
+                .map_err(|_| Error::InvalidPublicKey)?,
+        ))
     }
 
     /// Sign the `message` together with the signature hint.
