@@ -2,7 +2,7 @@ use crate::amount::Stroops;
 use crate::error::{Error, Result};
 use crate::operation_result::OperationResult;
 use crate::xdr;
-use crate::xdr::XDRDeserialize;
+use crate::xdr::{InnerTransactionResultResult, XDRDeserialize};
 use xdr_rs_serialize::de::XDRIn;
 
 /// Result of a transaction.
@@ -29,6 +29,7 @@ pub enum TransactionResult {
 /// Result of the inner transaction in a FeeBumpTransaction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InnerTransactionResult {
+    FeeBumpInnerSuccess(TransactionResultFeeBumpInnerSuccess),
     Success(TransactionResultSuccess),
     Failed(TransactionResultFailed),
     TooEarly(TransactionResultTooEarly),
@@ -42,6 +43,7 @@ pub enum InnerTransactionResult {
     BadAuthExtra(TransactionResultBadAuthExtra),
     InternalError(TransactionResultInternalError),
     NotSupported(TransactionResultNotSupported),
+    FeeBumpInnerFailed(TransactionResultFeeBumpInnerFailed),
     BadSponsorship(TransactionResultBadSponsorship),
 }
 
@@ -53,10 +55,20 @@ pub struct TransactionResultFeeBumpSuccess {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TransactionResultFeeBumpInnerSuccess {
+    pub fee_charged: Stroops,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TransactionResultFeeBumpFailed {
     pub fee_charged: Stroops,
     pub transaction_hash: Vec<u8>,
     pub result: InnerTransactionResult,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TransactionResultFeeBumpInnerFailed {
+    pub fee_charged: Stroops,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -636,6 +648,10 @@ impl InnerTransactionResult {
     pub fn from_xdr(x: &xdr::InnerTransactionResult) -> Result<InnerTransactionResult> {
         let fee_charged = Stroops::from_xdr_int64(&x.fee_charged)?;
         match x.result {
+            xdr::InnerTransactionResultResult::TxFeeBumpInnerSuccess(()) => {
+                let inner = TransactionResultFeeBumpInnerSuccess { fee_charged };
+                Ok(InnerTransactionResult::FeeBumpInnerSuccess(inner))
+            }
             xdr::InnerTransactionResultResult::TxSuccess(ref xdr_results) => {
                 let mut results = Vec::new();
                 for xdr_result in xdr_results {
@@ -703,6 +719,10 @@ impl InnerTransactionResult {
             xdr::InnerTransactionResultResult::TxNotSupported(()) => {
                 let inner = TransactionResultNotSupported { fee_charged };
                 Ok(InnerTransactionResult::NotSupported(inner))
+            }
+            InnerTransactionResultResult::TxFeeBumpInnerFailed(()) => {
+                let inner = TransactionResultFeeBumpInnerFailed { fee_charged };
+                Ok(InnerTransactionResult::FeeBumpInnerFailed(inner))
             }
             xdr::InnerTransactionResultResult::TxBadSponsorship(()) => {
                 let inner = TransactionResultBadSponsorship { fee_charged };

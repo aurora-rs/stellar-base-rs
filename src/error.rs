@@ -68,6 +68,9 @@ pub enum Error {
     /// Invalid claimable balance id length. Length must be 32 bytes.
     #[error("invalid claimable balance id length")]
     InvalidClaimableBalanceIdLength,
+    /// Invalid liquidity pool id length. Length must be 32 bytes.
+    #[error("invalid liquidity pool id length")]
+    InvalidLiquidityPoolIdLength,
     /// Error that can occur when parsing amounts.
     #[error("error parsing amount")]
     ParseAmountError(#[from] rust_decimal::Error),

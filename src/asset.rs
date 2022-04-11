@@ -1,6 +1,7 @@
 //! Assets on the network.
 use crate::crypto::PublicKey;
 use crate::error::{Error, Result};
+use crate::liquidity_pool::LiquidityPoolId;
 use crate::xdr;
 use crate::xdr::{XDRDeserialize, XDRSerialize};
 use xdr_rs_serialize::de::XDRIn;
@@ -14,6 +15,15 @@ pub enum Asset {
     Native,
     /// A non-native asset, identified by asset code/issuer id.
     Credit(CreditAsset),
+}
+
+/// Represent an asset associated with a trustline, either a regular asset or a liquidity pool's
+/// shares
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TrustLineAsset {
+    Native,
+    Credit(CreditAsset),
+    PoolShare(LiquidityPoolId),
 }
 
 /// The credit asset type, based on its code length.
@@ -86,7 +96,7 @@ impl Asset {
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
                     let asset_code = xdr::AssetCode4::new(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
-                    let asset_alphanum4 = xdr::AssetAlphaNum4 { asset_code, issuer };
+                    let asset_alphanum4 = xdr::AlphaNum4 { asset_code, issuer };
                     Ok(xdr::Asset::AssetTypeCreditAlphanum4(asset_alphanum4))
                 }
                 CreditAsset::AlphaNum12 { code, issuer } => {
@@ -95,7 +105,7 @@ impl Asset {
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
                     let asset_code = xdr::AssetCode12::new(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
-                    let asset_alphanum12 = xdr::AssetAlphaNum12 { asset_code, issuer };
+                    let asset_alphanum12 = xdr::AlphaNum12 { asset_code, issuer };
                     Ok(xdr::Asset::AssetTypeCreditAlphanum12(asset_alphanum12))
                 }
             },
@@ -161,6 +171,146 @@ impl CreditAsset {
                 CreditAssetType::CreditAlphaNum12(code.clone())
             }
         }
+    }
+}
+
+impl TrustLineAsset {
+    /// Create the native asset: Lumens.
+    pub fn new_native() -> Self {
+        Self::Native
+    }
+
+    /// Create the asset with `code` issued by `issuer`.
+    pub fn new_credit<S>(code: S, issuer: PublicKey) -> Result<Self>
+    where
+        S: Into<String>,
+    {
+        let code = code.into();
+        let inner = CreditAsset::new(code, issuer)?;
+        Ok(Self::Credit(inner))
+    }
+
+    /// Create a trustline asset for a liquidity pool shares.
+    pub fn new_pool_share(liquidity_pool_id: LiquidityPoolId) -> Result<Self> {
+        Ok(Self::PoolShare(liquidity_pool_id))
+    }
+
+    /// Returns true if the asset is a Native. Returns false otherwise.
+    pub fn is_native(&self) -> bool {
+        match *self {
+            Self::Native => true,
+            _ => false,
+        }
+    }
+
+    /// Returns true if the asset is a Credit. Returns false otherwise.
+    pub fn is_credit(&self) -> bool {
+        self.as_credit().is_some()
+    }
+
+    /// If the asset is a Credit, returns its value. Returns None otherwise
+    pub fn as_credit(&self) -> Option<&CreditAsset> {
+        match *self {
+            Self::Credit(ref credit) => Some(credit),
+            _ => None,
+        }
+    }
+
+    /// If the asset is a Credit, returns its mutable value. Returns None otherwise
+    pub fn as_credit_mut(&mut self) -> Option<&mut CreditAsset> {
+        match *self {
+            Self::Credit(ref mut credit) => Some(credit),
+            _ => None,
+        }
+    }
+
+    pub fn is_pool_share(&self) -> bool {
+        self.as_pool_share().is_some()
+    }
+
+    pub fn as_pool_share(&self) -> Option<&LiquidityPoolId> {
+        match *self {
+            Self::PoolShare(ref pool_id) => Some(pool_id),
+            _ => None,
+        }
+    }
+
+    pub fn as_pool_share_mut(&mut self) -> Option<&mut LiquidityPoolId> {
+        match *self {
+            Self::PoolShare(ref mut pool_id) => Some(pool_id),
+            _ => None,
+        }
+    }
+
+    /// Returns the trustline asset xdr object.
+    pub fn to_xdr(&self) -> Result<xdr::TrustLineAsset> {
+        match self {
+            Self::Native => Ok(xdr::TrustLineAsset::AssetTypeNative(())),
+            Self::Credit(credit) => match credit {
+                CreditAsset::AlphaNum4 { code, issuer } => {
+                    let code_len = code.len();
+                    let mut code_bytes = vec![0; 4];
+                    code_bytes[..code_len].copy_from_slice(code.as_bytes());
+                    let asset_code = xdr::AssetCode4::new(code_bytes);
+                    let issuer = issuer.to_xdr_account_id()?;
+                    let asset_alphanum4 = xdr::AlphaNum4 { asset_code, issuer };
+                    Ok(xdr::TrustLineAsset::AssetTypeCreditAlphanum4(
+                        asset_alphanum4,
+                    ))
+                }
+                CreditAsset::AlphaNum12 { code, issuer } => {
+                    let code_len = code.len();
+                    let mut code_bytes = vec![0; 12];
+                    code_bytes[..code_len].copy_from_slice(code.as_bytes());
+                    let asset_code = xdr::AssetCode12::new(code_bytes);
+                    let issuer = issuer.to_xdr_account_id()?;
+                    let asset_alphanum12 = xdr::AlphaNum12 { asset_code, issuer };
+                    Ok(xdr::TrustLineAsset::AssetTypeCreditAlphanum12(
+                        asset_alphanum12,
+                    ))
+                }
+            },
+            Self::PoolShare(pool_id) => {
+                Ok(xdr::TrustLineAsset::AssetTypePoolShare(pool_id.to_xdr()))
+            }
+        }
+    }
+
+    /// Creates an asset from the xdr object.
+    pub fn from_xdr(x: &xdr::TrustLineAsset) -> Result<Self> {
+        match x {
+            xdr::TrustLineAsset::AssetTypeNative(()) => Ok(Self::new_native()),
+            xdr::TrustLineAsset::AssetTypeCreditAlphanum4(credit) => {
+                let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
+                let code = xdr_code_to_string(&credit.asset_code.value);
+                Ok(Self::new_credit(code, issuer)?)
+            }
+            xdr::TrustLineAsset::AssetTypeCreditAlphanum12(credit) => {
+                let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
+                let code = xdr_code_to_string(&credit.asset_code.value);
+                Ok(Self::new_credit(code, issuer)?)
+            }
+            xdr::TrustLineAsset::AssetTypePoolShare(pool_id) => {
+                let liquidity_pool_id = LiquidityPoolId::from_xdr(pool_id)?;
+                Ok(Self::new_pool_share(liquidity_pool_id)?)
+            }
+        }
+    }
+}
+
+impl XDRSerialize for TrustLineAsset {
+    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+        let xdr_asset = self.to_xdr()?;
+        xdr_asset.write_xdr(&mut out).map_err(Error::XdrError)
+    }
+}
+
+impl XDRDeserialize for TrustLineAsset {
+    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
+        let (xdr_asset, bytes_read) =
+            xdr::TrustLineAsset::read_xdr(&buffer).map_err(Error::XdrError)?;
+        let res = TrustLineAsset::from_xdr(&xdr_asset)?;
+        Ok((res, bytes_read))
     }
 }
 

@@ -1,11 +1,11 @@
 // Module  is generated from:
 //
-//  ../stellar-core/src/xdr/Stellar-ledger-entries.x
-//  ../stellar-core/src/xdr/Stellar-ledger.x
-//  ../stellar-core/src/xdr/Stellar-overlay.x
-//  ../stellar-core/src/xdr/Stellar-SCP.x
-//  ../stellar-core/src/xdr/Stellar-transaction.x
-//  ../stellar-core/src/xdr/Stellar-types.x
+//  stellar-proto/Stellar-ledger-entries.x
+//  stellar-proto/Stellar-ledger.x
+//  stellar-proto/Stellar-overlay.x
+//  stellar-proto/Stellar-SCP.x
+//  stellar-proto/Stellar-transaction.x
+//  stellar-proto/Stellar-types.x
 //
 // DO NOT EDIT or your changes may be overwritten
 //! Stellar XDR types
@@ -137,6 +137,22 @@ impl DataValue {
     }
 }
 
+// PoolId is an XDR Typedef defines as:
+//
+//   typedef Hash PoolID;
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct PoolId {
+    // TODO
+    pub value: Hash,
+}
+
+impl PoolId {
+    pub fn new(value: Hash) -> PoolId {
+        PoolId { value }
+    }
+}
+
 // AssetCode4 is an XDR Typedef defines as:
 //
 //   typedef opaque AssetCode4[4];
@@ -175,7 +191,8 @@ impl AssetCode12 {
 //    {
 //        ASSET_TYPE_NATIVE = 0,
 //        ASSET_TYPE_CREDIT_ALPHANUM4 = 1,
-//        ASSET_TYPE_CREDIT_ALPHANUM12 = 2
+//        ASSET_TYPE_CREDIT_ALPHANUM12 = 2,
+//        ASSET_TYPE_POOL_SHARE = 3
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -183,34 +200,59 @@ pub enum AssetType {
     AssetTypeNative = 0,
     AssetTypeCreditAlphanum4 = 1,
     AssetTypeCreditAlphanum12 = 2,
+    AssetTypePoolShare = 3,
 }
 
-// AssetAlphaNum4 is an XDR NestedStruct defines as:
+// AssetCode is an XDR Union defines as:
 //
-//   struct
-//        {
-//            AssetCode4 assetCode;
-//            AccountID issuer;
-//        }
+//   union AssetCode switch (AssetType type)
+//    {
+//    case ASSET_TYPE_CREDIT_ALPHANUM4:
+//        AssetCode4 assetCode4;
+//
+//    case ASSET_TYPE_CREDIT_ALPHANUM12:
+//        AssetCode12 assetCode12;
+//
+//        // add other asset types here in the future
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum AssetCode {
+    // IDEN ASSET_TYPE_CREDIT_ALPHANUM4
+    #[discriminant(value = "1")]
+    AssetTypeCreditAlphanum4(AssetCode4),
+    // IDEN ASSET_TYPE_CREDIT_ALPHANUM12
+    #[discriminant(value = "2")]
+    AssetTypeCreditAlphanum12(AssetCode12),
+}
+
+// AlphaNum4 is an XDR Struct defines as:
+//
+//   struct AlphaNum4
+//    {
+//        AssetCode4 assetCode;
+//        AccountID issuer;
+//    };
 //
 #[derive(Debug, XDROut, XDRIn)]
-pub struct AssetAlphaNum4 {
+pub struct AlphaNum4 {
     // TODO
     pub asset_code: AssetCode4,
     // TODO
     pub issuer: AccountId,
 }
 
-// AssetAlphaNum12 is an XDR NestedStruct defines as:
+// AlphaNum12 is an XDR Struct defines as:
 //
-//   struct
-//        {
-//            AssetCode12 assetCode;
-//            AccountID issuer;
-//        }
+//   struct AlphaNum12
+//    {
+//        AssetCode12 assetCode;
+//        AccountID issuer;
+//    };
 //
 #[derive(Debug, XDROut, XDRIn)]
-pub struct AssetAlphaNum12 {
+pub struct AlphaNum12 {
     // TODO
     pub asset_code: AssetCode12,
     // TODO
@@ -225,18 +267,10 @@ pub struct AssetAlphaNum12 {
 //        void;
 //
 //    case ASSET_TYPE_CREDIT_ALPHANUM4:
-//        struct
-//        {
-//            AssetCode4 assetCode;
-//            AccountID issuer;
-//        } alphaNum4;
+//        AlphaNum4 alphaNum4;
 //
 //    case ASSET_TYPE_CREDIT_ALPHANUM12:
-//        struct
-//        {
-//            AssetCode12 assetCode;
-//            AccountID issuer;
-//        } alphaNum12;
+//        AlphaNum12 alphaNum12;
 //
 //        // add other asset types here in the future
 //    };
@@ -245,11 +279,14 @@ pub struct AssetAlphaNum12 {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum Asset {
     // IDEN ASSET_TYPE_NATIVE
+    #[discriminant(value = "0")]
     AssetTypeNative(()),
     // IDEN ASSET_TYPE_CREDIT_ALPHANUM4
-    AssetTypeCreditAlphanum4(AssetAlphaNum4),
+    #[discriminant(value = "1")]
+    AssetTypeCreditAlphanum4(AlphaNum4),
     // IDEN ASSET_TYPE_CREDIT_ALPHANUM12
-    AssetTypeCreditAlphanum12(AssetAlphaNum12),
+    #[discriminant(value = "2")]
+    AssetTypeCreditAlphanum12(AlphaNum12),
 }
 
 // Price is an XDR Struct defines as:
@@ -310,7 +347,8 @@ pub enum ThresholdIndexes {
 //        TRUSTLINE = 1,
 //        OFFER = 2,
 //        DATA = 3,
-//        CLAIMABLE_BALANCE = 4
+//        CLAIMABLE_BALANCE = 4,
+//        LIQUIDITY_POOL = 5
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -320,6 +358,7 @@ pub enum LedgerEntryType {
     Offer = 2,
     Data = 3,
     ClaimableBalance = 4,
+    LiquidityPool = 5,
 }
 
 // Signer is an XDR Struct defines as:
@@ -351,7 +390,11 @@ pub struct Signer {
 //        // otherwise, authorization cannot be revoked
 //        AUTH_REVOCABLE_FLAG = 0x2,
 //        // Once set, causes all AUTH_* flags to be read-only
-//        AUTH_IMMUTABLE_FLAG = 0x4
+//        AUTH_IMMUTABLE_FLAG = 0x4,
+//        // Trustlines are created with clawback enabled set to "true",
+//        // and claimable balances created from those trustlines are created
+//        // with clawback enabled set to "true"
+//        AUTH_CLAWBACK_ENABLED_FLAG = 0x8
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -359,6 +402,7 @@ pub enum AccountFlags {
     AuthRequiredFlag = 1,
     AuthRevocableFlag = 2,
     AuthImmutableFlag = 4,
+    AuthClawbackEnabledFlag = 8,
 }
 
 // MaskAccountFlags is an XDR Const defines as:
@@ -366,6 +410,12 @@ pub enum AccountFlags {
 //   const MASK_ACCOUNT_FLAGS = 0x7;
 //
 const MASK_ACCOUNT_FLAGS: u64 = 0x7;
+
+// MaskAccountFlagsV17 is an XDR Const defines as:
+//
+//   const MASK_ACCOUNT_FLAGS_V17 = 0xF;
+//
+const MASK_ACCOUNT_FLAGS_V17: u64 = 0xF;
 
 // MaxSigners is an XDR Const defines as:
 //
@@ -557,13 +607,17 @@ pub struct AccountEntry {
 //        AUTHORIZED_FLAG = 1,
 //        // issuer has authorized account to maintain and reduce liabilities for its
 //        // credit
-//        AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG = 2
+//        AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG = 2,
+//        // issuer has specified that it may clawback its credit, and that claimable
+//        // balances created with its credit may also be clawed back
+//        TRUSTLINE_CLAWBACK_ENABLED_FLAG = 4
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
 pub enum TrustLineFlags {
     AuthorizedFlag = 1,
     AuthorizedToMaintainLiabilitiesFlag = 2,
+    TrustlineClawbackEnabledFlag = 4,
 }
 
 // MaskTrustlineFlags is an XDR Const defines as:
@@ -578,19 +632,116 @@ const MASK_TRUSTLINE_FLAGS: u64 = 1;
 //
 const MASK_TRUSTLINE_FLAGS_V13: u64 = 3;
 
+// MaskTrustlineFlagsV17 is an XDR Const defines as:
+//
+//   const MASK_TRUSTLINE_FLAGS_V17 = 7;
+//
+const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
+
+// LiquidityPoolType is an XDR Enum defines as:
+//
+//   enum LiquidityPoolType
+//    {
+//        LIQUIDITY_POOL_CONSTANT_PRODUCT = 0
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum LiquidityPoolType {
+    LiquidityPoolConstantProduct = 0,
+}
+
+// TrustLineAsset is an XDR Union defines as:
+//
+//   union TrustLineAsset switch (AssetType type)
+//    {
+//    case ASSET_TYPE_NATIVE: // Not credit
+//        void;
+//
+//    case ASSET_TYPE_CREDIT_ALPHANUM4:
+//        AlphaNum4 alphaNum4;
+//
+//    case ASSET_TYPE_CREDIT_ALPHANUM12:
+//        AlphaNum12 alphaNum12;
+//
+//    case ASSET_TYPE_POOL_SHARE:
+//        PoolID liquidityPoolID;
+//
+//        // add other asset types here in the future
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum TrustLineAsset {
+    // IDEN ASSET_TYPE_NATIVE
+    #[discriminant(value = "0")]
+    AssetTypeNative(()),
+    // IDEN ASSET_TYPE_CREDIT_ALPHANUM4
+    #[discriminant(value = "1")]
+    AssetTypeCreditAlphanum4(AlphaNum4),
+    // IDEN ASSET_TYPE_CREDIT_ALPHANUM12
+    #[discriminant(value = "2")]
+    AssetTypeCreditAlphanum12(AlphaNum12),
+    // IDEN ASSET_TYPE_POOL_SHARE
+    #[discriminant(value = "3")]
+    AssetTypePoolShare(PoolId),
+}
+
+// TrustLineEntryExtensionV2Ext is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum TrustLineEntryExtensionV2Ext {
+    // NO IDEN 0
+    V0(()),
+}
+
+// TrustLineEntryExtensionV2 is an XDR Struct defines as:
+//
+//   struct TrustLineEntryExtensionV2
+//    {
+//        int32 liquidityPoolUseCount;
+//
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//        ext;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct TrustLineEntryExtensionV2 {
+    // TODO
+    pub liquidity_pool_use_count: Int32,
+    // TODO
+    pub ext: TrustLineEntryExtensionV2Ext,
+}
+
 // TrustLineEntryV1Ext is an XDR NestedUnion defines as:
 //
 //   union switch (int v)
 //                {
 //                case 0:
 //                    void;
+//                case 2:
+//                    TrustLineEntryExtensionV2 v2;
 //                }
 //
 // union
 #[derive(Debug, XDROut, XDRIn)]
 pub enum TrustLineEntryV1Ext {
     // NO IDEN 0
+    #[discriminant(value = "0")]
     V0(()),
+    // NO IDEN 2
+    #[discriminant(value = "2")]
+    V2(TrustLineEntryExtensionV2),
 }
 
 // TrustLineEntryV1 is an XDR NestedStruct defines as:
@@ -603,6 +754,8 @@ pub enum TrustLineEntryV1Ext {
 //                {
 //                case 0:
 //                    void;
+//                case 2:
+//                    TrustLineEntryExtensionV2 v2;
 //                }
 //                ext;
 //            }
@@ -630,6 +783,8 @@ pub struct TrustLineEntryV1 {
 //                {
 //                case 0:
 //                    void;
+//                case 2:
+//                    TrustLineEntryExtensionV2 v2;
 //                }
 //                ext;
 //            } v1;
@@ -639,8 +794,10 @@ pub struct TrustLineEntryV1 {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum TrustLineEntryExt {
     // NO IDEN 0
+    #[discriminant(value = "0")]
     V0(()),
     // NO IDEN 1
+    #[discriminant(value = "1")]
     V1(TrustLineEntryV1),
 }
 
@@ -648,10 +805,10 @@ pub enum TrustLineEntryExt {
 //
 //   struct TrustLineEntry
 //    {
-//        AccountID accountID; // account this trustline belongs to
-//        Asset asset;         // type of asset (with issuer)
-//        int64 balance;       // how much of this asset the user has.
-//                             // Asset defines the unit for this;
+//        AccountID accountID;  // account this trustline belongs to
+//        TrustLineAsset asset; // type of asset (with issuer)
+//        int64 balance;        // how much of this asset the user has.
+//                              // Asset defines the unit for this;
 //
 //        int64 limit;  // balance cannot be above this
 //        uint32 flags; // see TrustLineFlags
@@ -670,6 +827,8 @@ pub enum TrustLineEntryExt {
 //                {
 //                case 0:
 //                    void;
+//                case 2:
+//                    TrustLineEntryExtensionV2 v2;
 //                }
 //                ext;
 //            } v1;
@@ -682,7 +841,7 @@ pub struct TrustLineEntry {
     // TODO
     pub account_id: AccountId,
     // TODO
-    pub asset: Asset,
+    pub asset: TrustLineAsset,
     // TODO
     pub balance: Int64,
     // TODO
@@ -950,7 +1109,27 @@ pub enum ClaimableBalanceId {
     ClaimableBalanceIdTypeV0(Hash),
 }
 
-// ClaimableBalanceEntryExt is an XDR NestedUnion defines as:
+// ClaimableBalanceFlags is an XDR Enum defines as:
+//
+//   enum ClaimableBalanceFlags
+//    {
+//        // If set, the issuer account of the asset held by the claimable balance may
+//        // clawback the claimable balance
+//        CLAIMABLE_BALANCE_CLAWBACK_ENABLED_FLAG = 0x1
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimableBalanceFlags {
+    ClaimableBalanceClawbackEnabledFlag = 1,
+}
+
+// MaskClaimableBalanceFlags is an XDR Const defines as:
+//
+//   const MASK_CLAIMABLE_BALANCE_FLAGS = 0x1;
+//
+const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
+
+// ClaimableBalanceEntryExtensionV1Ext is an XDR NestedUnion defines as:
 //
 //   union switch (int v)
 //        {
@@ -960,9 +1139,50 @@ pub enum ClaimableBalanceId {
 //
 // union
 #[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimableBalanceEntryExtensionV1Ext {
+    // NO IDEN 0
+    V0(()),
+}
+
+// ClaimableBalanceEntryExtensionV1 is an XDR Struct defines as:
+//
+//   struct ClaimableBalanceEntryExtensionV1
+//    {
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//        ext;
+//
+//        uint32 flags; // see ClaimableBalanceFlags
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct ClaimableBalanceEntryExtensionV1 {
+    // TODO
+    pub ext: ClaimableBalanceEntryExtensionV1Ext,
+    // TODO
+    pub flags: Uint32,
+}
+
+// ClaimableBalanceEntryExt is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        case 1:
+//            ClaimableBalanceEntryExtensionV1 v1;
+//        }
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
 pub enum ClaimableBalanceEntryExt {
     // NO IDEN 0
     V0(()),
+    // NO IDEN 1
+    V1(ClaimableBalanceEntryExtensionV1),
 }
 
 // ClaimableBalanceEntry is an XDR Struct defines as:
@@ -986,6 +1206,8 @@ pub enum ClaimableBalanceEntryExt {
 //        {
 //        case 0:
 //            void;
+//        case 1:
+//            ClaimableBalanceEntryExtensionV1 v1;
 //        }
 //        ext;
 //    };
@@ -1002,6 +1224,104 @@ pub struct ClaimableBalanceEntry {
     pub amount: Int64,
     // TODO
     pub ext: ClaimableBalanceEntryExt,
+}
+
+// LiquidityPoolConstantProductParameters is an XDR Struct defines as:
+//
+//   struct LiquidityPoolConstantProductParameters
+//    {
+//        Asset assetA; // assetA < assetB
+//        Asset assetB;
+//        int32 fee;    // Fee is in basis points, so the actual rate is (fee/100)%
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LiquidityPoolConstantProductParameters {
+    // TODO
+    pub asset_a: Asset,
+    // TODO
+    pub asset_b: Asset,
+    // TODO
+    pub fee: Int32,
+}
+
+// LiquidityPoolEntryConstantProduct is an XDR NestedStruct defines as:
+//
+//   struct
+//            {
+//                LiquidityPoolConstantProductParameters params;
+//
+//                int64 reserveA;        // amount of A in the pool
+//                int64 reserveB;        // amount of B in the pool
+//                int64 totalPoolShares; // total number of pool shares issued
+//                int64 poolSharesTrustLineCount; // number of trust lines for the associated pool shares
+//            }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LiquidityPoolEntryConstantProduct {
+    // TODO
+    pub params: LiquidityPoolConstantProductParameters,
+    // TODO
+    pub reserve_a: Int64,
+    // TODO
+    pub reserve_b: Int64,
+    // TODO
+    pub total_pool_shares: Int64,
+    // TODO
+    pub pool_shares_trust_line_count: Int64,
+}
+
+// LiquidityPoolEntryBody is an XDR NestedUnion defines as:
+//
+//   union switch (LiquidityPoolType type)
+//        {
+//        case LIQUIDITY_POOL_CONSTANT_PRODUCT:
+//            struct
+//            {
+//                LiquidityPoolConstantProductParameters params;
+//
+//                int64 reserveA;        // amount of A in the pool
+//                int64 reserveB;        // amount of B in the pool
+//                int64 totalPoolShares; // total number of pool shares issued
+//                int64 poolSharesTrustLineCount; // number of trust lines for the associated pool shares
+//            } constantProduct;
+//        }
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum LiquidityPoolEntryBody {
+    // IDEN LIQUIDITY_POOL_CONSTANT_PRODUCT
+    LiquidityPoolConstantProduct(LiquidityPoolEntryConstantProduct),
+}
+
+// LiquidityPoolEntry is an XDR Struct defines as:
+//
+//   struct LiquidityPoolEntry
+//    {
+//        PoolID liquidityPoolID;
+//
+//        union switch (LiquidityPoolType type)
+//        {
+//        case LIQUIDITY_POOL_CONSTANT_PRODUCT:
+//            struct
+//            {
+//                LiquidityPoolConstantProductParameters params;
+//
+//                int64 reserveA;        // amount of A in the pool
+//                int64 reserveB;        // amount of B in the pool
+//                int64 totalPoolShares; // total number of pool shares issued
+//                int64 poolSharesTrustLineCount; // number of trust lines for the associated pool shares
+//            } constantProduct;
+//        }
+//        body;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LiquidityPoolEntry {
+    // TODO
+    pub liquidity_pool_id: PoolId,
+    // TODO
+    pub body: LiquidityPoolEntryBody,
 }
 
 // LedgerEntryExtensionV1Ext is an XDR NestedUnion defines as:
@@ -1055,6 +1375,8 @@ pub struct LedgerEntryExtensionV1 {
 //            DataEntry data;
 //        case CLAIMABLE_BALANCE:
 //            ClaimableBalanceEntry claimableBalance;
+//        case LIQUIDITY_POOL:
+//            LiquidityPoolEntry liquidityPool;
 //        }
 //
 // union
@@ -1070,6 +1392,8 @@ pub enum LedgerEntryData {
     Data(DataEntry),
     // IDEN CLAIMABLE_BALANCE
     ClaimableBalance(ClaimableBalanceEntry),
+    // IDEN LIQUIDITY_POOL
+    LiquidityPool(LiquidityPoolEntry),
 }
 
 // LedgerEntryExt is an XDR NestedUnion defines as:
@@ -1109,6 +1433,8 @@ pub enum LedgerEntryExt {
 //            DataEntry data;
 //        case CLAIMABLE_BALANCE:
 //            ClaimableBalanceEntry claimableBalance;
+//        case LIQUIDITY_POOL:
+//            LiquidityPoolEntry liquidityPool;
 //        }
 //        data;
 //
@@ -1151,7 +1477,7 @@ pub struct LedgerKeyAccount {
 //   struct
 //        {
 //            AccountID accountID;
-//            Asset asset;
+//            TrustLineAsset asset;
 //        }
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -1159,7 +1485,7 @@ pub struct LedgerKeyTrustLine {
     // TODO
     pub account_id: AccountId,
     // TODO
-    pub asset: Asset,
+    pub asset: TrustLineAsset,
 }
 
 // LedgerKeyOffer is an XDR NestedStruct defines as:
@@ -1207,6 +1533,19 @@ pub struct LedgerKeyClaimableBalance {
     pub balance_id: ClaimableBalanceId,
 }
 
+// LedgerKeyLiquidityPool is an XDR NestedStruct defines as:
+//
+//   struct
+//        {
+//            PoolID liquidityPoolID;
+//        }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LedgerKeyLiquidityPool {
+    // TODO
+    pub liquidity_pool_id: PoolId,
+}
+
 // LedgerKey is an XDR Union defines as:
 //
 //   union LedgerKey switch (LedgerEntryType type)
@@ -1221,7 +1560,7 @@ pub struct LedgerKeyClaimableBalance {
 //        struct
 //        {
 //            AccountID accountID;
-//            Asset asset;
+//            TrustLineAsset asset;
 //        } trustLine;
 //
 //    case OFFER:
@@ -1243,6 +1582,12 @@ pub struct LedgerKeyClaimableBalance {
 //        {
 //            ClaimableBalanceID balanceID;
 //        } claimableBalance;
+//
+//    case LIQUIDITY_POOL:
+//        struct
+//        {
+//            PoolID liquidityPoolID;
+//        } liquidityPool;
 //    };
 //
 // union
@@ -1258,6 +1603,8 @@ pub enum LedgerKey {
     Data(LedgerKeyData),
     // IDEN CLAIMABLE_BALANCE
     ClaimableBalance(LedgerKeyClaimableBalance),
+    // IDEN LIQUIDITY_POOL
+    LiquidityPool(LedgerKeyLiquidityPool),
 }
 
 // EnvelopeType is an XDR Enum defines as:
@@ -1270,7 +1617,8 @@ pub enum LedgerKey {
 //        ENVELOPE_TYPE_AUTH = 3,
 //        ENVELOPE_TYPE_SCPVALUE = 4,
 //        ENVELOPE_TYPE_TX_FEE_BUMP = 5,
-//        ENVELOPE_TYPE_OP_ID = 6
+//        ENVELOPE_TYPE_OP_ID = 6,
+//        ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -1282,6 +1630,7 @@ pub enum EnvelopeType {
     EnvelopeTypeScpvalue = 4,
     EnvelopeTypeTxFeeBump = 5,
     EnvelopeTypeOpId = 6,
+    EnvelopeTypePoolRevokeOpId = 7,
 }
 
 // UpgradeType is an XDR Typedef defines as:
@@ -1386,7 +1735,29 @@ pub struct StellarValue {
     pub ext: StellarValueExt,
 }
 
-// LedgerHeaderExt is an XDR NestedUnion defines as:
+// MaskLedgerHeaderFlags is an XDR Const defines as:
+//
+//   const MASK_LEDGER_HEADER_FLAGS = 0x7;
+//
+const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
+
+// LedgerHeaderFlags is an XDR Enum defines as:
+//
+//   enum LedgerHeaderFlags
+//    {
+//        DISABLE_LIQUIDITY_POOL_TRADING_FLAG = 0x1,
+//        DISABLE_LIQUIDITY_POOL_DEPOSIT_FLAG = 0x2,
+//        DISABLE_LIQUIDITY_POOL_WITHDRAWAL_FLAG = 0x4
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum LedgerHeaderFlags {
+    DisableLiquidityPoolTradingFlag = 1,
+    DisableLiquidityPoolDepositFlag = 2,
+    DisableLiquidityPoolWithdrawalFlag = 4,
+}
+
+// LedgerHeaderExtensionV1Ext is an XDR NestedUnion defines as:
 //
 //   union switch (int v)
 //        {
@@ -1396,9 +1767,50 @@ pub struct StellarValue {
 //
 // union
 #[derive(Debug, XDROut, XDRIn)]
+pub enum LedgerHeaderExtensionV1Ext {
+    // NO IDEN 0
+    V0(()),
+}
+
+// LedgerHeaderExtensionV1 is an XDR Struct defines as:
+//
+//   struct LedgerHeaderExtensionV1
+//    {
+//        uint32 flags; // LedgerHeaderFlags
+//
+//        union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        }
+//        ext;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LedgerHeaderExtensionV1 {
+    // TODO
+    pub flags: Uint32,
+    // TODO
+    pub ext: LedgerHeaderExtensionV1Ext,
+}
+
+// LedgerHeaderExt is an XDR NestedUnion defines as:
+//
+//   union switch (int v)
+//        {
+//        case 0:
+//            void;
+//        case 1:
+//            LedgerHeaderExtensionV1 v1;
+//        }
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
 pub enum LedgerHeaderExt {
     // NO IDEN 0
     V0(()),
+    // NO IDEN 1
+    V1(LedgerHeaderExtensionV1),
 }
 
 // LedgerHeader is an XDR Struct defines as:
@@ -1437,6 +1849,8 @@ pub enum LedgerHeaderExt {
 //        {
 //        case 0:
 //            void;
+//        case 1:
+//            LedgerHeaderExtensionV1 v1;
 //        }
 //        ext;
 //    };
@@ -1482,7 +1896,8 @@ pub struct LedgerHeader {
 //        LEDGER_UPGRADE_VERSION = 1,
 //        LEDGER_UPGRADE_BASE_FEE = 2,
 //        LEDGER_UPGRADE_MAX_TX_SET_SIZE = 3,
-//        LEDGER_UPGRADE_BASE_RESERVE = 4
+//        LEDGER_UPGRADE_BASE_RESERVE = 4,
+//        LEDGER_UPGRADE_FLAGS = 5
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -1491,6 +1906,7 @@ pub enum LedgerUpgradeType {
     LedgerUpgradeBaseFee = 2,
     LedgerUpgradeMaxTxSetSize = 3,
     LedgerUpgradeBaseReserve = 4,
+    LedgerUpgradeFlags = 5,
 }
 
 // LedgerUpgrade is an XDR Union defines as:
@@ -1505,19 +1921,28 @@ pub enum LedgerUpgradeType {
 //        uint32 newMaxTxSetSize; // update maxTxSetSize
 //    case LEDGER_UPGRADE_BASE_RESERVE:
 //        uint32 newBaseReserve; // update baseReserve
+//    case LEDGER_UPGRADE_FLAGS:
+//        uint32 newFlags; // update flags
 //    };
 //
 // union
 #[derive(Debug, XDROut, XDRIn)]
 pub enum LedgerUpgrade {
     // IDEN LEDGER_UPGRADE_VERSION
+    #[discriminant(value = "1")]
     LedgerUpgradeVersion(Uint32),
     // IDEN LEDGER_UPGRADE_BASE_FEE
+    #[discriminant(value = "2")]
     LedgerUpgradeBaseFee(Uint32),
     // IDEN LEDGER_UPGRADE_MAX_TX_SET_SIZE
+    #[discriminant(value = "3")]
     LedgerUpgradeMaxTxSetSize(Uint32),
     // IDEN LEDGER_UPGRADE_BASE_RESERVE
+    #[discriminant(value = "4")]
     LedgerUpgradeBaseReserve(Uint32),
+    // IDEN LEDGER_UPGRADE_FLAGS
+    #[discriminant(value = "5")]
+    LedgerUpgradeFlags(Uint32),
 }
 
 // BucketEntryType is an XDR Enum defines as:
@@ -1597,12 +2022,16 @@ pub struct BucketMetadata {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum BucketEntry {
     // IDEN LIVEENTRY
+    #[discriminant(value = "0")]
     Liveentry(LedgerEntry),
     // IDEN INITENTRY
+    #[discriminant(value = "1")]
     Initentry(LedgerEntry),
     // IDEN DEADENTRY
+    #[discriminant(value = "2")]
     Deadentry(LedgerKey),
     // IDEN METAENTRY
+    #[discriminant(value = "-1")]
     Metaentry(BucketMetadata),
 }
 
@@ -1857,12 +2286,16 @@ pub enum LedgerEntryChangeType {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum LedgerEntryChange {
     // IDEN LEDGER_ENTRY_CREATED
+    #[discriminant(value = "0")]
     LedgerEntryCreated(LedgerEntry),
     // IDEN LEDGER_ENTRY_UPDATED
+    #[discriminant(value = "1")]
     LedgerEntryUpdated(LedgerEntry),
     // IDEN LEDGER_ENTRY_REMOVED
+    #[discriminant(value = "2")]
     LedgerEntryRemoved(LedgerKey),
     // IDEN LEDGER_ENTRY_STATE
+    #[discriminant(value = "3")]
     LedgerEntryState(LedgerEntry),
 }
 
@@ -1948,10 +2381,13 @@ pub struct TransactionMetaV2 {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum TransactionMeta {
     // NO IDEN 0
+    #[discriminant(value = "0")]
     V0(Vec<OperationMeta>),
     // NO IDEN 1
+    #[discriminant(value = "1")]
     V1(TransactionMetaV1),
     // NO IDEN 2
+    #[discriminant(value = "2")]
     V2(TransactionMetaV2),
 }
 
@@ -2172,8 +2608,10 @@ pub enum IpAddrType {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum PeerAddressIp {
     // IDEN IPv4
+    #[discriminant(value = "0")]
     IPv4(Vec<u8>),
     // IDEN IPv6
+    #[discriminant(value = "1")]
     IPv6(Vec<u8>),
 }
 
@@ -2534,34 +2972,49 @@ pub enum SurveyResponseBody {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum StellarMessage {
     // IDEN ERROR_MSG
+    #[discriminant(value = "0")]
     ErrorMsg(SError),
     // IDEN HELLO
+    #[discriminant(value = "13")]
     Hello(Hello),
     // IDEN AUTH
+    #[discriminant(value = "2")]
     Auth(Auth),
     // IDEN DONT_HAVE
+    #[discriminant(value = "3")]
     DontHave(DontHave),
     // IDEN GET_PEERS
+    #[discriminant(value = "4")]
     GetPeers(()),
     // IDEN PEERS
+    #[discriminant(value = "5")]
     Peers(Vec<PeerAddress>),
     // IDEN GET_TX_SET
+    #[discriminant(value = "6")]
     GetTxSet(Uint256),
     // IDEN TX_SET
+    #[discriminant(value = "7")]
     TxSet(TransactionSet),
     // IDEN TRANSACTION
+    #[discriminant(value = "8")]
     Transaction(TransactionEnvelope),
     // IDEN SURVEY_REQUEST
+    #[discriminant(value = "14")]
     SurveyRequest(SignedSurveyRequestMessage),
     // IDEN SURVEY_RESPONSE
+    #[discriminant(value = "15")]
     SurveyResponse(SignedSurveyResponseMessage),
     // IDEN GET_SCP_QUORUMSET
+    #[discriminant(value = "9")]
     GetScpQuorumset(Uint256),
     // IDEN SCP_QUORUMSET
+    #[discriminant(value = "10")]
     ScpQuorumset(ScpQuorumSet),
     // IDEN SCP_MESSAGE
+    #[discriminant(value = "11")]
     ScpMessage(ScpEnvelope),
     // IDEN GET_SCP_STATE
+    #[discriminant(value = "12")]
     GetScpState(Uint32),
 }
 
@@ -2864,7 +3317,7 @@ pub struct ScpEnvelope {
 //   struct SCPQuorumSet
 //    {
 //        uint32 threshold;
-//        PublicKey validators<>;
+//        NodeID validators<>;
 //        SCPQuorumSet innerSets<>;
 //    };
 //
@@ -2873,9 +3326,24 @@ pub struct ScpQuorumSet {
     // TODO
     pub threshold: Uint32,
     // TODO
-    pub validators: Vec<PublicKey>,
+    pub validators: Vec<NodeId>,
     // TODO
     pub inner_sets: Vec<ScpQuorumSet>,
+}
+
+// LiquidityPoolParameters is an XDR Union defines as:
+//
+//   union LiquidityPoolParameters switch (LiquidityPoolType type)
+//    {
+//    case LIQUIDITY_POOL_CONSTANT_PRODUCT:
+//        LiquidityPoolConstantProductParameters constantProduct;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum LiquidityPoolParameters {
+    // IDEN LIQUIDITY_POOL_CONSTANT_PRODUCT
+    LiquidityPoolConstantProduct(LiquidityPoolConstantProductParameters),
 }
 
 // MuxedAccountMed25519 is an XDR NestedStruct defines as:
@@ -2957,7 +3425,12 @@ pub struct DecoratedSignature {
 //        CLAIM_CLAIMABLE_BALANCE = 15,
 //        BEGIN_SPONSORING_FUTURE_RESERVES = 16,
 //        END_SPONSORING_FUTURE_RESERVES = 17,
-//        REVOKE_SPONSORSHIP = 18
+//        REVOKE_SPONSORSHIP = 18,
+//        CLAWBACK = 19,
+//        CLAWBACK_CLAIMABLE_BALANCE = 20,
+//        SET_TRUST_LINE_FLAGS = 21,
+//        LIQUIDITY_POOL_DEPOSIT = 22,
+//        LIQUIDITY_POOL_WITHDRAW = 23
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -2981,6 +3454,11 @@ pub enum OperationType {
     BeginSponsoringFutureReserves = 16,
     EndSponsoringFutureReserves = 17,
     RevokeSponsorship = 18,
+    Clawback = 19,
+    ClawbackClaimableBalance = 20,
+    SetTrustLineFlags = 21,
+    LiquidityPoolDeposit = 22,
+    LiquidityPoolWithdraw = 23,
 }
 
 // CreateAccountOp is an XDR Struct defines as:
@@ -3143,7 +3621,7 @@ pub struct ManageBuyOfferOp {
 //    {
 //        Asset selling; // A
 //        Asset buying;  // B
-//        int64 amount;  // amount taker gets. if set to 0, delete the offer
+//        int64 amount;  // amount taker gets
 //        Price price;   // cost of A in terms of B
 //    };
 //
@@ -3203,11 +3681,43 @@ pub struct SetOptionsOp {
     pub signer: Option<Signer>,
 }
 
+// ChangeTrustAsset is an XDR Union defines as:
+//
+//   union ChangeTrustAsset switch (AssetType type)
+//    {
+//    case ASSET_TYPE_NATIVE: // Not credit
+//        void;
+//
+//    case ASSET_TYPE_CREDIT_ALPHANUM4:
+//        AlphaNum4 alphaNum4;
+//
+//    case ASSET_TYPE_CREDIT_ALPHANUM12:
+//        AlphaNum12 alphaNum12;
+//
+//    case ASSET_TYPE_POOL_SHARE:
+//        LiquidityPoolParameters liquidityPool;
+//
+//        // add other asset types here in the future
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ChangeTrustAsset {
+    // IDEN ASSET_TYPE_NATIVE
+    AssetTypeNative(()),
+    // IDEN ASSET_TYPE_CREDIT_ALPHANUM4
+    AssetTypeCreditAlphanum4(AlphaNum4),
+    // IDEN ASSET_TYPE_CREDIT_ALPHANUM12
+    AssetTypeCreditAlphanum12(AlphaNum12),
+    // IDEN ASSET_TYPE_POOL_SHARE
+    AssetTypePoolShare(LiquidityPoolParameters),
+}
+
 // ChangeTrustOp is an XDR Struct defines as:
 //
 //   struct ChangeTrustOp
 //    {
-//        Asset line;
+//        ChangeTrustAsset line;
 //
 //        // if limit is set to 0, deletes the trust line
 //        int64 limit;
@@ -3216,34 +3726,9 @@ pub struct SetOptionsOp {
 #[derive(Debug, XDROut, XDRIn)]
 pub struct ChangeTrustOp {
     // TODO
-    pub line: Asset,
+    pub line: ChangeTrustAsset,
     // TODO
     pub limit: Int64,
-}
-
-// AllowTrustOpAsset is an XDR NestedUnion defines as:
-//
-//   union switch (AssetType type)
-//        {
-//        // ASSET_TYPE_NATIVE is not allowed
-//        case ASSET_TYPE_CREDIT_ALPHANUM4:
-//            AssetCode4 assetCode4;
-//
-//        case ASSET_TYPE_CREDIT_ALPHANUM12:
-//            AssetCode12 assetCode12;
-//
-//            // add other asset types here in the future
-//        }
-//
-// union
-#[derive(Debug, XDROut, XDRIn)]
-pub enum AllowTrustOpAsset {
-    // IDEN ASSET_TYPE_CREDIT_ALPHANUM4
-    #[discriminant(value = "1")]
-    AssetTypeCreditAlphanum4(AssetCode4),
-    // IDEN ASSET_TYPE_CREDIT_ALPHANUM12
-    #[discriminant(value = "2")]
-    AssetTypeCreditAlphanum12(AssetCode12),
 }
 
 // AllowTrustOp is an XDR Struct defines as:
@@ -3251,20 +3736,9 @@ pub enum AllowTrustOpAsset {
 //   struct AllowTrustOp
 //    {
 //        AccountID trustor;
-//        union switch (AssetType type)
-//        {
-//        // ASSET_TYPE_NATIVE is not allowed
-//        case ASSET_TYPE_CREDIT_ALPHANUM4:
-//            AssetCode4 assetCode4;
+//        AssetCode asset;
 //
-//        case ASSET_TYPE_CREDIT_ALPHANUM12:
-//            AssetCode12 assetCode12;
-//
-//            // add other asset types here in the future
-//        }
-//        asset;
-//
-//        // 0, or any bitwise combination of TrustLineFlags
+//        // One of 0, AUTHORIZED_FLAG, or AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG
 //        uint32 authorize;
 //    };
 //
@@ -3273,7 +3747,7 @@ pub struct AllowTrustOp {
     // TODO
     pub trustor: AccountId,
     // TODO
-    pub asset: AllowTrustOpAsset,
+    pub asset: AssetCode,
     // TODO
     pub authorize: Uint32,
 }
@@ -3393,8 +3867,7 @@ pub struct RevokeSponsorshipOpSigner {
 //        {
 //            AccountID accountID;
 //            SignerKey signerKey;
-//        }
-//        signer;
+//        } signer;
 //    };
 //
 // union
@@ -3404,6 +3877,114 @@ pub enum RevokeSponsorshipOp {
     RevokeSponsorshipLedgerEntry(LedgerKey),
     // IDEN REVOKE_SPONSORSHIP_SIGNER
     RevokeSponsorshipSigner(RevokeSponsorshipOpSigner),
+}
+
+// ClawbackOp is an XDR Struct defines as:
+//
+//   struct ClawbackOp
+//    {
+//        Asset asset;
+//        MuxedAccount from;
+//        int64 amount;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct ClawbackOp {
+    // TODO
+    pub asset: Asset,
+    // TODO
+    pub from: MuxedAccount,
+    // TODO
+    pub amount: Int64,
+}
+
+// ClawbackClaimableBalanceOp is an XDR Struct defines as:
+//
+//   struct ClawbackClaimableBalanceOp
+//    {
+//        ClaimableBalanceID balanceID;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct ClawbackClaimableBalanceOp {
+    // TODO
+    pub balance_id: ClaimableBalanceId,
+}
+
+// SetTrustLineFlagsOp is an XDR Struct defines as:
+//
+//   struct SetTrustLineFlagsOp
+//    {
+//        AccountID trustor;
+//        Asset asset;
+//
+//        uint32 clearFlags; // which flags to clear
+//        uint32 setFlags;   // which flags to set
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct SetTrustLineFlagsOp {
+    // TODO
+    pub trustor: AccountId,
+    // TODO
+    pub asset: Asset,
+    // TODO
+    pub clear_flags: Uint32,
+    // TODO
+    pub set_flags: Uint32,
+}
+
+// LiquidityPoolFeeV18 is an XDR Const defines as:
+//
+//   const LIQUIDITY_POOL_FEE_V18 = 30;
+//
+const LIQUIDITY_POOL_FEE_V18: u64 = 30;
+
+// LiquidityPoolDepositOp is an XDR Struct defines as:
+//
+//   struct LiquidityPoolDepositOp
+//    {
+//        PoolID liquidityPoolID;
+//        int64 maxAmountA;     // maximum amount of first asset to deposit
+//        int64 maxAmountB;     // maximum amount of second asset to deposit
+//        Price minPrice;       // minimum depositA/depositB
+//        Price maxPrice;       // maximum depositA/depositB
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LiquidityPoolDepositOp {
+    // TODO
+    pub liquidity_pool_id: PoolId,
+    // TODO
+    pub max_amount_a: Int64,
+    // TODO
+    pub max_amount_b: Int64,
+    // TODO
+    pub min_price: Price,
+    // TODO
+    pub max_price: Price,
+}
+
+// LiquidityPoolWithdrawOp is an XDR Struct defines as:
+//
+//   struct LiquidityPoolWithdrawOp
+//    {
+//        PoolID liquidityPoolID;
+//        int64 amount;         // amount of pool shares to withdraw
+//        int64 minAmountA;     // minimum amount of first asset to withdraw
+//        int64 minAmountB;     // minimum amount of second asset to withdraw
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct LiquidityPoolWithdrawOp {
+    // TODO
+    pub liquidity_pool_id: PoolId,
+    // TODO
+    pub amount: Int64,
+    // TODO
+    pub min_amount_a: Int64,
+    // TODO
+    pub min_amount_b: Int64,
 }
 
 // OperationBody is an XDR NestedUnion defines as:
@@ -3448,49 +4029,93 @@ pub enum RevokeSponsorshipOp {
 //            void;
 //        case REVOKE_SPONSORSHIP:
 //            RevokeSponsorshipOp revokeSponsorshipOp;
+//        case CLAWBACK:
+//            ClawbackOp clawbackOp;
+//        case CLAWBACK_CLAIMABLE_BALANCE:
+//            ClawbackClaimableBalanceOp clawbackClaimableBalanceOp;
+//        case SET_TRUST_LINE_FLAGS:
+//            SetTrustLineFlagsOp setTrustLineFlagsOp;
+//        case LIQUIDITY_POOL_DEPOSIT:
+//            LiquidityPoolDepositOp liquidityPoolDepositOp;
+//        case LIQUIDITY_POOL_WITHDRAW:
+//            LiquidityPoolWithdrawOp liquidityPoolWithdrawOp;
 //        }
 //
 // union
 #[derive(Debug, XDROut, XDRIn)]
 pub enum OperationBody {
     // IDEN CREATE_ACCOUNT
+    #[discriminant(value = "0")]
     CreateAccount(CreateAccountOp),
     // IDEN PAYMENT
+    #[discriminant(value = "1")]
     Payment(PaymentOp),
     // IDEN PATH_PAYMENT_STRICT_RECEIVE
+    #[discriminant(value = "2")]
     PathPaymentStrictReceive(PathPaymentStrictReceiveOp),
     // IDEN MANAGE_SELL_OFFER
+    #[discriminant(value = "3")]
     ManageSellOffer(ManageSellOfferOp),
     // IDEN CREATE_PASSIVE_SELL_OFFER
+    #[discriminant(value = "4")]
     CreatePassiveSellOffer(CreatePassiveSellOfferOp),
     // IDEN SET_OPTIONS
+    #[discriminant(value = "5")]
     SetOptions(SetOptionsOp),
     // IDEN CHANGE_TRUST
+    #[discriminant(value = "6")]
     ChangeTrust(ChangeTrustOp),
     // IDEN ALLOW_TRUST
+    #[discriminant(value = "7")]
     AllowTrust(AllowTrustOp),
     // IDEN ACCOUNT_MERGE
+    #[discriminant(value = "8")]
     AccountMerge(MuxedAccount),
     // IDEN INFLATION
+    #[discriminant(value = "9")]
     Inflation(()),
     // IDEN MANAGE_DATA
+    #[discriminant(value = "10")]
     ManageData(ManageDataOp),
     // IDEN BUMP_SEQUENCE
+    #[discriminant(value = "11")]
     BumpSequence(BumpSequenceOp),
     // IDEN MANAGE_BUY_OFFER
+    #[discriminant(value = "12")]
     ManageBuyOffer(ManageBuyOfferOp),
     // IDEN PATH_PAYMENT_STRICT_SEND
+    #[discriminant(value = "13")]
     PathPaymentStrictSend(PathPaymentStrictSendOp),
     // IDEN CREATE_CLAIMABLE_BALANCE
+    #[discriminant(value = "14")]
     CreateClaimableBalance(CreateClaimableBalanceOp),
     // IDEN CLAIM_CLAIMABLE_BALANCE
+    #[discriminant(value = "15")]
     ClaimClaimableBalance(ClaimClaimableBalanceOp),
     // IDEN BEGIN_SPONSORING_FUTURE_RESERVES
+    #[discriminant(value = "16")]
     BeginSponsoringFutureReserves(BeginSponsoringFutureReservesOp),
     // IDEN END_SPONSORING_FUTURE_RESERVES
+    #[discriminant(value = "17")]
     EndSponsoringFutureReserves(()),
     // IDEN REVOKE_SPONSORSHIP
+    #[discriminant(value = "18")]
     RevokeSponsorship(RevokeSponsorshipOp),
+    // IDEN CLAWBACK
+    #[discriminant(value = "19")]
+    Clawback(ClawbackOp),
+    // IDEN CLAWBACK_CLAIMABLE_BALANCE
+    #[discriminant(value = "20")]
+    ClawbackClaimableBalance(ClawbackClaimableBalanceOp),
+    // IDEN SET_TRUST_LINE_FLAGS
+    #[discriminant(value = "21")]
+    SetTrustLineFlags(SetTrustLineFlagsOp),
+    // IDEN LIQUIDITY_POOL_DEPOSIT
+    #[discriminant(value = "22")]
+    LiquidityPoolDeposit(LiquidityPoolDepositOp),
+    // IDEN LIQUIDITY_POOL_WITHDRAW
+    #[discriminant(value = "23")]
+    LiquidityPoolWithdraw(LiquidityPoolWithdrawOp),
 }
 
 // Operation is an XDR Struct defines as:
@@ -3542,6 +4167,16 @@ pub enum OperationBody {
 //            void;
 //        case REVOKE_SPONSORSHIP:
 //            RevokeSponsorshipOp revokeSponsorshipOp;
+//        case CLAWBACK:
+//            ClawbackOp clawbackOp;
+//        case CLAWBACK_CLAIMABLE_BALANCE:
+//            ClawbackClaimableBalanceOp clawbackClaimableBalanceOp;
+//        case SET_TRUST_LINE_FLAGS:
+//            SetTrustLineFlagsOp setTrustLineFlagsOp;
+//        case LIQUIDITY_POOL_DEPOSIT:
+//            LiquidityPoolDepositOp liquidityPoolDepositOp;
+//        case LIQUIDITY_POOL_WITHDRAW:
+//            LiquidityPoolWithdrawOp liquidityPoolWithdrawOp;
 //        }
 //        body;
 //    };
@@ -3554,43 +4189,81 @@ pub struct Operation {
     pub body: OperationBody,
 }
 
-// OperationIdId is an XDR NestedStruct defines as:
+// HashIdPreimageOperationId is an XDR NestedStruct defines as:
 //
 //   struct
 //        {
-//            MuxedAccount sourceAccount;
+//            AccountID sourceAccount;
 //            SequenceNumber seqNum;
 //            uint32 opNum;
 //        }
 //
 #[derive(Debug, XDROut, XDRIn)]
-pub struct OperationIdId {
+pub struct HashIdPreimageOperationId {
     // TODO
-    pub source_account: MuxedAccount,
+    pub source_account: AccountId,
     // TODO
     pub seq_num: SequenceNumber,
     // TODO
     pub op_num: Uint32,
 }
 
-// OperationId is an XDR Union defines as:
+// HashIdPreimageRevokeId is an XDR NestedStruct defines as:
 //
-//   union OperationID switch (EnvelopeType type)
+//   struct
+//        {
+//            AccountID sourceAccount;
+//            SequenceNumber seqNum;
+//            uint32 opNum;
+//            PoolID liquidityPoolID;
+//            Asset asset;
+//        }
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct HashIdPreimageRevokeId {
+    // TODO
+    pub source_account: AccountId,
+    // TODO
+    pub seq_num: SequenceNumber,
+    // TODO
+    pub op_num: Uint32,
+    // TODO
+    pub liquidity_pool_id: PoolId,
+    // TODO
+    pub asset: Asset,
+}
+
+// HashIdPreimage is an XDR Union defines as:
+//
+//   union HashIDPreimage switch (EnvelopeType type)
 //    {
 //    case ENVELOPE_TYPE_OP_ID:
 //        struct
 //        {
-//            MuxedAccount sourceAccount;
+//            AccountID sourceAccount;
 //            SequenceNumber seqNum;
 //            uint32 opNum;
-//        } id;
+//        } operationID;
+//    case ENVELOPE_TYPE_POOL_REVOKE_OP_ID:
+//        struct
+//        {
+//            AccountID sourceAccount;
+//            SequenceNumber seqNum;
+//            uint32 opNum;
+//            PoolID liquidityPoolID;
+//            Asset asset;
+//        } revokeID;
 //    };
 //
 // union
 #[derive(Debug, XDROut, XDRIn)]
-pub enum OperationId {
+pub enum HashIdPreimage {
     // IDEN ENVELOPE_TYPE_OP_ID
-    EnvelopeTypeOpId(OperationIdId),
+    #[discriminant(value = "6")]
+    EnvelopeTypeOpId(HashIdPreimageOperationId),
+    // IDEN ENVELOPE_TYPE_POOL_REVOKE_OP_ID
+    #[discriminant(value = "7")]
+    EnvelopeTypePoolRevokeOpId(HashIdPreimageRevokeId),
 }
 
 // MemoType is an XDR Enum defines as:
@@ -3792,7 +4465,6 @@ pub struct Transaction {
     // TODO
     pub memo: Memo,
     // TODO
-    #[array(var = 20)]
     pub operations: Vec<Operation>,
     // TODO
     pub ext: TransactionExt,
@@ -3813,7 +4485,6 @@ pub struct TransactionV1Envelope {
     // TODO
     pub tx: Transaction,
     // TODO
-    #[array(var = 20)]
     pub signatures: Vec<DecoratedSignature>,
 }
 
@@ -3829,6 +4500,7 @@ pub struct TransactionV1Envelope {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum FeeBumpTransactionInnerTx {
     // IDEN ENVELOPE_TYPE_TX
+    #[discriminant(value = "2")]
     EnvelopeTypeTx(TransactionV1Envelope),
 }
 
@@ -3894,7 +4566,6 @@ pub struct FeeBumpTransactionEnvelope {
     // TODO
     pub tx: FeeBumpTransaction,
     // TODO
-    #[array(var = 20)]
     pub signatures: Vec<DecoratedSignature>,
 }
 
@@ -3970,6 +4641,55 @@ pub struct TransactionSignaturePayload {
     pub tagged_transaction: TransactionSignaturePayloadTaggedTransaction,
 }
 
+// ClaimAtomType is an XDR Enum defines as:
+//
+//   enum ClaimAtomType
+//    {
+//        CLAIM_ATOM_TYPE_V0 = 0,
+//        CLAIM_ATOM_TYPE_ORDER_BOOK = 1,
+//        CLAIM_ATOM_TYPE_LIQUIDITY_POOL = 2
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimAtomType {
+    ClaimAtomTypeV0 = 0,
+    ClaimAtomTypeOrderBook = 1,
+    ClaimAtomTypeLiquidityPool = 2,
+}
+
+// ClaimOfferAtomV0 is an XDR Struct defines as:
+//
+//   struct ClaimOfferAtomV0
+//    {
+//        // emitted to identify the offer
+//        uint256 sellerEd25519; // Account that owns the offer
+//        int64 offerID;
+//
+//        // amount and asset taken from the owner
+//        Asset assetSold;
+//        int64 amountSold;
+//
+//        // amount and asset sent to the owner
+//        Asset assetBought;
+//        int64 amountBought;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct ClaimOfferAtomV0 {
+    // TODO
+    pub seller_ed25519: Uint256,
+    // TODO
+    pub offer_id: Int64,
+    // TODO
+    pub asset_sold: Asset,
+    // TODO
+    pub amount_sold: Int64,
+    // TODO
+    pub asset_bought: Asset,
+    // TODO
+    pub amount_bought: Int64,
+}
+
 // ClaimOfferAtom is an XDR Struct defines as:
 //
 //   struct ClaimOfferAtom
@@ -4001,6 +4721,58 @@ pub struct ClaimOfferAtom {
     pub asset_bought: Asset,
     // TODO
     pub amount_bought: Int64,
+}
+
+// ClaimLiquidityAtom is an XDR Struct defines as:
+//
+//   struct ClaimLiquidityAtom
+//    {
+//        PoolID liquidityPoolID;
+//
+//        // amount and asset taken from the pool
+//        Asset assetSold;
+//        int64 amountSold;
+//
+//        // amount and asset sent to the pool
+//        Asset assetBought;
+//        int64 amountBought;
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub struct ClaimLiquidityAtom {
+    // TODO
+    pub liquidity_pool_id: PoolId,
+    // TODO
+    pub asset_sold: Asset,
+    // TODO
+    pub amount_sold: Int64,
+    // TODO
+    pub asset_bought: Asset,
+    // TODO
+    pub amount_bought: Int64,
+}
+
+// ClaimAtom is an XDR Union defines as:
+//
+//   union ClaimAtom switch (ClaimAtomType type)
+//    {
+//    case CLAIM_ATOM_TYPE_V0:
+//        ClaimOfferAtomV0 v0;
+//    case CLAIM_ATOM_TYPE_ORDER_BOOK:
+//        ClaimOfferAtom orderBook;
+//    case CLAIM_ATOM_TYPE_LIQUIDITY_POOL:
+//        ClaimLiquidityAtom liquidityPool;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClaimAtom {
+    // IDEN CLAIM_ATOM_TYPE_V0
+    ClaimAtomTypeV0(ClaimOfferAtomV0),
+    // IDEN CLAIM_ATOM_TYPE_ORDER_BOOK
+    ClaimAtomTypeOrderBook(ClaimOfferAtom),
+    // IDEN CLAIM_ATOM_TYPE_LIQUIDITY_POOL
+    ClaimAtomTypeLiquidityPool(ClaimLiquidityAtom),
 }
 
 // CreateAccountResultCode is an XDR Enum defines as:
@@ -4058,7 +4830,7 @@ pub enum CreateAccountResult {
 //   enum PaymentResultCode
 //    {
 //        // codes considered as "success" for the operation
-//        PAYMENT_SUCCESS = 0, // payment successfuly completed
+//        PAYMENT_SUCCESS = 0, // payment successfully completed
 //
 //        // codes considered as "failure" for the operation
 //        PAYMENT_MALFORMED = -1,          // bad input
@@ -4193,26 +4965,27 @@ pub struct SimplePaymentResult {
 //
 //   struct
 //        {
-//            ClaimOfferAtom offers<>;
+//            ClaimAtom offers<>;
 //            SimplePaymentResult last;
 //        }
 //
 #[derive(Debug, XDROut, XDRIn)]
 pub struct PathPaymentStrictReceiveResultSuccess {
     // TODO
-    pub offers: Vec<ClaimOfferAtom>,
+    pub offers: Vec<ClaimAtom>,
     // TODO
     pub last: SimplePaymentResult,
 }
 
 // PathPaymentStrictReceiveResult is an XDR Union defines as:
 //
-//   union PathPaymentStrictReceiveResult switch (PathPaymentStrictReceiveResultCode code)
+//   union PathPaymentStrictReceiveResult switch (
+//        PathPaymentStrictReceiveResultCode code)
 //    {
 //    case PATH_PAYMENT_STRICT_RECEIVE_SUCCESS:
 //        struct
 //        {
-//            ClaimOfferAtom offers<>;
+//            ClaimAtom offers<>;
 //            SimplePaymentResult last;
 //        } success;
 //    case PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER:
@@ -4227,9 +5000,6 @@ pub enum PathPaymentStrictReceiveResult {
     // IDEN PATH_PAYMENT_STRICT_RECEIVE_SUCCESS
     #[discriminant(value = "0")]
     PathPaymentStrictReceiveSuccess(PathPaymentStrictReceiveResultSuccess),
-    // IDEN PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER
-    #[discriminant(value = "-9")]
-    PathPaymentStrictReceiveNoIssuer(Asset),
     #[discriminant(value = "-1")]
     PathPaymentStrictReceiveMalformed(()),
     #[discriminant(value = "-2")]
@@ -4246,6 +5016,9 @@ pub enum PathPaymentStrictReceiveResult {
     PathPaymentStrictReceiveNotAuthorized(()),
     #[discriminant(value = "-8")]
     PathPaymentStrictReceiveLineFull(()),
+    // IDEN PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER
+    #[discriminant(value = "-9")]
+    PathPaymentStrictReceiveNoIssuer(Asset),
     #[discriminant(value = "-10")]
     PathPaymentStrictReceiveTooFewOffers(()),
     #[discriminant(value = "-11")]
@@ -4305,14 +5078,14 @@ pub enum PathPaymentStrictSendResultCode {
 //
 //   struct
 //        {
-//            ClaimOfferAtom offers<>;
+//            ClaimAtom offers<>;
 //            SimplePaymentResult last;
 //        }
 //
 #[derive(Debug, XDROut, XDRIn)]
 pub struct PathPaymentStrictSendResultSuccess {
     // TODO
-    pub offers: Vec<ClaimOfferAtom>,
+    pub offers: Vec<ClaimAtom>,
     // TODO
     pub last: SimplePaymentResult,
 }
@@ -4324,7 +5097,7 @@ pub struct PathPaymentStrictSendResultSuccess {
 //    case PATH_PAYMENT_STRICT_SEND_SUCCESS:
 //        struct
 //        {
-//            ClaimOfferAtom offers<>;
+//            ClaimAtom offers<>;
 //            SimplePaymentResult last;
 //        } success;
 //    case PATH_PAYMENT_STRICT_SEND_NO_ISSUER:
@@ -4339,9 +5112,6 @@ pub enum PathPaymentStrictSendResult {
     // IDEN PATH_PAYMENT_STRICT_SEND_SUCCESS
     #[discriminant(value = "0")]
     PathPaymentStrictSendSuccess(PathPaymentStrictSendResultSuccess),
-    // IDEN PATH_PAYMENT_STRICT_SEND_NO_ISSUER
-    #[discriminant(value = "-9")]
-    PathPaymentStrictSendNoIssuer(Asset),
     #[discriminant(value = "-1")]
     PathPaymentStrictSendMalformed(()),
     #[discriminant(value = "-2")]
@@ -4358,6 +5128,9 @@ pub enum PathPaymentStrictSendResult {
     PathPaymentStrictSendNotAuthorized(()),
     #[discriminant(value = "-8")]
     PathPaymentStrictSendLineFull(()),
+    // IDEN PATH_PAYMENT_STRICT_SEND_NO_ISSUER
+    #[discriminant(value = "-9")]
+    PathPaymentStrictSendNoIssuer(Asset),
     #[discriminant(value = "-10")]
     PathPaymentStrictSendTooFewOffers(()),
     #[discriminant(value = "-11")]
@@ -4443,9 +5216,12 @@ pub enum ManageOfferEffect {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum ManageOfferSuccessResultOffer {
     // IDEN MANAGE_OFFER_CREATED
+    #[discriminant(value = "0")]
     ManageOfferCreated(OfferEntry),
     // IDEN MANAGE_OFFER_UPDATED
+    #[discriminant(value = "1")]
     ManageOfferUpdated(OfferEntry),
+    #[discriminant(value = "2")]
     ManageOfferDeleted(()),
 }
 
@@ -4454,7 +5230,7 @@ pub enum ManageOfferSuccessResultOffer {
 //   struct ManageOfferSuccessResult
 //    {
 //        // offers that got claimed while creating this offer
-//        ClaimOfferAtom offersClaimed<>;
+//        ClaimAtom offersClaimed<>;
 //
 //        union switch (ManageOfferEffect effect)
 //        {
@@ -4470,7 +5246,7 @@ pub enum ManageOfferSuccessResultOffer {
 #[derive(Debug, XDROut, XDRIn)]
 pub struct ManageOfferSuccessResult {
     // TODO
-    pub offers_claimed: Vec<ClaimOfferAtom>,
+    pub offers_claimed: Vec<ClaimAtom>,
     // TODO
     pub offer: ManageOfferSuccessResultOffer,
 }
@@ -4617,7 +5393,9 @@ pub enum ManageBuyOfferResult {
 //        SET_OPTIONS_UNKNOWN_FLAG = -6,           // can't set an unknown flag
 //        SET_OPTIONS_THRESHOLD_OUT_OF_RANGE = -7, // bad value for weight/threshold
 //        SET_OPTIONS_BAD_SIGNER = -8,             // signer cannot be masterkey
-//        SET_OPTIONS_INVALID_HOME_DOMAIN = -9     // malformed home domain
+//        SET_OPTIONS_INVALID_HOME_DOMAIN = -9,    // malformed home domain
+//        SET_OPTIONS_AUTH_REVOCABLE_REQUIRED =
+//            -10 // auth revocable is required for clawback
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -4632,6 +5410,7 @@ pub enum SetOptionsResultCode {
     SetOptionsThresholdOutOfRange = -7,
     SetOptionsBadSigner = -8,
     SetOptionsInvalidHomeDomain = -9,
+    SetOptionsAuthRevocableRequired = -10,
 }
 
 // SetOptionsResult is an XDR Union defines as:
@@ -4668,6 +5447,8 @@ pub enum SetOptionsResult {
     SetOptionsBadSigner(()),
     #[discriminant(value = "-9")]
     SetOptionsInvalidHomeDomain(()),
+    #[discriminant(value = "-10")]
+    SetOptionsAuthRevocableRequired(()),
 }
 
 // ChangeTrustResultCode is an XDR Enum defines as:
@@ -4683,7 +5464,10 @@ pub enum SetOptionsResult {
 //                                         // cannot create with a limit of 0
 //        CHANGE_TRUST_LOW_RESERVE =
 //            -4, // not enough funds to create a new trust line,
-//        CHANGE_TRUST_SELF_NOT_ALLOWED = -5 // trusting self is not allowed
+//        CHANGE_TRUST_SELF_NOT_ALLOWED = -5, // trusting self is not allowed
+//        CHANGE_TRUST_TRUST_LINE_MISSING = -6, // Asset trustline is missing for pool
+//        CHANGE_TRUST_CANNOT_DELETE = -7, // Asset trustline is still referenced in a pool
+//        CHANGE_TRUST_NOT_AUTH_MAINTAIN_LIABILITIES = -8 // Asset trustline is deauthorized
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -4694,6 +5478,9 @@ pub enum ChangeTrustResultCode {
     ChangeTrustInvalidLimit = -3,
     ChangeTrustLowReserve = -4,
     ChangeTrustSelfNotAllowed = -5,
+    ChangeTrustTrustLineMissing = -6,
+    ChangeTrustCannotDelete = -7,
+    ChangeTrustNotAuthMaintainLiabilities = -8,
 }
 
 // ChangeTrustResult is an XDR Union defines as:
@@ -4722,6 +5509,12 @@ pub enum ChangeTrustResult {
     ChangeTrustLowReserve(()),
     #[discriminant(value = "-5")]
     ChangeTrustSelfNotAllowed(()),
+    #[discriminant(value = "-6")]
+    ChangeTrustTrustLineMissing(()),
+    #[discriminant(value = "-7")]
+    ChangeTrustCannotDelete(()),
+    #[discriminant(value = "-8")]
+    ChangeTrustNotAuthMaintainLiabilities(()),
 }
 
 // AllowTrustResultCode is an XDR Enum defines as:
@@ -4736,7 +5529,9 @@ pub enum ChangeTrustResult {
 //                                        // source account does not require trust
 //        ALLOW_TRUST_TRUST_NOT_REQUIRED = -3,
 //        ALLOW_TRUST_CANT_REVOKE = -4,     // source account can't revoke trust,
-//        ALLOW_TRUST_SELF_NOT_ALLOWED = -5 // trusting self is not allowed
+//        ALLOW_TRUST_SELF_NOT_ALLOWED = -5, // trusting self is not allowed
+//        ALLOW_TRUST_LOW_RESERVE = -6 // claimable balances can't be created
+//                                     // on revoke due to low reserves
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -4747,6 +5542,7 @@ pub enum AllowTrustResultCode {
     AllowTrustTrustNotRequired = -3,
     AllowTrustCantRevoke = -4,
     AllowTrustSelfNotAllowed = -5,
+    AllowTrustLowReserve = -6,
 }
 
 // AllowTrustResult is an XDR Union defines as:
@@ -4775,6 +5571,8 @@ pub enum AllowTrustResult {
     AllowTrustCantRevoke(()),
     #[discriminant(value = "-5")]
     AllowTrustSelfNotAllowed(()),
+    #[discriminant(value = "-6")]
+    AllowTrustLowReserve(()),
 }
 
 // AccountMergeResultCode is an XDR Enum defines as:
@@ -4811,7 +5609,7 @@ pub enum AccountMergeResultCode {
 //   union AccountMergeResult switch (AccountMergeResultCode code)
 //    {
 //    case ACCOUNT_MERGE_SUCCESS:
-//        int64 sourceAccountBalance; // how much got transfered from source account
+//        int64 sourceAccountBalance; // how much got transferred from source account
 //    default:
 //        void;
 //    };
@@ -4969,6 +5767,7 @@ pub enum BumpSequenceResultCode {
 // union
 #[derive(Debug, XDROut, XDRIn)]
 pub enum BumpSequenceResult {
+    // IDEN BUMP_SEQUENCE_SUCCESS
     #[discriminant(value = "0")]
     BumpSequenceSuccess(()),
     #[discriminant(value = "-1")]
@@ -4999,7 +5798,8 @@ pub enum CreateClaimableBalanceResultCode {
 
 // CreateClaimableBalanceResult is an XDR Union defines as:
 //
-//   union CreateClaimableBalanceResult switch (CreateClaimableBalanceResultCode code)
+//   union CreateClaimableBalanceResult switch (
+//        CreateClaimableBalanceResultCode code)
 //    {
 //    case CREATE_CLAIMABLE_BALANCE_SUCCESS:
 //        ClaimableBalanceID balanceID;
@@ -5099,7 +5899,8 @@ pub enum BeginSponsoringFutureReservesResultCode {
 
 // BeginSponsoringFutureReservesResult is an XDR Union defines as:
 //
-//   union BeginSponsoringFutureReservesResult switch (BeginSponsoringFutureReservesResultCode code)
+//   union BeginSponsoringFutureReservesResult switch (
+//        BeginSponsoringFutureReservesResultCode code)
 //    {
 //    case BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS:
 //        void;
@@ -5140,7 +5941,8 @@ pub enum EndSponsoringFutureReservesResultCode {
 
 // EndSponsoringFutureReservesResult is an XDR Union defines as:
 //
-//   union EndSponsoringFutureReservesResult switch (EndSponsoringFutureReservesResultCode code)
+//   union EndSponsoringFutureReservesResult switch (
+//        EndSponsoringFutureReservesResultCode code)
 //    {
 //    case END_SPONSORING_FUTURE_RESERVES_SUCCESS:
 //        void;
@@ -5169,7 +5971,8 @@ pub enum EndSponsoringFutureReservesResult {
 //        REVOKE_SPONSORSHIP_DOES_NOT_EXIST = -1,
 //        REVOKE_SPONSORSHIP_NOT_SPONSOR = -2,
 //        REVOKE_SPONSORSHIP_LOW_RESERVE = -3,
-//        REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE = -4
+//        REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE = -4,
+//        REVOKE_SPONSORSHIP_MALFORMED = -5
 //    };
 //
 #[derive(Debug, XDROut, XDRIn)]
@@ -5179,6 +5982,7 @@ pub enum RevokeSponsorshipResultCode {
     RevokeSponsorshipNotSponsor = -2,
     RevokeSponsorshipLowReserve = -3,
     RevokeSponsorshipOnlyTransferable = -4,
+    RevokeSponsorshipMalformed = -5,
 }
 
 // RevokeSponsorshipResult is an XDR Union defines as:
@@ -5205,6 +6009,280 @@ pub enum RevokeSponsorshipResult {
     RevokeSponsorshipLowReserve(()),
     #[discriminant(value = "-4")]
     RevokeSponsorshipOnlyTransferable(()),
+    #[discriminant(value = "-5")]
+    RevokeSponsorshipMalformed(()),
+}
+
+// ClawbackResultCode is an XDR Enum defines as:
+//
+//   enum ClawbackResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        CLAWBACK_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        CLAWBACK_MALFORMED = -1,
+//        CLAWBACK_NOT_CLAWBACK_ENABLED = -2,
+//        CLAWBACK_NO_TRUST = -3,
+//        CLAWBACK_UNDERFUNDED = -4
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClawbackResultCode {
+    ClawbackSuccess = 0,
+    ClawbackMalformed = -1,
+    ClawbackNotClawbackEnabled = -2,
+    ClawbackNoTrust = -3,
+    ClawbackUnderfunded = -4,
+}
+
+// ClawbackResult is an XDR Union defines as:
+//
+//   union ClawbackResult switch (ClawbackResultCode code)
+//    {
+//    case CLAWBACK_SUCCESS:
+//        void;
+//    default:
+//        void;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClawbackResult {
+    // IDEN CLAWBACK_SUCCESS
+    #[discriminant(value = "0")]
+    ClawbackSuccess(()),
+    #[discriminant(value = "-1")]
+    ClawbackMalformed(()),
+    #[discriminant(value = "-2")]
+    ClawbackNotClawbackEnabled(()),
+    #[discriminant(value = "-3")]
+    ClawbackNoTrust(()),
+    #[discriminant(value = "-4")]
+    ClawbackUnderfunded(()),
+}
+
+// ClawbackClaimableBalanceResultCode is an XDR Enum defines as:
+//
+//   enum ClawbackClaimableBalanceResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        CLAWBACK_CLAIMABLE_BALANCE_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        CLAWBACK_CLAIMABLE_BALANCE_DOES_NOT_EXIST = -1,
+//        CLAWBACK_CLAIMABLE_BALANCE_NOT_ISSUER = -2,
+//        CLAWBACK_CLAIMABLE_BALANCE_NOT_CLAWBACK_ENABLED = -3
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClawbackClaimableBalanceResultCode {
+    ClawbackClaimableBalanceSuccess = 0,
+    ClawbackClaimableBalanceDoesNotExist = -1,
+    ClawbackClaimableBalanceNotIssuer = -2,
+    ClawbackClaimableBalanceNotClawbackEnabled = -3,
+}
+
+// ClawbackClaimableBalanceResult is an XDR Union defines as:
+//
+//   union ClawbackClaimableBalanceResult switch (
+//        ClawbackClaimableBalanceResultCode code)
+//    {
+//    case CLAWBACK_CLAIMABLE_BALANCE_SUCCESS:
+//        void;
+//    default:
+//        void;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum ClawbackClaimableBalanceResult {
+    // IDEN CLAWBACK_CLAIMABLE_BALANCE_SUCCESS
+    #[discriminant(value = "0")]
+    ClawbackClaimableBalanceSuccess(()),
+    #[discriminant(value = "-1")]
+    ClawbackClaimableBalanceDoesNotExist(()),
+    #[discriminant(value = "-2")]
+    ClawbackClaimableBalanceNotIssuer(()),
+    #[discriminant(value = "-3")]
+    ClawbackClaimableBalanceNotClawbackEnabled(()),
+}
+
+// SetTrustLineFlagsResultCode is an XDR Enum defines as:
+//
+//   enum SetTrustLineFlagsResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        SET_TRUST_LINE_FLAGS_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        SET_TRUST_LINE_FLAGS_MALFORMED = -1,
+//        SET_TRUST_LINE_FLAGS_NO_TRUST_LINE = -2,
+//        SET_TRUST_LINE_FLAGS_CANT_REVOKE = -3,
+//        SET_TRUST_LINE_FLAGS_INVALID_STATE = -4,
+//        SET_TRUST_LINE_FLAGS_LOW_RESERVE = -5 // claimable balances can't be created
+//                                              // on revoke due to low reserves
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum SetTrustLineFlagsResultCode {
+    SetTrustLineFlagsSuccess = 0,
+    SetTrustLineFlagsMalformed = -1,
+    SetTrustLineFlagsNoTrustLine = -2,
+    SetTrustLineFlagsCantRevoke = -3,
+    SetTrustLineFlagsInvalidState = -4,
+    SetTrustLineFlagsLowReserve = -5,
+}
+
+// SetTrustLineFlagsResult is an XDR Union defines as:
+//
+//   union SetTrustLineFlagsResult switch (SetTrustLineFlagsResultCode code)
+//    {
+//    case SET_TRUST_LINE_FLAGS_SUCCESS:
+//        void;
+//    default:
+//        void;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum SetTrustLineFlagsResult {
+    // IDEN SET_TRUST_LINE_FLAGS_SUCCESS
+    #[discriminant(value = "0")]
+    SetTrustLineFlagsSuccess(()),
+    #[discriminant(value = "-1")]
+    SetTrustLineFlagsMalformed(()),
+    #[discriminant(value = "-2")]
+    SetTrustLineFlagsNoTrustLine(()),
+    #[discriminant(value = "-3")]
+    SetTrustLineFlagsCantRevoke(()),
+    #[discriminant(value = "-4")]
+    SetTrustLineFlagsInvalidState(()),
+    #[discriminant(value = "-5")]
+    SetTrustLineFlagsLowReserve(()),
+}
+
+// LiquidityPoolDepositResultCode is an XDR Enum defines as:
+//
+//   enum LiquidityPoolDepositResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        LIQUIDITY_POOL_DEPOSIT_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        LIQUIDITY_POOL_DEPOSIT_MALFORMED = -1,      // bad input
+//        LIQUIDITY_POOL_DEPOSIT_NO_TRUST = -2,       // no trust line for one of the
+//                                                    // assets
+//        LIQUIDITY_POOL_DEPOSIT_NOT_AUTHORIZED = -3, // not authorized for one of the
+//                                                    // assets
+//        LIQUIDITY_POOL_DEPOSIT_UNDERFUNDED = -4,    // not enough balance for one of
+//                                                    // the assets
+//        LIQUIDITY_POOL_DEPOSIT_LINE_FULL = -5,      // pool share trust line doesn't
+//                                                    // have sufficient limit
+//        LIQUIDITY_POOL_DEPOSIT_BAD_PRICE = -6,      // deposit price outside bounds
+//        LIQUIDITY_POOL_DEPOSIT_POOL_FULL = -7       // pool reserves are full
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum LiquidityPoolDepositResultCode {
+    LiquidityPoolDepositSuccess = 0,
+    LiquidityPoolDepositMalformed = -1,
+    LiquidityPoolDepositNoTrust = -2,
+    LiquidityPoolDepositNotAuthorized = -3,
+    LiquidityPoolDepositUnderfunded = -4,
+    LiquidityPoolDepositLineFull = -5,
+    LiquidityPoolDepositBadPrice = -6,
+    LiquidityPoolDepositPoolFull = -7,
+}
+
+// LiquidityPoolDepositResult is an XDR Union defines as:
+//
+//   union LiquidityPoolDepositResult switch (
+//        LiquidityPoolDepositResultCode code)
+//    {
+//    case LIQUIDITY_POOL_DEPOSIT_SUCCESS:
+//        void;
+//    default:
+//        void;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum LiquidityPoolDepositResult {
+    // IDEN LIQUIDITY_POOL_DEPOSIT_SUCCESS
+    #[discriminant(value = "0")]
+    LiquidityPoolDepositSuccess(()),
+    #[discriminant(value = "-1")]
+    LiquidityPoolDepositMalformed(()),
+    #[discriminant(value = "-2")]
+    LiquidityPoolDepositNoTrust(()),
+    #[discriminant(value = "-3")]
+    LiquidityPoolDepositNotAuthorized(()),
+    #[discriminant(value = "-4")]
+    LiquidityPoolDepositUnderfunded(()),
+    #[discriminant(value = "-5")]
+    LiquidityPoolDepositLineFull(()),
+    #[discriminant(value = "-6")]
+    LiquidityPoolDepositBadPrice(()),
+    #[discriminant(value = "-7")]
+    LiquidityPoolDepositPoolFull(()),
+}
+
+// LiquidityPoolWithdrawResultCode is an XDR Enum defines as:
+//
+//   enum LiquidityPoolWithdrawResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        LIQUIDITY_POOL_WITHDRAW_SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        LIQUIDITY_POOL_WITHDRAW_MALFORMED = -1,      // bad input
+//        LIQUIDITY_POOL_WITHDRAW_NO_TRUST = -2,       // no trust line for one of the
+//                                                     // assets
+//        LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED = -3,    // not enough balance of the
+//                                                     // pool share
+//        LIQUIDITY_POOL_WITHDRAW_LINE_FULL = -4,      // would go above limit for one
+//                                                     // of the assets
+//        LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM = -5   // didn't withdraw enough
+//    };
+//
+#[derive(Debug, XDROut, XDRIn)]
+pub enum LiquidityPoolWithdrawResultCode {
+    LiquidityPoolWithdrawSuccess = 0,
+    LiquidityPoolWithdrawMalformed = -1,
+    LiquidityPoolWithdrawNoTrust = -2,
+    LiquidityPoolWithdrawUnderfunded = -3,
+    LiquidityPoolWithdrawLineFull = -4,
+    LiquidityPoolWithdrawUnderMinimum = -5,
+}
+
+// LiquidityPoolWithdrawResult is an XDR Union defines as:
+//
+//   union LiquidityPoolWithdrawResult switch (
+//        LiquidityPoolWithdrawResultCode code)
+//    {
+//    case LIQUIDITY_POOL_WITHDRAW_SUCCESS:
+//        void;
+//    default:
+//        void;
+//    };
+//
+// union
+#[derive(Debug, XDROut, XDRIn)]
+pub enum LiquidityPoolWithdrawResult {
+    // IDEN LIQUIDITY_POOL_WITHDRAW_SUCCESS
+    #[discriminant(value = "0")]
+    LiquidityPoolWithdrawSuccess(()),
+    #[discriminant(value = "-1")]
+    LiquidityPoolWithdrawMalformed(()),
+    #[discriminant(value = "-2")]
+    LiquidityPoolWithdrawNoTrust(()),
+    #[discriminant(value = "-3")]
+    LiquidityPoolWithdrawUnderfunded(()),
+    #[discriminant(value = "-4")]
+    LiquidityPoolWithdrawLineFull(()),
+    #[discriminant(value = "-5")]
+    LiquidityPoolWithdrawUnderMinimum(()),
 }
 
 // OperationResultCode is an XDR Enum defines as:
@@ -5274,49 +6352,93 @@ pub enum OperationResultCode {
 //            EndSponsoringFutureReservesResult endSponsoringFutureReservesResult;
 //        case REVOKE_SPONSORSHIP:
 //            RevokeSponsorshipResult revokeSponsorshipResult;
+//        case CLAWBACK:
+//            ClawbackResult clawbackResult;
+//        case CLAWBACK_CLAIMABLE_BALANCE:
+//            ClawbackClaimableBalanceResult clawbackClaimableBalanceResult;
+//        case SET_TRUST_LINE_FLAGS:
+//            SetTrustLineFlagsResult setTrustLineFlagsResult;
+//        case LIQUIDITY_POOL_DEPOSIT:
+//            LiquidityPoolDepositResult liquidityPoolDepositResult;
+//        case LIQUIDITY_POOL_WITHDRAW:
+//            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
 //        }
 //
 // union
 #[derive(Debug, XDROut, XDRIn)]
 pub enum OperationResultTr {
     // IDEN CREATE_ACCOUNT
+    #[discriminant(value = "0")]
     CreateAccount(CreateAccountResult),
     // IDEN PAYMENT
+    #[discriminant(value = "1")]
     Payment(PaymentResult),
     // IDEN PATH_PAYMENT_STRICT_RECEIVE
+    #[discriminant(value = "2")]
     PathPaymentStrictReceive(PathPaymentStrictReceiveResult),
     // IDEN MANAGE_SELL_OFFER
+    #[discriminant(value = "3")]
     ManageSellOffer(ManageSellOfferResult),
     // IDEN CREATE_PASSIVE_SELL_OFFER
+    #[discriminant(value = "4")]
     CreatePassiveSellOffer(ManageSellOfferResult),
     // IDEN SET_OPTIONS
+    #[discriminant(value = "5")]
     SetOptions(SetOptionsResult),
     // IDEN CHANGE_TRUST
+    #[discriminant(value = "6")]
     ChangeTrust(ChangeTrustResult),
     // IDEN ALLOW_TRUST
+    #[discriminant(value = "7")]
     AllowTrust(AllowTrustResult),
     // IDEN ACCOUNT_MERGE
+    #[discriminant(value = "8")]
     AccountMerge(AccountMergeResult),
     // IDEN INFLATION
+    #[discriminant(value = "9")]
     Inflation(InflationResult),
     // IDEN MANAGE_DATA
+    #[discriminant(value = "10")]
     ManageData(ManageDataResult),
     // IDEN BUMP_SEQUENCE
+    #[discriminant(value = "11")]
     BumpSequence(BumpSequenceResult),
     // IDEN MANAGE_BUY_OFFER
+    #[discriminant(value = "12")]
     ManageBuyOffer(ManageBuyOfferResult),
     // IDEN PATH_PAYMENT_STRICT_SEND
+    #[discriminant(value = "13")]
     PathPaymentStrictSend(PathPaymentStrictSendResult),
     // IDEN CREATE_CLAIMABLE_BALANCE
+    #[discriminant(value = "14")]
     CreateClaimableBalance(CreateClaimableBalanceResult),
     // IDEN CLAIM_CLAIMABLE_BALANCE
+    #[discriminant(value = "15")]
     ClaimClaimableBalance(ClaimClaimableBalanceResult),
     // IDEN BEGIN_SPONSORING_FUTURE_RESERVES
+    #[discriminant(value = "16")]
     BeginSponsoringFutureReserves(BeginSponsoringFutureReservesResult),
     // IDEN END_SPONSORING_FUTURE_RESERVES
+    #[discriminant(value = "17")]
     EndSponsoringFutureReserves(EndSponsoringFutureReservesResult),
     // IDEN REVOKE_SPONSORSHIP
+    #[discriminant(value = "18")]
     RevokeSponsorship(RevokeSponsorshipResult),
+    // IDEN CLAWBACK
+    #[discriminant(value = "19")]
+    Clawback(ClawbackResult),
+    // IDEN CLAWBACK_CLAIMABLE_BALANCE
+    #[discriminant(value = "20")]
+    ClawbackClaimableBalance(ClawbackClaimableBalanceResult),
+    // IDEN SET_TRUST_LINE_FLAGS
+    #[discriminant(value = "21")]
+    SetTrustLineFlags(SetTrustLineFlagsResult),
+    // IDEN LIQUIDITY_POOL_DEPOSIT
+    #[discriminant(value = "22")]
+    LiquidityPoolDeposit(LiquidityPoolDepositResult),
+    // IDEN LIQUIDITY_POOL_WITHDRAW
+    #[discriminant(value = "23")]
+    LiquidityPoolWithdraw(LiquidityPoolWithdrawResult),
 }
 
 // OperationResult is an XDR Union defines as:
@@ -5364,6 +6486,16 @@ pub enum OperationResultTr {
 //            EndSponsoringFutureReservesResult endSponsoringFutureReservesResult;
 //        case REVOKE_SPONSORSHIP:
 //            RevokeSponsorshipResult revokeSponsorshipResult;
+//        case CLAWBACK:
+//            ClawbackResult clawbackResult;
+//        case CLAWBACK_CLAIMABLE_BALANCE:
+//            ClawbackClaimableBalanceResult clawbackClaimableBalanceResult;
+//        case SET_TRUST_LINE_FLAGS:
+//            SetTrustLineFlagsResult setTrustLineFlagsResult;
+//        case LIQUIDITY_POOL_DEPOSIT:
+//            LiquidityPoolDepositResult liquidityPoolDepositResult;
+//        case LIQUIDITY_POOL_WITHDRAW:
+//            LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
 //        }
 //        tr;
 //    default:
@@ -5409,7 +6541,7 @@ pub enum OperationResult {
 //        txNO_ACCOUNT = -8,           // source account not found
 //        txINSUFFICIENT_FEE = -9,     // fee is too small
 //        txBAD_AUTH_EXTRA = -10,      // unused signatures attached to transaction
-//        txINTERNAL_ERROR = -11,      // an unknown error occured
+//        txINTERNAL_ERROR = -11,      // an unknown error occurred
 //
 //        txNOT_SUPPORTED = -12,         // transaction type not supported
 //        txFEE_BUMP_INNER_FAILED = -13, // fee bump inner transaction failed
@@ -5463,6 +6595,8 @@ pub enum TransactionResultCode {
 // union
 #[derive(Debug, XDROut, XDRIn)]
 pub enum InnerTransactionResultResult {
+    #[discriminant(value = "1")]
+    TxFeeBumpInnerSuccess(()),
     // IDEN txSUCCESS
     #[discriminant(value = "0")]
     TxSuccess(Vec<OperationResult>),
@@ -5502,6 +6636,8 @@ pub enum InnerTransactionResultResult {
     // IDEN txNOT_SUPPORTED
     #[discriminant(value = "-12")]
     TxNotSupported(()),
+    #[discriminant(value = "-13")]
+    TxFeeBumpInnerFailed(()),
     // IDEN txBAD_SPONSORSHIP
     #[discriminant(value = "-14")]
     TxBadSponsorship(()),
@@ -5607,9 +6743,6 @@ pub enum TransactionResultResult {
     // IDEN txFEE_BUMP_INNER_SUCCESS
     #[discriminant(value = "1")]
     TxFeeBumpInnerSuccess(InnerTransactionResultPair),
-    // IDEN txFEE_BUMP_INNER_FAILED
-    #[discriminant(value = "-13")]
-    TxFeeBumpInnerFailed(InnerTransactionResultPair),
     // IDEN txSUCCESS
     #[discriminant(value = "0")]
     TxSuccess(Vec<OperationResult>),
@@ -5638,6 +6771,9 @@ pub enum TransactionResultResult {
     TxInternalError(()),
     #[discriminant(value = "-12")]
     TxNotSupported(()),
+    #[discriminant(value = "-13")]
+    // IDEN txFEE_BUMP_INNER_FAILED
+    TxFeeBumpInnerFailed(InnerTransactionResultPair),
     #[discriminant(value = "-14")]
     TxBadSponsorship(()),
 }
@@ -5847,6 +6983,7 @@ pub enum SignerKeyType {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum PublicKey {
     // IDEN PUBLIC_KEY_TYPE_ED25519
+    #[discriminant(value = "0")]
     PublicKeyTypeEd25519(Uint256),
 }
 
@@ -5868,6 +7005,7 @@ pub enum PublicKey {
 #[derive(Debug, XDROut, XDRIn)]
 pub enum SignerKey {
     // IDEN SIGNER_KEY_TYPE_ED25519
+    #[discriminant(value = "0")]
     SignerKeyTypeEd25519(Uint256),
     // IDEN SIGNER_KEY_TYPE_PRE_AUTH_TX
     SignerKeyTypePreAuthTx(Uint256),
