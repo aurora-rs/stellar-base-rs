@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING: Use `ChangeTrustAsset` for `ChangeTrust` operation
 - BREAKING: Use `TrustLineAsset` instead of `Asset` in `LedgerKey::Trustline`
 - BREAKING: Update `xdr_generated.rs` from the current stellar X files.
+- Update dependency's versions
 
 ### Fixed
 
