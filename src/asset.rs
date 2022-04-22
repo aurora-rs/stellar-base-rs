@@ -292,6 +292,17 @@ impl TrustLineAsset {
     }
 }
 
+impl From<Asset> for TrustLineAsset {
+    fn from(asset: Asset) -> Self {
+        match asset {
+            Asset::Native => TrustLineAsset::new_native(),
+            Asset::Credit(credit) => {
+                TrustLineAsset::new_credit(credit.code(), credit.issuer().clone()).unwrap()
+            }
+        }
+    }
+}
+
 impl XDRSerialize for TrustLineAsset {
     fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr_asset = self.to_xdr()?;

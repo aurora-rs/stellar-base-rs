@@ -4,7 +4,7 @@ use crate::crypto::MuxedAccount;
 use crate::error::{Error, Result};
 use crate::liquidity_pool::LiquidityPoolParameters;
 use crate::operations::Operation;
-use crate::{xdr, PublicKey};
+use crate::{xdr, Asset, PublicKey};
 use std::convert::TryInto;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -158,6 +158,17 @@ impl ChangeTrustAsset {
             xdr::ChangeTrustAsset::AssetTypePoolShare(ref pool_params_xdr) => {
                 let pool_params = LiquidityPoolParameters::from_xdr(pool_params_xdr)?;
                 Self::new_pool_share(pool_params)
+            }
+        }
+    }
+}
+
+impl From<Asset> for ChangeTrustAsset {
+    fn from(asset: Asset) -> Self {
+        match asset {
+            Asset::Native => ChangeTrustAsset::new_native().unwrap(),
+            Asset::Credit(credit) => {
+                ChangeTrustAsset::new_credit(credit.code(), credit.issuer().clone()).unwrap()
             }
         }
     }
