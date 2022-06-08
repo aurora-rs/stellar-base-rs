@@ -62,7 +62,7 @@ impl EndSponsoringFutureReservesOperationBuilder {
 
 #[cfg(test)]
 mod tests {
-    
+
     use crate::network::Network;
     use crate::operations::tests::*;
     use crate::operations::Operation;
