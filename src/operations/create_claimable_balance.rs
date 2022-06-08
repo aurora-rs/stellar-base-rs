@@ -168,7 +168,7 @@ mod tests {
     use crate::amount::Amount;
     use crate::asset::Asset;
     use crate::claim::{ClaimPredicate, Claimant};
-    
+
     use crate::network::Network;
     use crate::operations::tests::*;
     use crate::operations::Operation;
