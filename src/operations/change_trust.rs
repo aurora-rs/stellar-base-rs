@@ -198,7 +198,7 @@ impl ChangeTrustOperationBuilder {
             .ok_or_else(|| Error::InvalidOperation("missing change trust asset".to_string()))?;
 
         if let Some(limit) = &self.limit {
-            if limit.to_i64() <= 0 {
+            if limit.to_i64() < 0 {
                 return Err(Error::InvalidOperation(
                     "change trust limit must be positive".to_string(),
                 ));
