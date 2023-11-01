@@ -30,6 +30,8 @@ mod payment;
 mod revoke_sponsorship;
 mod set_options;
 mod set_trustline_flags;
+#[cfg(test)]
+pub mod tests;
 
 use crate::operations::clawback::ClawbackOperationBuilder;
 use crate::operations::clawback_claimable_balance::{

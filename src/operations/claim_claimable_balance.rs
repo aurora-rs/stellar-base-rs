@@ -95,17 +95,12 @@ impl ClaimClaimableBalanceOperationBuilder {
 #[cfg(test)]
 mod tests {
     use crate::claim::ClaimableBalanceId;
-    use crate::crypto::KeyPair;
+
     use crate::network::Network;
+    use crate::operations::tests::*;
     use crate::operations::Operation;
     use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-
-    fn keypair0() -> KeyPair {
-        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
-        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
-            .unwrap()
-    }
 
     #[test]
     fn test_claim_claimable_balance() {
@@ -122,7 +117,7 @@ mod tests {
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
+        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAPAAAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAAAAAAAAAAHqLnLFAAAAQH9SMMxYh28+t9WP0xrJWUZH/i7mk9jG1Qzjvnh2I2Hx/M8OTOqr0511hvBuHI+ETJiAEMUoFw8zb16fXHjQoQQ=";
@@ -147,7 +142,7 @@ mod tests {
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
+        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAA4Nxt4XJcrGZRYrUvrOc1sooiQ+QdEk1suS1wo+oucsUAAAAPAAAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAAAAAAAAAAHqLnLFAAAAQD80Q+16BK4ZzJzNGaesezr0cPxsyOvgVVlANU1g91tfM6/NkzLXkB1QI2F4xkXIbp5qbSJ/OfrGRxmsdwWo2g0=";

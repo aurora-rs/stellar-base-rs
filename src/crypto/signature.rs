@@ -1,18 +1,12 @@
 //! Transaction signatures.
-use crate::crypto::{hash, PublicKey, SecretKey};
+use crate::crypto::{hash, PublicKey};
 use crate::error::{Error, Result};
 use crate::network::Network;
 use crate::transaction::TransactionEnvelope;
 use crate::xdr::{self, XDRDeserialize, XDRSerialize};
-use sodiumoxide::crypto::sign::ed25519;
+use ed25519::Signature;
 use xdr_rs_serialize::de::XDRIn;
 use xdr_rs_serialize::ser::XDROut;
-
-/// A signature.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Signature {
-    sig: ed25519::Signature,
-}
 
 /// Last 4 bytes of a public key.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -48,63 +42,32 @@ pub struct Signer {
     weight: u32,
 }
 
-impl Signature {
-    /// Signs `data` using the `secret` key.
-    pub fn sign(secret: &SecretKey, data: &[u8]) -> Signature {
-        let sig = ed25519::sign_detached(data, &secret.inner());
-        Signature { sig }
-    }
-
-    /// Returns a `Signature` from bytes.
-    pub fn from_slice(sb: &[u8]) -> Result<Signature> {
-        let sig = ed25519::Signature::from_slice(sb).ok_or(Error::InvalidSignature)?;
-        Ok(Signature { sig })
-    }
-
-    /// Length in bytes of the signature.
-    pub fn len(&self) -> usize {
-        self.sig.0.len()
-    }
-
-    /// Returns `true` if the signature has no bytes.
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Convert to `Vec<u8>`.
-    pub fn to_vec(&self) -> Vec<u8> {
-        self.sig.0.to_vec()
-    }
-
-    /// Inner buffer as slice.
-    pub fn as_bytes(&self) -> &[u8] {
-        &self.sig.0
-    }
-
-    /// Verifise the signature againt the `data` and the `public` key.
-    /// Returns `true` if the signature is valid, `false` otherwise.
-    pub fn verify(&self, public: &PublicKey, data: &[u8]) -> bool {
-        ed25519::verify_detached(&self.sig, data, &public.inner())
-    }
-
+pub trait XdrSignature {
     /// Returns xdr object.
-    pub fn to_xdr(&self) -> Result<xdr::Signature> {
-        Ok(xdr::Signature::new(self.to_vec()))
+    fn to_xdr(&self) -> Result<xdr::Signature>;
+
+    /// Creates from xdr object.
+    fn from_xdr(x: &xdr::Signature) -> Result<Signature>;
+}
+
+impl XdrSignature for Signature {
+    /// Returns xdr object.
+    fn to_xdr(&self) -> Result<xdr::Signature> {
+        Ok(xdr::Signature::new(self.to_bytes().to_vec()))
     }
 
     /// Creates from xdr object.
-    pub fn from_xdr(x: &xdr::Signature) -> Result<Signature> {
-        Signature::from_slice(&x.value)
+    fn from_xdr(x: &xdr::Signature) -> Result<Signature> {
+        Signature::from_bytes(&x.value).map_err(|_| Error::InvalidSignature)
     }
 }
 
 impl SignatureHint {
     /// Creates a `SignatureHint` with the last 4 bytes of the public key `pk`.
-    pub fn from_public_key(pk: &PublicKey) -> SignatureHint {
+    pub fn from_public_key(pk: &[u8]) -> SignatureHint {
         let mut hint: [u8; 4] = Default::default();
-        let buf = pk.as_bytes();
-        let len = buf.len();
-        hint.copy_from_slice(&buf[len - 4..len]);
+        let len = pk.len();
+        hint.copy_from_slice(&pk[len - 4..len]);
         SignatureHint(hint)
     }
 
@@ -143,7 +106,7 @@ impl DecoratedSignature {
     /// Creates a new `DecoratedSignature` from the pre image.
     pub fn new_from_preimage(preimage: &[u8]) -> Result<DecoratedSignature> {
         let hint = SignatureHint::from_slice(&preimage[preimage.len() - 4..])?;
-        let signature = Signature::from_slice(&preimage)?;
+        let signature = Signature::from_bytes(&preimage).map_err(|_| Error::InvalidSignature)?;
         Ok(DecoratedSignature::new(hint, signature))
     }
 
