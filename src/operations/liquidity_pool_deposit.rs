@@ -196,15 +196,10 @@ impl LiquidityPoolDepositOperationBuilder {
 mod tests {
     use crate::amount::{Amount, Price};
     use crate::liquidity_pool::LiquidityPoolId;
+    use crate::operations::tests::*;
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-    use crate::{KeyPair, Operation};
+    use crate::Operation;
     use std::str::FromStr;
-
-    fn keypair0() -> KeyPair {
-        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
-        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
-            .unwrap()
-    }
 
     #[test]
     fn test_liquidity_pool_deposit() {

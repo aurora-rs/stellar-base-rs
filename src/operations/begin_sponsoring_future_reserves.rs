@@ -98,29 +98,11 @@ impl BeginSponsoringFutureReservesOperationBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::crypto::KeyPair;
     use crate::network::Network;
+    use crate::operations::tests::*;
     use crate::operations::Operation;
     use crate::transaction::{Transaction, TransactionEnvelope, MIN_BASE_FEE};
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-
-    fn keypair0() -> KeyPair {
-        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
-        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
-            .unwrap()
-    }
-
-    fn keypair1() -> KeyPair {
-        // GAS4V4O2B7DW5T7IQRPEEVCRXMDZESKISR7DVIGKZQYYV3OSQ5SH5LVP
-        KeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
-            .unwrap()
-    }
-
-    fn keypair2() -> KeyPair {
-        // GB7BDSZU2Y27LYNLALKKALB52WS2IZWYBDGY6EQBLEED3TJOCVMZRH7H
-        KeyPair::from_secret_seed("SBZVMB74Z76QZ3ZOY7UTDFYKMEGKW5XFJEB6PFKBF4UYSSWHG4EDH7PY")
-            .unwrap()
-    }
 
     #[test]
     fn test_begin_sponsoring_future_reserves() {
@@ -136,7 +118,7 @@ mod tests {
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
+        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAQAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAAAAAAHqLnLFAAAAQIf45R2LIdRhc5dYfL6gFHyeBmxaIMfts2/+oOOhyVyKXYShySjM3xR9k1dCbg7cmgGJAmPo49RZczTXE1Ufjgs=";
@@ -161,7 +143,7 @@ mod tests {
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp, &Network::new_test()).unwrap();
+        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAQAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAAAAAAHqLnLFAAAAQCxAVR1PtQyNc3Bin78gpQlhX+Gu6r9RWh7Rezak0wJwOebKRKsjdO0R3hvQN9ZwSAQDeF5Du4panJMptWkgLQo=";

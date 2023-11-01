@@ -91,14 +91,9 @@ impl ClawbackClaimableBalanceOperationBuilder {
 #[cfg(test)]
 mod tests {
     use crate::claim::ClaimableBalanceId;
+    use crate::operations::tests::*;
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-    use crate::{KeyPair, Operation};
-
-    fn keypair0() -> KeyPair {
-        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
-        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
-            .unwrap()
-    }
+    use crate::Operation;
 
     #[test]
     fn test_clawback_claimable_balance() {

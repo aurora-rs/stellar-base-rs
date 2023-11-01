@@ -138,21 +138,10 @@ impl ClawbackOperationBuilder {
 #[cfg(test)]
 mod tests {
     use crate::amount::Amount;
+    use crate::operations::tests::*;
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-    use crate::{Asset, KeyPair, Operation, PublicKey};
+    use crate::{Asset, Operation, PublicKey};
     use std::str::FromStr;
-
-    fn keypair0() -> KeyPair {
-        // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
-        KeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
-            .unwrap()
-    }
-
-    fn keypair1() -> KeyPair {
-        // GAS4V4O2B7DW5T7IQRPEEVCRXMDZESKISR7DVIGKZQYYV3OSQ5SH5LVP
-        KeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
-            .unwrap()
-    }
 
     fn asset0() -> Asset {
         let issuer =
