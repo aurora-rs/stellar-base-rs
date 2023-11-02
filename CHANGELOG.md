@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING: Use `TrustLineAsset` instead of `Asset` in `LedgerKey::Trustline`
 - BREAKING: Update `xdr_generated.rs` from the current stellar X files.
 
+### Fixed
+
+- Fix `ChangeTrustOperationBuilder` to allow removing trust lines.
+
 ## [0.5.0] - 2021-01-15
 ### Added
  - Add support for CAP-0023.
