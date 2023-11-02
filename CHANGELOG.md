@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix `ChangeTrustOperationBuilder` to allow removing trust lines.
+- Fix `ChangeTrustOperationBuilder` to allow explicitly passing limit 0.
 
 ## [0.5.0] - 2021-01-15
 ### Added
