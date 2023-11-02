@@ -197,8 +197,10 @@ impl ClaimPredicate {
                 }
             }
             xdr::ClaimPredicate::ClaimPredicateBeforeAbsoluteTime(time) => {
-                let datetime = Utc.timestamp(time.value, 0);
-                Ok(ClaimPredicate::new_before_absolute_time(datetime))
+                let datetime = Utc.timestamp_opt(time.value, 0).single();
+                datetime
+                    .map(ClaimPredicate::new_before_absolute_time)
+                    .ok_or(Error::XdrClaimPredicateError)
             }
             xdr::ClaimPredicate::ClaimPredicateBeforeRelativeTime(time) => {
                 let duration = Duration::seconds(time.value);

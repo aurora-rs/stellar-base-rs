@@ -107,10 +107,18 @@ impl TimeBounds {
         let mut res = TimeBounds::always_valid();
 
         if min_time_epoch != 0 {
-            res = res.with_lower(Utc.timestamp(min_time_epoch, 0))?;
+            res = res.with_lower(
+                Utc.timestamp_opt(min_time_epoch, 0)
+                    .single()
+                    .ok_or(Error::InvalidTimeBounds)?,
+            )?;
         }
         if max_time_epoch != 0 {
-            res = res.with_upper(Utc.timestamp(max_time_epoch, 0))?;
+            res = res.with_upper(
+                Utc.timestamp_opt(max_time_epoch, 0)
+                    .single()
+                    .ok_or(Error::InvalidTimeBounds)?,
+            )?;
         }
 
         Ok(res)
@@ -233,7 +241,10 @@ mod tests {
 
     #[test]
     fn test_serialize_with_bounds() {
-        let now = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(1594305941, 0), Utc);
+        let now = DateTime::<Utc>::from_naive_utc_and_offset(
+            NaiveDateTime::from_timestamp_opt(1594305941, 0).unwrap(),
+            Utc,
+        );
         let before_now = now - Duration::minutes(1);
         let tb = TimeBounds::always_valid()
             .with_lower(before_now)
@@ -253,7 +264,10 @@ mod tests {
 
     #[test]
     fn test_deserialize_with_bounds() {
-        let now = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(1594305941, 0), Utc);
+        let now = DateTime::<Utc>::from_naive_utc_and_offset(
+            NaiveDateTime::from_timestamp_opt(1594305941, 0).unwrap(),
+            Utc,
+        );
         let before_now = now - Duration::minutes(1);
         let expected = TimeBounds::always_valid()
             .with_lower(before_now)
