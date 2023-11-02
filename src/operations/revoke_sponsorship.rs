@@ -390,10 +390,7 @@ mod tests {
         let kp1 = keypair1();
 
         let op = Operation::new_revoke_sponsorship()
-            .with_ledger_key(LedgerKey::Data(
-                kp1.public_key(),
-                "Test_Data".to_string(),
-            ))
+            .with_ledger_key(LedgerKey::Data(kp1.public_key(), "Test_Data".to_string()))
             .build()
             .unwrap();
         let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)

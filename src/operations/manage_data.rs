@@ -66,11 +66,7 @@ impl ManageDataOperation {
         x: &xdr::ManageDataOp,
     ) -> Result<ManageDataOperation> {
         let data_name = x.data_name.value.to_string();
-        let data_value = x
-            .data_value
-            .as_ref()
-            .map(DataValue::from_xdr)
-            .transpose()?;
+        let data_value = x.data_value.as_ref().map(DataValue::from_xdr).transpose()?;
 
         Ok(ManageDataOperation {
             source_account,

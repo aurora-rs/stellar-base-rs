@@ -377,8 +377,7 @@ impl XDRSerialize for SignerKey {
 
 impl XDRDeserialize for SignerKey {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_signer, bytes_read) =
-            xdr::SignerKey::read_xdr(buffer).map_err(Error::XdrError)?;
+        let (xdr_signer, bytes_read) = xdr::SignerKey::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = SignerKey::from_xdr(&xdr_signer)?;
         Ok((res, bytes_read))
     }

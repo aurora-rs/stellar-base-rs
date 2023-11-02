@@ -199,11 +199,7 @@ impl SetOptionsOperation {
         let medium_threshold = x.med_threshold.as_ref().map(|w| w.value);
         let high_threshold = x.high_threshold.as_ref().map(|w| w.value);
         let home_domain = x.home_domain.as_ref().map(|h| h.value.clone());
-        let signer = x
-            .signer
-            .as_ref()
-            .map(Signer::from_xdr)
-            .transpose()?;
+        let signer = x.signer.as_ref().map(Signer::from_xdr).transpose()?;
         Ok(SetOptionsOperation {
             source_account,
             inflation_destination,
