@@ -53,7 +53,7 @@ impl Memo {
             Err(Error::InvalidMemoHash)
         } else {
             let mut memo_hash: [u8; 32] = Default::default();
-            memo_hash[..hash.len()].copy_from_slice(&hash);
+            memo_hash[..hash.len()].copy_from_slice(hash);
             Ok(Memo::Hash(memo_hash))
         }
     }
@@ -64,17 +64,14 @@ impl Memo {
             Err(Error::InvalidMemoReturn)
         } else {
             let mut memo_ret: [u8; 32] = Default::default();
-            memo_ret[..ret.len()].copy_from_slice(&ret);
+            memo_ret[..ret.len()].copy_from_slice(ret);
             Ok(Memo::Return(memo_ret))
         }
     }
 
     /// Returns true if memo is None. Returns false otherwise.
     pub fn is_none(&self) -> bool {
-        match self {
-            Memo::None => true,
-            _ => false,
-        }
+        matches!(self, Memo::None)
     }
 
     /// If the memo is an Id, returns its value. Returns None otherwise.
@@ -197,15 +194,15 @@ impl Default for Memo {
 }
 
 impl XDRSerialize for Memo {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr_memo = self.to_xdr()?;
-        xdr_memo.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr_memo.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for Memo {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_memo, bytes_read) = xdr::Memo::read_xdr(&buffer).map_err(Error::XdrError)?;
+        let (xdr_memo, bytes_read) = xdr::Memo::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = Memo::from_xdr(&xdr_memo)?;
         Ok((res, bytes_read))
     }
@@ -272,7 +269,7 @@ mod tests {
 
     #[test]
     fn test_memo_hash() {
-        let mut memo = Memo::new_hash(&vec![1, 2, 3, 4, 5]).unwrap();
+        let mut memo = Memo::new_hash(&[1, 2, 3, 4, 5]).unwrap();
         assert!(!memo.is_none());
         assert!(!memo.is_id());
         assert!(!memo.is_text());
@@ -303,7 +300,7 @@ mod tests {
 
     #[test]
     fn test_memo_return() {
-        let mut memo = Memo::new_return(&vec![1, 2, 3, 4, 5]).unwrap();
+        let mut memo = Memo::new_return(&[1, 2, 3, 4, 5]).unwrap();
         assert!(!memo.is_none());
         assert!(!memo.is_id());
         assert!(!memo.is_text());

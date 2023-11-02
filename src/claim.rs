@@ -209,32 +209,32 @@ impl ClaimPredicate {
 }
 
 impl XDRSerialize for Claimant {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr = self.to_xdr()?;
-        xdr.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for Claimant {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
         let (xdr_claimant, bytes_read) =
-            xdr::Claimant::read_xdr(&buffer).map_err(Error::XdrError)?;
+            xdr::Claimant::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = Claimant::from_xdr(&xdr_claimant)?;
         Ok((res, bytes_read))
     }
 }
 
 impl XDRSerialize for ClaimPredicate {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr = self.to_xdr()?;
-        xdr.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for ClaimPredicate {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
         let (xdr_claim, bytes_read) =
-            xdr::ClaimPredicate::read_xdr(&buffer).map_err(Error::XdrError)?;
+            xdr::ClaimPredicate::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = ClaimPredicate::from_xdr(&xdr_claim)?;
         Ok((res, bytes_read))
     }

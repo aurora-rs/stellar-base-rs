@@ -192,7 +192,7 @@ mod tests {
         let kp1 = keypair1();
 
         let amount = Amount::from_str("100.0").unwrap();
-        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key()).unwrap();
         let price = Price::from_str("12.35").unwrap();
 
         let op = Operation::new_create_passive_sell_offer()
@@ -203,11 +203,11 @@ mod tests {
             .with_price(price)
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAEAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAAB6i5yxQAAAECG2/IOsqY2pTugmUnhX9Iafmy5JuCQjPxlA0kxdYHe2EKIbZVClMbgckEwvjJq+B0G2SzRUqiK1sfAOIZpAB4D";
@@ -223,11 +223,11 @@ mod tests {
         let kp2 = keypair2();
 
         let amount = Amount::from_str("100.0").unwrap();
-        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key()).unwrap();
         let price = Price::from_str("12.35").unwrap();
 
         let op = Operation::new_create_passive_sell_offer()
-            .with_source_account(kp2.public_key().clone())
+            .with_source_account(kp2.public_key())
             .with_selling_asset(Asset::new_native())
             .with_buying_asset(buying)
             .with_amount(amount)
@@ -235,11 +235,11 @@ mod tests {
             .with_price(price)
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAEAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAAB6i5yxQAAAECffRDt4ilFKVEfldEY/Ys2VJm4g7iu6eiqJvPGqDGALTPnEMncqaMGoFbtNgMvZWv3rXi65351/VQv1o8MrtML";

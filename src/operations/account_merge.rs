@@ -104,11 +104,11 @@ mod tests {
             .with_destination(kp1.public_key().to_muxed_account(123).clone())
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAIAAABAAAAAAAAAAB7Jcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAAAAAAAeoucsUAAABAsar7y6Xy4F1R8InkdOL21n646Z5Fe6dUUfhAkDf9GnIQKHcFzVoeo7z73S6V0zW1AxfR/wJDsFprWPhbllYhBw==";
@@ -125,14 +125,14 @@ mod tests {
 
         let op = Operation::new_account_merge()
             .with_destination(kp1.public_key().to_muxed_account(123).clone())
-            .with_source_account(kp2.public_key().clone())
+            .with_source_account(kp2.public_key())
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAIAAABAAAAAAAAAAB7Jcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAAAAAAAeoucsUAAABAXZWyIftD9wZB7iI/CPWdye29ggvdwf20/WQr00IbTshuas0JDIbJhhfK8NUrEILhBspQjRx82XCrppZVrampAQ==";

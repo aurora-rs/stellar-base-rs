@@ -58,10 +58,7 @@ impl Asset {
 
     /// Returns true if the asset is a Native. Returns false otherwise.
     pub fn is_native(&self) -> bool {
-        match *self {
-            Asset::Native => true,
-            _ => false,
-        }
+        matches!(*self, Asset::Native)
     }
 
     /// If the asset is a Credit, returns its value. Returns None otherwise
@@ -136,9 +133,9 @@ impl CreditAsset {
     /// Code must be shorter than 12 characters.
     pub fn new(code: String, issuer: PublicKey) -> Result<CreditAsset> {
         let code_len = code.len();
-        if code_len >= 1 && code_len <= 4 {
+        if (1..=4).contains(&code_len) {
             Ok(CreditAsset::AlphaNum4 { code, issuer })
-        } else if code_len >= 5 && code_len <= 12 {
+        } else if (5..=12).contains(&code_len) {
             Ok(CreditAsset::AlphaNum12 { code, issuer })
         } else {
             Err(Error::InvalidAssetCode)
@@ -148,16 +145,16 @@ impl CreditAsset {
     /// Returns the asset code.
     pub fn code(&self) -> &str {
         match self {
-            CreditAsset::AlphaNum4 { code, issuer: _ } => &code,
-            CreditAsset::AlphaNum12 { code, issuer: _ } => &code,
+            CreditAsset::AlphaNum4 { code, issuer: _ } => code,
+            CreditAsset::AlphaNum12 { code, issuer: _ } => code,
         }
     }
 
     /// Returns the asset issuer.
     pub fn issuer(&self) -> &PublicKey {
         match self {
-            CreditAsset::AlphaNum4 { code: _, issuer } => &issuer,
-            CreditAsset::AlphaNum12 { code: _, issuer } => &issuer,
+            CreditAsset::AlphaNum4 { code: _, issuer } => issuer,
+            CreditAsset::AlphaNum12 { code: _, issuer } => issuer,
         }
     }
 
@@ -197,10 +194,7 @@ impl TrustLineAsset {
 
     /// Returns true if the asset is a Native. Returns false otherwise.
     pub fn is_native(&self) -> bool {
-        match *self {
-            Self::Native => true,
-            _ => false,
-        }
+        matches!(*self, Self::Native)
     }
 
     /// Returns true if the asset is a Credit. Returns false otherwise.
@@ -299,31 +293,31 @@ impl TrustLineAsset {
 }
 
 impl XDRSerialize for TrustLineAsset {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr_asset = self.to_xdr()?;
-        xdr_asset.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr_asset.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for TrustLineAsset {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
         let (xdr_asset, bytes_read) =
-            xdr::TrustLineAsset::read_xdr(&buffer).map_err(Error::XdrError)?;
+            xdr::TrustLineAsset::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = TrustLineAsset::from_xdr(&xdr_asset)?;
         Ok((res, bytes_read))
     }
 }
 
 impl XDRSerialize for Asset {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr_asset = self.to_xdr()?;
-        xdr_asset.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr_asset.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for Asset {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_asset, bytes_read) = xdr::Asset::read_xdr(&buffer).map_err(Error::XdrError)?;
+        let (xdr_asset, bytes_read) = xdr::Asset::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = Asset::from_xdr(&xdr_asset)?;
         Ok((res, bytes_read))
     }

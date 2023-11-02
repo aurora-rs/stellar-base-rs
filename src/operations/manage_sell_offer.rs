@@ -228,7 +228,7 @@ mod tests {
         let kp1 = keypair1();
 
         let amount = Amount::from_str("100.0").unwrap();
-        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key()).unwrap();
         let price = Price::from_str("12.35").unwrap();
 
         let op = Operation::new_manage_sell_offer()
@@ -239,11 +239,11 @@ mod tests {
             .with_price(price)
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAAAAAAAAAAAAAHqLnLFAAAAQPhJ8gbyJpZmlbKl5ItaNi7KAGF0BH3Dfe3ZT/f9liF1JtsEFKeoNq8ea0me2y59AH78iahdkLLxVc4oq1ROcw4=";
@@ -258,7 +258,7 @@ mod tests {
         let kp1 = keypair1();
 
         let amount = Amount::from_str("100.0").unwrap();
-        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key()).unwrap();
         let price = Price::from_str("12.35").unwrap();
 
         let op = Operation::new_manage_sell_offer()
@@ -270,11 +270,11 @@ mod tests {
             .with_offer_id(Some(888))
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQI9ZDQtGLZFCFgqd/6dLqznGWwAI4/LOwrNS7JkO5Rbx8j1cG60rWFylW9v0i40yk7Z5HleAncBJzrvcDeHhDAA=";
@@ -290,11 +290,11 @@ mod tests {
         let kp2 = keypair2();
 
         let amount = Amount::from_str("100.0").unwrap();
-        let buying = Asset::new_credit("AB", kp1.public_key().clone()).unwrap();
+        let buying = Asset::new_credit("AB", kp1.public_key()).unwrap();
         let price = Price::from_str("12.35").unwrap();
 
         let op = Operation::new_manage_sell_offer()
-            .with_source_account(kp2.public_key().clone())
+            .with_source_account(kp2.public_key())
             .with_selling_asset(Asset::new_native())
             .with_buying_asset(buying)
             .with_amount(amount)
@@ -303,11 +303,11 @@ mod tests {
             .with_offer_id(Some(888))
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAADAAAAAAAAAAFBQgAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAADuaygAAAAD3AAAAFAAAAAAAAAN4AAAAAAAAAAHqLnLFAAAAQBJhFxneImX3Z8FW+UO5xM1kAQhkwVVxSbpVqsafWaeFzcY8KWTlopVYqgoJrXnHRQq3KAstTiRktSg5zZbppgQ=";

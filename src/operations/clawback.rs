@@ -152,12 +152,12 @@ mod tests {
 
     #[test]
     fn test_clawback() {
-        let from = keypair1().public_key().clone();
+        let from = keypair1().public_key();
         let asset = asset0();
         let amount = Amount::from_str("17.6301").unwrap();
 
         let clawback_op = Operation::new_clawback()
-            .with_from(from.clone())
+            .with_from(from)
             .with_asset(asset)
             .with_amount(amount)
             .unwrap()
@@ -173,14 +173,14 @@ mod tests {
 
     #[test]
     fn test_clawback_with_source_account() {
-        let source_account = keypair0().public_key().clone();
-        let from = keypair1().public_key().clone();
+        let source_account = keypair0().public_key();
+        let from = keypair1().public_key();
         let asset = asset0();
         let amount = Amount::from_str("17.6301").unwrap();
 
         let clawback_op = Operation::new_clawback()
-            .with_source_account(source_account.clone())
-            .with_from(from.clone())
+            .with_source_account(source_account)
+            .with_from(from)
             .with_asset(asset)
             .with_amount(amount)
             .unwrap()

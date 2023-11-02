@@ -113,11 +113,11 @@ mod tests {
             .build()
             .unwrap();
 
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAPAAAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAAAAAAAAAAHqLnLFAAAAQH9SMMxYh28+t9WP0xrJWUZH/i7mk9jG1Qzjvnh2I2Hx/M8OTOqr0511hvBuHI+ETJiAEMUoFw8zb16fXHjQoQQ=";
@@ -133,16 +133,16 @@ mod tests {
         let balance_id = ClaimableBalanceId::new(vec![7; 32]).unwrap();
 
         let op = Operation::new_claim_claimable_balance()
-            .with_source_account(kp.public_key().clone())
+            .with_source_account(kp.public_key())
             .with_claimable_balance_id(balance_id)
             .build()
             .unwrap();
 
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAA4Nxt4XJcrGZRYrUvrOc1sooiQ+QdEk1suS1wo+oucsUAAAAPAAAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAAAAAAAAAAHqLnLFAAAAQD80Q+16BK4ZzJzNGaesezr0cPxsyOvgVVlANU1g91tfM6/NkzLXkB1QI2F4xkXIbp5qbSJ/OfrGRxmsdwWo2g0=";

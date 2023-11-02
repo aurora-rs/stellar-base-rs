@@ -118,16 +118,16 @@ impl TimeBounds {
 }
 
 impl XDRSerialize for TimeBounds {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr = self.to_xdr()?;
-        xdr.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for TimeBounds {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
         let (xdr_timebounds, bytes_read) =
-            xdr::TimeBounds::read_xdr(&buffer).map_err(Error::XdrError)?;
+            xdr::TimeBounds::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = TimeBounds::from_xdr(&xdr_timebounds)?;
         Ok((res, bytes_read))
     }

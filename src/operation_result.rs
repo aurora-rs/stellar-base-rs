@@ -378,7 +378,7 @@ impl OperationResult {
     pub fn from_xdr(x: &xdr::OperationResult) -> Result<OperationResult> {
         match *x {
             xdr::OperationResult::OpInner(ref xdr_inner) => {
-                let inner = InnerOperationResult::from_xdr(&xdr_inner)?;
+                let inner = InnerOperationResult::from_xdr(xdr_inner)?;
                 Ok(OperationResult::Inner(inner))
             }
             xdr::OperationResult::OpBadAuth(()) => Ok(OperationResult::BadAuth),
@@ -395,99 +395,99 @@ impl InnerOperationResult {
     pub fn from_xdr(x: &xdr::OperationResultTr) -> Result<InnerOperationResult> {
         match *x {
             xdr::OperationResultTr::CreateAccount(ref xdr_inner) => {
-                let inner = CreateAccountResult::from_xdr(&xdr_inner)?;
+                let inner = CreateAccountResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::CreateAccount(inner))
             }
             xdr::OperationResultTr::Payment(ref xdr_inner) => {
-                let inner = PaymentResult::from_xdr(&xdr_inner)?;
+                let inner = PaymentResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::Payment(inner))
             }
             xdr::OperationResultTr::PathPaymentStrictReceive(ref xdr_inner) => {
-                let inner = PathPaymentStrictReceiveResult::from_xdr(&xdr_inner)?;
+                let inner = PathPaymentStrictReceiveResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::PathPaymentStrictReceive(inner))
             }
             xdr::OperationResultTr::ManageSellOffer(ref xdr_inner) => {
-                let inner = ManageSellOfferResult::from_xdr(&xdr_inner)?;
+                let inner = ManageSellOfferResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::ManageSellOffer(inner))
             }
             xdr::OperationResultTr::CreatePassiveSellOffer(ref xdr_inner) => {
-                let inner = ManageSellOfferResult::from_xdr(&xdr_inner)?;
+                let inner = ManageSellOfferResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::CreatePassiveSellOffer(inner))
             }
             xdr::OperationResultTr::SetOptions(ref xdr_inner) => {
-                let inner = SetOptionsResult::from_xdr(&xdr_inner)?;
+                let inner = SetOptionsResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::SetOptions(inner))
             }
             xdr::OperationResultTr::ChangeTrust(ref xdr_inner) => {
-                let inner = ChangeTrustResult::from_xdr(&xdr_inner)?;
+                let inner = ChangeTrustResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::ChangeTrust(inner))
             }
             xdr::OperationResultTr::AllowTrust(ref xdr_inner) => {
-                let inner = AllowTrustResult::from_xdr(&xdr_inner)?;
+                let inner = AllowTrustResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::AllowTrust(inner))
             }
             xdr::OperationResultTr::AccountMerge(ref xdr_inner) => {
-                let inner = AccountMergeResult::from_xdr(&xdr_inner)?;
+                let inner = AccountMergeResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::AccountMerge(inner))
             }
             xdr::OperationResultTr::Inflation(ref xdr_inner) => {
-                let inner = InflationResult::from_xdr(&xdr_inner)?;
+                let inner = InflationResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::Inflation(inner))
             }
             xdr::OperationResultTr::ManageData(ref xdr_inner) => {
-                let inner = ManageDataResult::from_xdr(&xdr_inner)?;
+                let inner = ManageDataResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::ManageData(inner))
             }
             xdr::OperationResultTr::BumpSequence(ref xdr_inner) => {
-                let inner = BumpSequenceResult::from_xdr(&xdr_inner)?;
+                let inner = BumpSequenceResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::BumpSequence(inner))
             }
             xdr::OperationResultTr::ManageBuyOffer(ref xdr_inner) => {
-                let inner = ManageBuyOfferResult::from_xdr(&xdr_inner)?;
+                let inner = ManageBuyOfferResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::ManageBuyOffer(inner))
             }
             xdr::OperationResultTr::PathPaymentStrictSend(ref xdr_inner) => {
-                let inner = PathPaymentStrictSendResult::from_xdr(&xdr_inner)?;
+                let inner = PathPaymentStrictSendResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::PathPaymentStrictSend(inner))
             }
             xdr::OperationResultTr::CreateClaimableBalance(ref xdr_inner) => {
-                let inner = CreateClaimableBalanceResult::from_xdr(&xdr_inner)?;
+                let inner = CreateClaimableBalanceResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::CreateClaimableBalance(inner))
             }
             xdr::OperationResultTr::ClaimClaimableBalance(ref xdr_inner) => {
-                let inner = ClaimClaimableBalanceResult::from_xdr(&xdr_inner)?;
+                let inner = ClaimClaimableBalanceResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::ClaimClaimableBalance(inner))
             }
             xdr::OperationResultTr::BeginSponsoringFutureReserves(ref xdr_inner) => {
-                let inner = BeginSponsoringFutureReservesResult::from_xdr(&xdr_inner)?;
+                let inner = BeginSponsoringFutureReservesResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::BeginSponsoringFutureReserves(inner))
             }
             xdr::OperationResultTr::EndSponsoringFutureReserves(ref xdr_inner) => {
-                let inner = EndSponsoringFutureReservesResult::from_xdr(&xdr_inner)?;
+                let inner = EndSponsoringFutureReservesResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::EndSponsoringFutureReserves(inner))
             }
             xdr::OperationResultTr::RevokeSponsorship(ref xdr_inner) => {
-                let inner = RevokeSponsorshipResult::from_xdr(&xdr_inner)?;
+                let inner = RevokeSponsorshipResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::RevokeSponsorship(inner))
             }
             xdr::OperationResultTr::Clawback(ref xdr_inner) => {
-                let inner = ClawbackResult::from_xdr(&xdr_inner)?;
+                let inner = ClawbackResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::Clawback(inner))
             }
             xdr::OperationResultTr::ClawbackClaimableBalance(ref xdr_inner) => {
-                let inner = ClawbackClaimableBalanceResult::from_xdr(&xdr_inner)?;
+                let inner = ClawbackClaimableBalanceResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::ClawbackClaimableBalance(inner))
             }
             xdr::OperationResultTr::SetTrustLineFlags(ref xdr_inner) => {
-                let inner = SetTrustLineFlagsResult::from_xdr(&xdr_inner)?;
+                let inner = SetTrustLineFlagsResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::SetTrustLineFlags(inner))
             }
             xdr::OperationResultTr::LiquidityPoolDeposit(ref xdr_inner) => {
-                let inner = LiquidityPoolDepositResult::from_xdr(&xdr_inner)?;
+                let inner = LiquidityPoolDepositResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::LiquidityPoolDeposit(inner))
             }
             xdr::OperationResultTr::LiquidityPoolWithdraw(ref xdr_inner) => {
-                let inner = LiquidityPoolWithdrawResult::from_xdr(&xdr_inner)?;
+                let inner = LiquidityPoolWithdrawResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::LiquidityPoolWithdraw(inner))
             }
         }
@@ -539,7 +539,7 @@ impl PathPaymentStrictReceiveResult {
     ) -> Result<PathPaymentStrictReceiveResult> {
         match *x {
             xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveSuccess(ref xdr_inner) => {
-                let inner = PathPaymentStrictReceiveResultSuccess::from_xdr(&xdr_inner)?;
+                let inner = PathPaymentStrictReceiveResultSuccess::from_xdr(xdr_inner)?;
                 Ok(PathPaymentStrictReceiveResult::Success(inner))
             }
             xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveMalformed(()) => {
@@ -566,7 +566,7 @@ impl PathPaymentStrictReceiveResult {
             xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveNoIssuer(
                 ref xdr_asset,
             ) => {
-                let asset = Asset::from_xdr(&xdr_asset)?;
+                let asset = Asset::from_xdr(xdr_asset)?;
                 Ok(PathPaymentStrictReceiveResult::NoIssuer(asset))
             }
             xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveLineFull(()) => {
@@ -589,7 +589,7 @@ impl PathPaymentStrictSendResult {
     pub fn from_xdr(x: &xdr::PathPaymentStrictSendResult) -> Result<PathPaymentStrictSendResult> {
         match *x {
             xdr::PathPaymentStrictSendResult::PathPaymentStrictSendSuccess(ref xdr_inner) => {
-                let inner = PathPaymentStrictSendResultSuccess::from_xdr(&xdr_inner)?;
+                let inner = PathPaymentStrictSendResultSuccess::from_xdr(xdr_inner)?;
                 Ok(PathPaymentStrictSendResult::Success(inner))
             }
             xdr::PathPaymentStrictSendResult::PathPaymentStrictSendMalformed(()) => {
@@ -617,7 +617,7 @@ impl PathPaymentStrictSendResult {
                 Ok(PathPaymentStrictSendResult::LineFull)
             }
             xdr::PathPaymentStrictSendResult::PathPaymentStrictSendNoIssuer(ref xdr_asset) => {
-                let asset = Asset::from_xdr(&xdr_asset)?;
+                let asset = Asset::from_xdr(xdr_asset)?;
                 Ok(PathPaymentStrictSendResult::NoIssuer(asset))
             }
             xdr::PathPaymentStrictSendResult::PathPaymentStrictSendTooFewOffers(()) => {
@@ -637,7 +637,7 @@ impl ManageSellOfferResult {
     pub fn from_xdr(x: &xdr::ManageSellOfferResult) -> Result<ManageSellOfferResult> {
         match *x {
             xdr::ManageSellOfferResult::ManageSellOfferSuccess(ref xdr_inner) => {
-                let inner = ManageOfferResultSuccess::from_xdr(&xdr_inner)?;
+                let inner = ManageOfferResultSuccess::from_xdr(xdr_inner)?;
                 Ok(ManageSellOfferResult::Success(inner))
             }
             xdr::ManageSellOfferResult::ManageSellOfferMalformed(()) => {
@@ -684,7 +684,7 @@ impl ManageBuyOfferResult {
     pub fn from_xdr(x: &xdr::ManageBuyOfferResult) -> Result<ManageBuyOfferResult> {
         match *x {
             xdr::ManageBuyOfferResult::ManageBuyOfferSuccess(ref xdr_inner) => {
-                let inner = ManageOfferResultSuccess::from_xdr(&xdr_inner)?;
+                let inner = ManageOfferResultSuccess::from_xdr(xdr_inner)?;
                 Ok(ManageBuyOfferResult::Success(inner))
             }
             xdr::ManageBuyOfferResult::ManageBuyOfferMalformed(()) => {
@@ -803,7 +803,7 @@ impl AccountMergeResult {
     pub fn from_xdr(x: &xdr::AccountMergeResult) -> Result<AccountMergeResult> {
         match *x {
             xdr::AccountMergeResult::AccountMergeSuccess(ref xdr_balance) => {
-                let balance = Stroops::from_xdr_int64(&xdr_balance)?;
+                let balance = Stroops::from_xdr_int64(xdr_balance)?;
                 Ok(AccountMergeResult::Success(balance))
             }
             xdr::AccountMergeResult::AccountMergeMalformed(()) => Ok(AccountMergeResult::Malformed),
@@ -831,7 +831,7 @@ impl InflationResult {
             xdr::InflationResult::InflationSuccess(ref xdr_payouts) => {
                 let mut payouts = Vec::new();
                 for xdr_payout in xdr_payouts {
-                    let payout = InflationPayout::from_xdr(&xdr_payout)?;
+                    let payout = InflationPayout::from_xdr(xdr_payout)?;
                     payouts.push(payout);
                 }
                 Ok(InflationResult::Success(payouts))
@@ -868,7 +868,7 @@ impl CreateClaimableBalanceResult {
     pub fn from_xdr(x: &xdr::CreateClaimableBalanceResult) -> Result<CreateClaimableBalanceResult> {
         match *x {
             xdr::CreateClaimableBalanceResult::CreateClaimableBalanceSuccess(ref xdr_id) => {
-                let id = ClaimableBalanceId::from_xdr(&xdr_id)?;
+                let id = ClaimableBalanceId::from_xdr(xdr_id)?;
                 Ok(CreateClaimableBalanceResult::Success(id))
             }
             xdr::CreateClaimableBalanceResult::CreateClaimableBalanceMalformed(()) => {
@@ -1092,7 +1092,7 @@ impl ManageOfferResultSuccess {
     pub fn from_xdr(x: &xdr::ManageOfferSuccessResult) -> Result<ManageOfferResultSuccess> {
         let mut offers_claimed = Vec::new();
         for xdr_offer in &x.offers_claimed {
-            let offer = ClaimAtom::from_xdr(&xdr_offer)?;
+            let offer = ClaimAtom::from_xdr(xdr_offer)?;
             offers_claimed.push(offer);
         }
         let offer = OfferResult::from_xdr(&x.offer)?;
@@ -1192,11 +1192,11 @@ impl OfferResult {
     pub fn from_xdr(x: &xdr::ManageOfferSuccessResultOffer) -> Result<OfferResult> {
         match *x {
             xdr::ManageOfferSuccessResultOffer::ManageOfferCreated(ref xdr_inner) => {
-                let inner = OfferEntry::from_xdr(&xdr_inner)?;
+                let inner = OfferEntry::from_xdr(xdr_inner)?;
                 Ok(OfferResult::Created(inner))
             }
             xdr::ManageOfferSuccessResultOffer::ManageOfferUpdated(ref xdr_inner) => {
-                let inner = OfferEntry::from_xdr(&xdr_inner)?;
+                let inner = OfferEntry::from_xdr(xdr_inner)?;
                 Ok(OfferResult::Updated(inner))
             }
             xdr::ManageOfferSuccessResultOffer::ManageOfferDeleted(()) => Ok(OfferResult::Deleted),
@@ -1267,7 +1267,7 @@ mod tests {
     #[test]
     fn test_bad_auth() {
         let xdr = "AAAAAACYloD/////AAAAAf////8AAAAA";
-        let result = TransactionResult::from_xdr_base64(&xdr)
+        let result = TransactionResult::from_xdr_base64(xdr)
             .unwrap()
             .as_failed()
             .unwrap()
@@ -1282,7 +1282,7 @@ mod tests {
     #[test]
     fn test_no_account() {
         let xdr = "AAAAAACYloD/////AAAAAf////4AAAAA";
-        let result = TransactionResult::from_xdr_base64(&xdr)
+        let result = TransactionResult::from_xdr_base64(xdr)
             .unwrap()
             .as_failed()
             .unwrap()
@@ -1297,7 +1297,7 @@ mod tests {
     #[test]
     fn test_not_supported() {
         let xdr = "AAAAAACYloD/////AAAAAf////0AAAAA";
-        let result = TransactionResult::from_xdr_base64(&xdr)
+        let result = TransactionResult::from_xdr_base64(xdr)
             .unwrap()
             .as_failed()
             .unwrap()
@@ -1312,7 +1312,7 @@ mod tests {
     #[test]
     fn test_too_many_subentries() {
         let xdr = "AAAAAAAAA+j/////AAAAAf////wAAAAA";
-        let result = TransactionResult::from_xdr_base64(&xdr)
+        let result = TransactionResult::from_xdr_base64(xdr)
             .unwrap()
             .as_failed()
             .unwrap()
@@ -1327,7 +1327,7 @@ mod tests {
     #[test]
     fn test_exceeded_work_limit() {
         let xdr = "AAAAAAAAA+j/////AAAAAf////sAAAAA";
-        let result = TransactionResult::from_xdr_base64(&xdr)
+        let result = TransactionResult::from_xdr_base64(xdr)
             .unwrap()
             .as_failed()
             .unwrap()
@@ -1342,7 +1342,7 @@ mod tests {
     #[test]
     fn test_too_many_sponsoring() {
         let xdr = "AAAAAAAAA+j/////AAAAAf////oAAAAA";
-        let result = TransactionResult::from_xdr_base64(&xdr)
+        let result = TransactionResult::from_xdr_base64(xdr)
             .unwrap()
             .as_failed()
             .unwrap()

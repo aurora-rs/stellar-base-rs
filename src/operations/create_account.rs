@@ -141,17 +141,17 @@ mod tests {
         let starting_balance = Amount::from_str("12.30").unwrap();
 
         let op = Operation::new_create_account()
-            .with_destination(dest.clone())
+            .with_destination(dest)
             .with_starting_balance(starting_balance)
             .unwrap()
             .build()
             .unwrap();
 
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
 
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
@@ -170,17 +170,17 @@ mod tests {
         let starting_balance = "456.9878".parse::<Amount>().unwrap();
 
         let op = Operation::new_create_account()
-            .with_source_account(kp2.public_key().clone())
-            .with_destination(dest.clone())
+            .with_source_account(kp2.public_key())
+            .with_destination(dest)
             .with_starting_balance(starting_balance)
             .unwrap()
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAARBizfAAAAAAAAAAAeoucsUAAABACIZzOxwBATuDx2738HBsh0VA0oYQT1mTfrlOROtQeBb8h4AkOJeQYn3VEkij0ZnDnrZAmRP/rR7WD714PQioCA==";
