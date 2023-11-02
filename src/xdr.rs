@@ -13,7 +13,7 @@ pub trait XDRSerialize {
 
     fn xdr_base64(&self) -> Result<String> {
         let bytes = self.xdr_bytes()?;
-        let encoded = base64::encode(bytes);
+        let encoded = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, bytes);
         Ok(encoded)
     }
 }
@@ -21,7 +21,7 @@ pub trait XDRSerialize {
 pub trait XDRDeserialize: Sized {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)>;
     fn from_xdr_base64(encoded: &str) -> Result<Self> {
-        let decoded = base64::decode(encoded)?;
+        let decoded = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded)?;
         let (res, _) = Self::from_xdr_bytes(&decoded)?;
         Ok(res)
     }

@@ -405,7 +405,6 @@ mod tests {
     use crate::network::Network;
     use crate::transaction::TransactionEnvelope;
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-    use base64;
 
     #[test]
     fn test_signer_key_from_public_key() {
@@ -438,7 +437,7 @@ mod tests {
 
         assert_eq!(
             "LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=".to_string(),
-            base64::encode(hashx.as_bytes())
+            base64::Engine::encode(&base64::engine::general_purpose::STANDARD, hashx.as_bytes())
         );
 
         let xdr = signer_key.xdr_base64().unwrap();
@@ -466,7 +465,7 @@ mod tests {
         // Checked in stellar laboraty
         assert_eq!(
             "xkhj28AGwJ4ykWcbjN4347wQFhOKXg1qKFKwiXiKtzY=",
-            base64::encode(tx_hash)
+            base64::Engine::encode(&base64::engine::general_purpose::STANDARD, tx_hash)
         );
 
         let xdr = signer_key.xdr_base64().unwrap();
