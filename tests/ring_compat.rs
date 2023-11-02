@@ -12,7 +12,7 @@ pub fn ring_compat_sign_verify() {
     rng.fill_bytes(&mut ed25519_seed);
 
     let signing_key = SigningKey::from_seed(&ed25519_seed).unwrap();
-    let verify_key = signing_key.verify_key();
+    let verify_key = signing_key.verifying_key();
 
     let keys = KeyPair::new(signing_key, verify_key);
 

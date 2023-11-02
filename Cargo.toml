@@ -13,8 +13,8 @@ keywords = ["stellar", "blockchain"]
 
 [dependencies]
 base32 = "0.4.0"
-base64 = "0.13.0"
-bitflags = "1.2"
+base64 = "0.21.0"
+bitflags = "2.4"
 byteorder = "1.4.3"
 chrono = "0.4.19"
 crc16 = "0.4.0"
@@ -38,7 +38,7 @@ optional = true
 [dev-dependencies]
 ed25519-dalek = "1.0.1"
 rand = "0.7.3"
-ring-compat = "0.4.0"
+ring-compat = "0.5.1"
 
 [features]
 default = ["sodium_oxide"]

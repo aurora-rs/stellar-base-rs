@@ -4,6 +4,7 @@ use crate::xdr;
 
 bitflags! {
     /// Account flags.
+    #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
     pub struct AccountFlags: u32 {
         const AUTH_REQUIRED = xdr::AccountFlags::AuthRequiredFlag as u32;
         const AUTH_REVOCABLE = xdr::AccountFlags::AuthRevocableFlag as u32;
@@ -14,6 +15,7 @@ bitflags! {
 
 bitflags! {
     /// Account trust line flags.
+    #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
     pub struct TrustLineFlags: u32 {
         const AUTHORIZED = xdr::TrustLineFlags::AuthorizedFlag as u32;
         const AUTHORIZED_TO_MAINTAIN_LIABILITIES = xdr::TrustLineFlags::AuthorizedToMaintainLiabilitiesFlag as u32;
@@ -40,7 +42,7 @@ impl DataValue {
     ///
     /// Returns Err if the encoded data is longer than 64 bytes.
     pub fn from_base64(encoded: &str) -> Result<DataValue> {
-        let decoded = base64::decode(encoded)?;
+        let decoded = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, encoded)?;
         DataValue::from_slice(&decoded)
     }
 
