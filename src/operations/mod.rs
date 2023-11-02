@@ -2,7 +2,7 @@
 use crate::crypto::MuxedAccount;
 use crate::error::{Error, Result};
 use crate::xdr;
-use crate::xdr::{XDRDeserialize, XDRSerialize};
+use crate::xdr::{OperationBody, XDRDeserialize, XDRSerialize};
 use xdr_rs_serialize::de::XDRIn;
 use xdr_rs_serialize::ser::XDROut;
 
@@ -12,11 +12,15 @@ mod begin_sponsoring_future_reserves;
 mod bump_sequence;
 mod change_trust;
 mod claim_claimable_balance;
+mod clawback;
+mod clawback_claimable_balance;
 mod create_account;
 mod create_claimable_balance;
 mod create_passive_sell_offer;
 mod end_sponsoring_future_reserves;
 mod inflation;
+mod liquidity_pool_deposit;
+mod liquidity_pool_withdraw;
 mod manage_buy_offer;
 mod manage_data;
 mod manage_sell_offer;
@@ -25,9 +29,23 @@ mod path_payment_strict_send;
 mod payment;
 mod revoke_sponsorship;
 mod set_options;
+mod set_trustline_flags;
 #[cfg(test)]
 pub mod tests;
 
+use crate::operations::clawback::ClawbackOperationBuilder;
+use crate::operations::clawback_claimable_balance::{
+    ClawbackClaimableBalanceOperation, ClawbackClaimableBalanceOperationBuilder,
+};
+use crate::operations::liquidity_pool_deposit::{
+    LiquidityPoolDepositOperation, LiquidityPoolDepositOperationBuilder,
+};
+use crate::operations::liquidity_pool_withdraw::{
+    LiquidityPoolWithdrawOperation, LiquidityPoolWithdrawOperationBuilder,
+};
+use crate::operations::set_trustline_flags::{
+    SetTrustLineFlagsOperation, SetTrustLineFlagsOperationBuilder,
+};
 pub use account_merge::{AccountMergeOperation, AccountMergeOperationBuilder};
 pub use allow_trust::{AllowTrustOperation, AllowTrustOperationBuilder};
 pub use begin_sponsoring_future_reserves::{
@@ -38,6 +56,7 @@ pub use change_trust::{ChangeTrustOperation, ChangeTrustOperationBuilder};
 pub use claim_claimable_balance::{
     ClaimClaimableBalanceOperation, ClaimClaimableBalanceOperationBuilder,
 };
+pub use clawback::ClawbackOperation;
 pub use create_account::{CreateAccountOperation, CreateAccountOperationBuilder};
 pub use create_claimable_balance::{
     CreateClaimableBalanceOperation, CreateClaimableBalanceOperationBuilder,
@@ -104,6 +123,11 @@ pub enum Operation {
     EndSponsoringFutureReserves(EndSponsoringFutureReservesOperation),
     /// Revoke a reserve sponsorship.
     RevokeSponsorship(RevokeSponsorshipOperation),
+    Clawback(ClawbackOperation),
+    ClawbackClaimableBalance(ClawbackClaimableBalanceOperation),
+    SetTrustLineFlags(SetTrustLineFlagsOperation),
+    LiquidityPoolDeposit(LiquidityPoolDepositOperation),
+    LiquidityPoolWithdraw(LiquidityPoolWithdrawOperation),
 }
 
 impl Operation {
@@ -200,6 +224,26 @@ impl Operation {
     /// Creates a new revoke sponsorship operation builder.
     pub fn new_revoke_sponsorship() -> RevokeSponsorshipOperationBuilder {
         RevokeSponsorshipOperationBuilder::new()
+    }
+
+    pub fn new_clawback() -> ClawbackOperationBuilder {
+        ClawbackOperationBuilder::new()
+    }
+
+    pub fn new_clawback_claimable_balance() -> ClawbackClaimableBalanceOperationBuilder {
+        ClawbackClaimableBalanceOperationBuilder::new()
+    }
+
+    pub fn new_set_trustline_flags() -> SetTrustLineFlagsOperationBuilder {
+        SetTrustLineFlagsOperationBuilder::new()
+    }
+
+    pub fn new_liquidity_pool_deposit() -> LiquidityPoolDepositOperationBuilder {
+        LiquidityPoolDepositOperationBuilder::new()
+    }
+
+    pub fn new_liquidity_pool_withdraw() -> LiquidityPoolWithdrawOperationBuilder {
+        LiquidityPoolWithdrawOperationBuilder::new()
     }
 
     /// If the operation is a CreateAccount, returns its value. Returns None otherwise.
@@ -619,6 +663,100 @@ impl Operation {
         self.as_revoke_sponsorship().is_some()
     }
 
+    pub fn as_clawback(&self) -> Option<&ClawbackOperation> {
+        match *self {
+            Operation::Clawback(ref op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn as_clawback_mut(&mut self) -> Option<&mut ClawbackOperation> {
+        match *self {
+            Operation::Clawback(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn is_clawback(&self) -> bool {
+        self.as_clawback().is_some()
+    }
+
+    pub fn as_clawback_claimable_balance(&self) -> Option<&ClawbackClaimableBalanceOperation> {
+        match *self {
+            Operation::ClawbackClaimableBalance(ref op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn as_clawback_claimable_balance_mut(
+        &mut self,
+    ) -> Option<&mut ClawbackClaimableBalanceOperation> {
+        match *self {
+            Operation::ClawbackClaimableBalance(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn is_clawback_claimable_balance(&self) -> bool {
+        self.as_clawback_claimable_balance().is_some()
+    }
+
+    pub fn as_set_trustline_flags(&self) -> Option<&SetTrustLineFlagsOperation> {
+        match *self {
+            Operation::SetTrustLineFlags(ref op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn as_set_trustline_flags_mut(&mut self) -> Option<&mut SetTrustLineFlagsOperation> {
+        match *self {
+            Operation::SetTrustLineFlags(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn is_set_trustline_flags(&self) -> bool {
+        self.as_set_trustline_flags().is_some()
+    }
+
+    pub fn as_liquidity_pool_deposit(&self) -> Option<&LiquidityPoolDepositOperation> {
+        match *self {
+            Operation::LiquidityPoolDeposit(ref op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn as_liquidity_pool_deposit_mut(&mut self) -> Option<&mut LiquidityPoolDepositOperation> {
+        match *self {
+            Operation::LiquidityPoolDeposit(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn is_liquidity_pool_deposit(&self) -> bool {
+        self.as_liquidity_pool_deposit().is_some()
+    }
+
+    pub fn as_liquidity_pool_withdraw(&self) -> Option<&LiquidityPoolWithdrawOperation> {
+        match *self {
+            Operation::LiquidityPoolWithdraw(ref op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn as_liquidity_pool_withdraw_mut(
+        &mut self,
+    ) -> Option<&mut LiquidityPoolWithdrawOperation> {
+        match *self {
+            Operation::LiquidityPoolWithdraw(ref mut op) => Some(op),
+            _ => None,
+        }
+    }
+
+    pub fn is_liquidity_pool_withdraw(&self) -> bool {
+        self.as_liquidity_pool_withdraw().is_some()
+    }
+
     /// Retrieves the operation source account.
     pub fn source_account(&self) -> &Option<MuxedAccount> {
         match self {
@@ -641,6 +779,11 @@ impl Operation {
             Operation::BeginSponsoringFutureReserves(op) => op.source_account(),
             Operation::EndSponsoringFutureReserves(op) => op.source_account(),
             Operation::RevokeSponsorship(op) => op.source_account(),
+            Operation::Clawback(op) => op.source_account(),
+            Operation::ClawbackClaimableBalance(op) => op.source_account(),
+            Operation::SetTrustLineFlags(op) => op.source_account(),
+            Operation::LiquidityPoolDeposit(op) => op.source_account(),
+            Operation::LiquidityPoolWithdraw(op) => op.source_account(),
         }
     }
 
@@ -666,6 +809,11 @@ impl Operation {
             Operation::BeginSponsoringFutureReserves(op) => op.source_account_mut(),
             Operation::EndSponsoringFutureReserves(op) => op.source_account_mut(),
             Operation::RevokeSponsorship(op) => op.source_account_mut(),
+            Operation::Clawback(op) => op.source_account_mut(),
+            Operation::ClawbackClaimableBalance(op) => op.source_account_mut(),
+            Operation::SetTrustLineFlags(op) => op.source_account_mut(),
+            Operation::LiquidityPoolDeposit(op) => op.source_account_mut(),
+            Operation::LiquidityPoolWithdraw(op) => op.source_account_mut(),
         }
     }
 
@@ -695,6 +843,11 @@ impl Operation {
             Operation::BeginSponsoringFutureReserves(op) => op.to_xdr_operation_body()?,
             Operation::EndSponsoringFutureReserves(op) => op.to_xdr_operation_body()?,
             Operation::RevokeSponsorship(op) => op.to_xdr_operation_body()?,
+            Operation::Clawback(op) => op.to_xdr_operation_body()?,
+            Operation::ClawbackClaimableBalance(op) => op.to_xdr_operation_body()?,
+            Operation::SetTrustLineFlags(op) => op.to_xdr_operation_body()?,
+            Operation::LiquidityPoolDeposit(op) => op.to_xdr_operation_body()?,
+            Operation::LiquidityPoolWithdraw(op) => op.to_xdr_operation_body()?,
         };
         Ok(xdr::Operation {
             source_account,
@@ -794,6 +947,30 @@ impl Operation {
                 let inner =
                     RevokeSponsorshipOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::RevokeSponsorship(inner))
+            }
+            xdr::OperationBody::Clawback(op) => {
+                let inner = ClawbackOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::Clawback(inner))
+            }
+            xdr::OperationBody::ClawbackClaimableBalance(op) => {
+                let inner =
+                    ClawbackClaimableBalanceOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::ClawbackClaimableBalance(inner))
+            }
+            xdr::OperationBody::SetTrustLineFlags(op) => {
+                let inner =
+                    SetTrustLineFlagsOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::SetTrustLineFlags(inner))
+            }
+            xdr::OperationBody::LiquidityPoolDeposit(op) => {
+                let inner =
+                    LiquidityPoolDepositOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::LiquidityPoolDeposit(inner))
+            }
+            OperationBody::LiquidityPoolWithdraw(op) => {
+                let inner =
+                    LiquidityPoolWithdrawOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::LiquidityPoolWithdraw(inner))
             }
         }
     }

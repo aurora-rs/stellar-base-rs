@@ -1,8 +1,9 @@
-use crate::asset::Asset;
+use crate::asset::TrustLineAsset;
 use crate::claim::ClaimableBalanceId;
 use crate::crypto::{MuxedAccount, PublicKey, SignerKey};
 use crate::error::{Error, Result};
 use crate::ledger::LedgerKey;
+use crate::liquidity_pool::LiquidityPoolId;
 use crate::operations::Operation;
 use crate::xdr;
 
@@ -206,6 +207,11 @@ impl LedgerKey {
                 let inner = xdr::LedgerKeyClaimableBalance { balance_id };
                 Ok(xdr::LedgerKey::ClaimableBalance(inner))
             }
+            LedgerKey::LiquidityPool(ref liquidity_pool_id) => {
+                let liquidity_pool_id = liquidity_pool_id.to_xdr();
+                let inner = xdr::LedgerKeyLiquidityPool { liquidity_pool_id };
+                Ok(xdr::LedgerKey::LiquidityPool(inner))
+            }
         }
     }
 
@@ -218,7 +224,7 @@ impl LedgerKey {
             }
             xdr::LedgerKey::Trustline(ref trustline) => {
                 let account_id = PublicKey::from_xdr_account_id(&trustline.account_id)?;
-                let asset = Asset::from_xdr(&trustline.asset)?;
+                let asset = TrustLineAsset::from_xdr(&trustline.asset)?;
                 Ok(LedgerKey::Trustline(account_id, asset))
             }
             xdr::LedgerKey::Offer(ref offer) => {
@@ -234,6 +240,11 @@ impl LedgerKey {
             xdr::LedgerKey::ClaimableBalance(ref claimable_balance) => {
                 let balance_id = ClaimableBalanceId::from_xdr(&claimable_balance.balance_id)?;
                 Ok(LedgerKey::ClaimableBalance(balance_id))
+            }
+            xdr::LedgerKey::LiquidityPool(ref liquidity_pool) => {
+                let liquidity_pool_id =
+                    LiquidityPoolId::from_xdr(&liquidity_pool.liquidity_pool_id)?;
+                Ok(LedgerKey::LiquidityPool(liquidity_pool_id))
             }
         }
     }
@@ -294,7 +305,7 @@ impl RevokeSponsorshipOperationBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::asset::Asset;
+    use crate::asset::TrustLineAsset;
     use crate::claim::ClaimableBalanceId;
     use crate::crypto::SignerKey;
     use crate::ledger::LedgerKey;
@@ -332,7 +343,7 @@ mod tests {
         let kp1 = keypair1();
         let kp2 = keypair2();
 
-        let abcd = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
+        let abcd = TrustLineAsset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
 
         let op = Operation::new_revoke_sponsorship()
             .with_ledger_key(LedgerKey::Trustline(kp1.public_key().clone(), abcd))

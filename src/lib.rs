@@ -81,6 +81,7 @@ pub mod claim;
 pub mod crypto;
 pub mod error;
 pub mod ledger;
+pub mod liquidity_pool;
 pub mod memo;
 pub mod network;
 pub mod operation_result;

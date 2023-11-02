@@ -71,14 +71,14 @@ impl AllowTrustOperation {
                 let mut code_bytes = vec![0; 4];
                 code_bytes[..code_len].copy_from_slice(code.as_bytes());
                 let asset_code = xdr::AssetCode4::new(code_bytes);
-                xdr::AllowTrustOpAsset::AssetTypeCreditAlphanum4(asset_code)
+                xdr::AssetCode::AssetTypeCreditAlphanum4(asset_code)
             }
             CreditAssetType::CreditAlphaNum12(code) => {
                 let code_len = code.len();
                 let mut code_bytes = vec![0; 12];
                 code_bytes[..code_len].copy_from_slice(code.as_bytes());
                 let asset_code = xdr::AssetCode12::new(code_bytes);
-                xdr::AllowTrustOpAsset::AssetTypeCreditAlphanum12(asset_code)
+                xdr::AssetCode::AssetTypeCreditAlphanum12(asset_code)
             }
         };
         let authorize = xdr::Uint32::new(self.authorize.bits());
@@ -98,11 +98,11 @@ impl AllowTrustOperation {
     ) -> Result<AllowTrustOperation> {
         let trustor = PublicKey::from_xdr_account_id(&x.trustor)?;
         let asset = match &x.asset {
-            xdr::AllowTrustOpAsset::AssetTypeCreditAlphanum4(code) => {
+            xdr::AssetCode::AssetTypeCreditAlphanum4(code) => {
                 let code = xdr_code_to_string(&code.value);
                 CreditAssetType::CreditAlphaNum4(code)
             }
-            xdr::AllowTrustOpAsset::AssetTypeCreditAlphanum12(code) => {
+            xdr::AssetCode::AssetTypeCreditAlphanum12(code) => {
                 let code = xdr_code_to_string(&code.value);
                 CreditAssetType::CreditAlphaNum12(code)
             }
@@ -191,6 +191,7 @@ mod tests {
             .with_authorize_flags(TrustLineFlags::AUTHORIZED)
             .build()
             .unwrap();
+
         let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()

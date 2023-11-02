@@ -8,6 +8,7 @@ bitflags! {
         const AUTH_REQUIRED = xdr::AccountFlags::AuthRequiredFlag as u32;
         const AUTH_REVOCABLE = xdr::AccountFlags::AuthRevocableFlag as u32;
         const AUTH_IMMUTABLE = xdr::AccountFlags::AuthImmutableFlag as u32;
+        const AUTH_CLAWBACK_ENABLED = xdr::AccountFlags::AuthClawbackEnabledFlag as u32;
     }
 }
 
@@ -16,6 +17,7 @@ bitflags! {
     pub struct TrustLineFlags: u32 {
         const AUTHORIZED = xdr::TrustLineFlags::AuthorizedFlag as u32;
         const AUTHORIZED_TO_MAINTAIN_LIABILITIES = xdr::TrustLineFlags::AuthorizedToMaintainLiabilitiesFlag as u32;
+        const TRUSTLINE_CLAWBACK_ENABLED = xdr::TrustLineFlags::TrustlineClawbackEnabledFlag as u32;
     }
 }
 
