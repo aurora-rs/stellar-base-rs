@@ -859,7 +859,7 @@ impl Operation {
     pub fn from_xdr(x: &xdr::Operation) -> Result<Operation> {
         let source_account = match &x.source_account {
             None => None,
-            Some(sa) => Some(MuxedAccount::from_xdr(&sa)?),
+            Some(sa) => Some(MuxedAccount::from_xdr(sa)?),
         };
         match &x.body {
             xdr::OperationBody::CreateAccount(op) => {
@@ -977,16 +977,16 @@ impl Operation {
 }
 
 impl XDRSerialize for Operation {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr_operation = self.to_xdr()?;
-        xdr_operation.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr_operation.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for Operation {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
         let (xdr_operation, bytes_read) =
-            xdr::Operation::read_xdr(&buffer).map_err(Error::XdrError)?;
+            xdr::Operation::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = Operation::from_xdr(&xdr_operation)?;
         Ok((res, bytes_read))
     }

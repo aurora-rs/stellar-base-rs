@@ -229,17 +229,17 @@ mod tests {
         let kp = keypair0();
         let kp1 = keypair1();
 
-        let asset = ChangeTrustAsset::new_credit("FOOBAR", kp1.public_key().clone()).unwrap();
+        let asset = ChangeTrustAsset::new_credit("FOOBAR", kp1.public_key()).unwrap();
 
         let op = Operation::new_change_trust()
             .with_asset(asset)
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAGAAAAAkZPT0JBUgAAAAAAAAAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfgAAAAAAAAAAAAAAAAAAAAHqLnLFAAAAQItMBQHM0xqmxrCWDEUHHLm8RZZAamXvBVCFovprlCnzAwGOCgo/HrZlKhZL5LMJtoUAgTtb9eQL+Ur7H8zKDAk=";
@@ -253,7 +253,7 @@ mod tests {
         let kp = keypair0();
         let kp1 = keypair1();
 
-        let asset = ChangeTrustAsset::new_credit("FOOBAR", kp1.public_key().clone()).unwrap();
+        let asset = ChangeTrustAsset::new_credit("FOOBAR", kp1.public_key()).unwrap();
 
         let op = Operation::new_change_trust()
             .with_asset(asset)
@@ -261,11 +261,11 @@ mod tests {
             .unwrap()
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAGAAAAAkZPT0JBUgAAAAAAAAAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfn//////////AAAAAAAAAAHqLnLFAAAAQBGXSIMx1RSjmS7XD9DluNCn6TolNnB9sdmvBSlWeaizwgfud6hD8BZSfqBHdTNm4DgmloojC9fIVRtVFEHhpAE=";
@@ -280,20 +280,20 @@ mod tests {
         let kp1 = keypair1();
         let kp2 = keypair2();
 
-        let asset = ChangeTrustAsset::new_credit("FOOBAR", kp1.public_key().clone()).unwrap();
+        let asset = ChangeTrustAsset::new_credit("FOOBAR", kp1.public_key()).unwrap();
 
         let op = Operation::new_change_trust()
-            .with_source_account(kp2.public_key().clone())
+            .with_source_account(kp2.public_key())
             .with_asset(asset)
             .with_limit(Some(Stroops::max()))
             .unwrap()
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAGAAAAAkZPT0JBUgAAAAAAAAAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfn//////////AAAAAAAAAAHqLnLFAAAAQOLqKZ6HQ5VeJvRyWk9FBA5z6UVoxKPXAODzj7c0sOr6tGYzbAtHW1ahOPdIOI03J4lGjM21ROvgi3ClSfZVUAc=";

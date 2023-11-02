@@ -151,7 +151,7 @@ impl Transaction {
     ///
     /// This signs the transaction with the preimage `x` of `hash(x)`.
     pub fn sign_hashx(&mut self, preimage: &[u8]) -> Result<()> {
-        let signature = self.decorated_signature_from_preimage(&preimage)?;
+        let signature = self.decorated_signature_from_preimage(preimage)?;
         self.signatures.push(signature);
         Ok(())
     }
@@ -162,14 +162,14 @@ impl Transaction {
         S: Ed25519Signer<Signature>,
         V: Ed25519Verifier<Signature> + AsRef<[u8]>,
     {
-        let signature = self.decorated_signature(key, &network)?;
+        let signature = self.decorated_signature(key, network)?;
         self.signatures.push(signature);
         Ok(())
     }
 
     /// Returns the decorated signature of the transaction create with `image`.
     pub fn decorated_signature_from_preimage(&self, preimage: &[u8]) -> Result<DecoratedSignature> {
-        DecoratedSignature::new_from_preimage(&preimage)
+        DecoratedSignature::new_from_preimage(preimage)
     }
 
     /// Returns the decorated signature of the transaction create with `key` for `network`.
@@ -182,7 +182,7 @@ impl Transaction {
         S: Ed25519Signer<Signature>,
         V: Ed25519Verifier<Signature> + AsRef<[u8]>,
     {
-        let tx_hash = self.hash(&network)?;
+        let tx_hash = self.hash(network)?;
         Ok(key.sign_decorated(&tx_hash))
     }
 
@@ -195,7 +195,7 @@ impl Transaction {
     /// Returns the transaction signature data as bytes.
     pub fn signature_data(&self, network: &Network) -> Result<Vec<u8>> {
         let mut base = Vec::new();
-        let tx_signature_payload = self.to_xdr_transaction_signature_payload(&network)?;
+        let tx_signature_payload = self.to_xdr_transaction_signature_payload(network)?;
         tx_signature_payload
             .write_xdr(&mut base)
             .map_err(Error::XdrError)?;
@@ -263,7 +263,7 @@ impl Transaction {
         let memo = Memo::from_xdr(&x.memo)?;
         let mut operations = Vec::new();
         for operation in &x.operations {
-            let xdr_operation = Operation::from_xdr(&operation)?;
+            let xdr_operation = Operation::from_xdr(operation)?;
             operations.push(xdr_operation);
         }
         Ok(Transaction {
@@ -357,7 +357,7 @@ impl FeeBumpTransaction {
     ///
     /// This signs the transaction with the preimage `x` of `hash(x)`.
     pub fn sign_hashx(&mut self, preimage: &[u8]) -> Result<()> {
-        let signature = self.decorated_signature_from_preimage(&preimage)?;
+        let signature = self.decorated_signature_from_preimage(preimage)?;
         self.signatures.push(signature);
         Ok(())
     }
@@ -368,14 +368,14 @@ impl FeeBumpTransaction {
         S: Ed25519Signer<Signature>,
         V: Ed25519Verifier<Signature> + AsRef<[u8]>,
     {
-        let signature = self.decorated_signature(key, &network)?;
+        let signature = self.decorated_signature(key, network)?;
         self.signatures.push(signature);
         Ok(())
     }
 
     /// Returns the decorated signature of the transaction create with `image`.
     pub fn decorated_signature_from_preimage(&self, preimage: &[u8]) -> Result<DecoratedSignature> {
-        DecoratedSignature::new_from_preimage(&preimage)
+        DecoratedSignature::new_from_preimage(preimage)
     }
 
     /// Returns the decorated signature of the transaction create with `key` for `network`.
@@ -388,7 +388,7 @@ impl FeeBumpTransaction {
         S: Ed25519Signer<Signature>,
         V: Ed25519Verifier<Signature> + AsRef<[u8]>,
     {
-        let tx_hash = self.hash(&network)?;
+        let tx_hash = self.hash(network)?;
         Ok(key.sign_decorated(&tx_hash))
     }
 
@@ -401,7 +401,7 @@ impl FeeBumpTransaction {
     /// Returns the transaction signature data as bytes.
     pub fn signature_data(&self, network: &Network) -> Result<Vec<u8>> {
         let mut base = Vec::new();
-        let tx_signature_payload = self.to_xdr_transaction_signature_payload(&network)?;
+        let tx_signature_payload = self.to_xdr_transaction_signature_payload(network)?;
         tx_signature_payload
             .write_xdr(&mut base)
             .map_err(Error::XdrError)?;
@@ -436,7 +436,7 @@ impl FeeBumpTransaction {
         let fee = Stroops::new(x.fee.value);
         let inner_tx = match &x.inner_tx {
             xdr::FeeBumpTransactionInnerTx::EnvelopeTypeTx(inner_tx) => {
-                Transaction::from_xdr_envelope(&inner_tx)?
+                Transaction::from_xdr_envelope(inner_tx)?
             }
         };
         Ok(FeeBumpTransaction {
@@ -519,8 +519,8 @@ impl TransactionEnvelope {
     /// This signs the transaction with the preimage `x` of `hash(x)`.
     pub fn sign_hashx(&mut self, preimage: &[u8]) -> Result<()> {
         match self {
-            TransactionEnvelope::Transaction(tx) => tx.sign_hashx(&preimage),
-            TransactionEnvelope::FeeBumpTransaction(tx) => tx.sign_hashx(&preimage),
+            TransactionEnvelope::Transaction(tx) => tx.sign_hashx(preimage),
+            TransactionEnvelope::FeeBumpTransaction(tx) => tx.sign_hashx(preimage),
         }
     }
 
@@ -531,17 +531,17 @@ impl TransactionEnvelope {
         V: Ed25519Verifier<Signature> + AsRef<[u8]>,
     {
         match self {
-            TransactionEnvelope::Transaction(tx) => tx.sign(key, &network),
-            TransactionEnvelope::FeeBumpTransaction(tx) => tx.sign(key, &network),
+            TransactionEnvelope::Transaction(tx) => tx.sign(key, network),
+            TransactionEnvelope::FeeBumpTransaction(tx) => tx.sign(key, network),
         }
     }
 
     /// Returns the decorated signature of the transaction create with `image`.
     pub fn decorated_signature_from_preimage(&self, preimage: &[u8]) -> Result<DecoratedSignature> {
         match self {
-            TransactionEnvelope::Transaction(tx) => tx.decorated_signature_from_preimage(&preimage),
+            TransactionEnvelope::Transaction(tx) => tx.decorated_signature_from_preimage(preimage),
             TransactionEnvelope::FeeBumpTransaction(tx) => {
-                tx.decorated_signature_from_preimage(&preimage)
+                tx.decorated_signature_from_preimage(preimage)
             }
         }
     }
@@ -557,24 +557,24 @@ impl TransactionEnvelope {
         V: Ed25519Verifier<Signature> + AsRef<[u8]>,
     {
         match self {
-            TransactionEnvelope::Transaction(tx) => tx.decorated_signature(key, &network),
-            TransactionEnvelope::FeeBumpTransaction(tx) => tx.decorated_signature(key, &network),
+            TransactionEnvelope::Transaction(tx) => tx.decorated_signature(key, network),
+            TransactionEnvelope::FeeBumpTransaction(tx) => tx.decorated_signature(key, network),
         }
     }
 
     /// Returns the transaction hash for the transaction on `network`.
     pub fn hash(&self, network: &Network) -> Result<Vec<u8>> {
         match self {
-            TransactionEnvelope::Transaction(tx) => tx.hash(&network),
-            TransactionEnvelope::FeeBumpTransaction(tx) => tx.hash(&network),
+            TransactionEnvelope::Transaction(tx) => tx.hash(network),
+            TransactionEnvelope::FeeBumpTransaction(tx) => tx.hash(network),
         }
     }
 
     /// Returns the transaction signature data as bytes.
     pub fn signature_data(&self, network: &Network) -> Result<Vec<u8>> {
         match self {
-            TransactionEnvelope::Transaction(tx) => tx.signature_data(&network),
-            TransactionEnvelope::FeeBumpTransaction(tx) => tx.signature_data(&network),
+            TransactionEnvelope::Transaction(tx) => tx.signature_data(network),
+            TransactionEnvelope::FeeBumpTransaction(tx) => tx.signature_data(network),
         }
     }
 
@@ -614,10 +614,10 @@ impl TransactionEnvelope {
     ) -> Result<xdr::TransactionSignaturePayload> {
         match self {
             TransactionEnvelope::Transaction(tx) => {
-                tx.to_xdr_transaction_signature_payload(&network)
+                tx.to_xdr_transaction_signature_payload(network)
             }
             TransactionEnvelope::FeeBumpTransaction(tx) => {
-                tx.to_xdr_transaction_signature_payload(&network)
+                tx.to_xdr_transaction_signature_payload(network)
             }
         }
     }
@@ -685,7 +685,7 @@ impl TransactionBuilder {
             let fee = self
                 .base_fee
                 .checked_mul(&Stroops::new(tx.operations.len() as i64))
-                .ok_or_else(|| Error::TransactionFeeOverflow)?;
+                .ok_or(Error::TransactionFeeOverflow)?;
             *tx.fee_mut() = fee;
         }
 
@@ -697,16 +697,16 @@ impl TransactionBuilder {
 }
 
 impl XDRSerialize for TransactionEnvelope {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr_tx = self.to_xdr()?;
-        xdr_tx.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr_tx.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for TransactionEnvelope {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
         let (xdr_tx, bytes_read) =
-            xdr::TransactionEnvelope::read_xdr(&buffer).map_err(Error::XdrError)?;
+            xdr::TransactionEnvelope::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = TransactionEnvelope::from_xdr(&xdr_tx)?;
         Ok((res, bytes_read))
     }
@@ -726,7 +726,7 @@ fn signatures_from_xdr(
 ) -> Result<Vec<DecoratedSignature>> {
     let mut signatures = Vec::new();
     for xdr_signature in xdr_signatures {
-        let signature = DecoratedSignature::from_xdr(&xdr_signature)?;
+        let signature = DecoratedSignature::from_xdr(xdr_signature)?;
         signatures.push(signature);
     }
     Ok(signatures)
@@ -744,7 +744,7 @@ mod tests {
     #[test]
     fn test_transaction_builder() {
         let kp = SodiumKeyPair::random().unwrap();
-        let tx = Transaction::builder(kp.public_key().clone(), 123, Stroops::new(100))
+        let tx = Transaction::builder(kp.public_key(), 123, Stroops::new(100))
             .with_memo(Memo::new_id(987))
             .with_time_bounds(TimeBounds::always_valid())
             .add_operation(Operation::new_inflation().build())

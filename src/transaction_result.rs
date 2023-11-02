@@ -455,7 +455,7 @@ impl TransactionResult {
 impl XDRDeserialize for TransactionResult {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
         let (xdr_result, bytes_read) =
-            xdr::TransactionResult::read_xdr(&buffer).map_err(Error::XdrError)?;
+            xdr::TransactionResult::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = TransactionResult::from_xdr(&xdr_result)?;
         Ok((res, bytes_read))
     }
@@ -735,7 +735,7 @@ impl InnerTransactionResult {
 impl XDRDeserialize for InnerTransactionResult {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
         let (xdr_result, bytes_read) =
-            xdr::InnerTransactionResult::read_xdr(&buffer).map_err(Error::XdrError)?;
+            xdr::InnerTransactionResult::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = InnerTransactionResult::from_xdr(&xdr_result)?;
         Ok((res, bytes_read))
     }
@@ -749,119 +749,119 @@ mod tests {
     #[test]
     fn test_fee_bump_success() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0AAAAAAAAAAAAAAAAAAAAAA=";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_fee_bump_success());
     }
 
     #[test]
     fn test_fee_bump_failed() {
         let xdr = "AAAAAAAAA+j////zAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0AAAAAAAAAAAAAAAAAAAAAA=";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_fee_bump_failed());
     }
 
     #[test]
     fn test_success() {
         let xdr = "AAAAAAAAA+gAAAAAAAAAAAAAAAA=";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_success());
     }
 
     #[test]
     fn test_failed() {
         let xdr = "AAAAAAAAA+j/////AAAAAAAAAAA=";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_failed());
     }
 
     #[test]
     fn test_too_early() {
         let xdr = "AAAAAAAPQkD////+AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_too_early());
     }
 
     #[test]
     fn test_too_late() {
         let xdr = "AAAAAAAPQkD////9AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_too_late());
     }
 
     #[test]
     fn test_missing_operation() {
         let xdr = "AAAAAAAPQkD////8AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_missing_operation());
     }
 
     #[test]
     fn test_bad_sequence() {
         let xdr = "AAAAAAAPQkD////7AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_bad_sequence());
     }
 
     #[test]
     fn test_bad_auth() {
         let xdr = "AAAAAAAPQkD////6AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_bad_auth());
     }
 
     #[test]
     fn test_insufficient_balance() {
         let xdr = "AAAAAAAPQkD////5AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_insufficient_balance());
     }
 
     #[test]
     fn test_no_account() {
         let xdr = "AAAAAAAPQkD////4AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_no_account());
     }
 
     #[test]
     fn test_insufficient_fee() {
         let xdr = "AAAAAAAPQkD////3AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_insufficient_fee());
     }
 
     #[test]
     fn test_bad_auth_extra() {
         let xdr = "AAAAAAAPQkD////2AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_bad_auth_extra());
     }
 
     #[test]
     fn test_internal_error() {
         let xdr = "AAAAAAAPQkD////1AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_internal_error());
     }
 
     #[test]
     fn test_not_supported() {
         let xdr = "AAAAAAAPQkD////0AAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_not_supported());
     }
 
     #[test]
     fn test_bad_sponsorship() {
         let xdr = "AAAAAAAPQkD////yAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         assert!(result.is_bad_sponsorship());
     }
 
     #[test]
     fn test_inner_success() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0AAAAAAAAAAAAAAAAAAAAAA=";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_success());
     }
@@ -869,7 +869,7 @@ mod tests {
     #[test]
     fn test_inner_failed() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////8AAAAAAAAAAAAAAAA=";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_failed());
     }
@@ -877,7 +877,7 @@ mod tests {
     #[test]
     fn test_inner_too_early() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////4AAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_too_early());
     }
@@ -885,7 +885,7 @@ mod tests {
     #[test]
     fn test_inner_too_late() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////0AAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_too_late());
     }
@@ -893,7 +893,7 @@ mod tests {
     #[test]
     fn test_inner_missing_operation() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////wAAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_missing_operation());
     }
@@ -901,7 +901,7 @@ mod tests {
     #[test]
     fn test_inner_bad_sequence() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////sAAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_bad_sequence());
     }
@@ -909,7 +909,7 @@ mod tests {
     #[test]
     fn test_inner_bad_auth() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////oAAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_bad_auth());
     }
@@ -917,7 +917,7 @@ mod tests {
     #[test]
     fn test_inner_insufficient_balance() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////kAAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_insufficient_balance());
     }
@@ -925,7 +925,7 @@ mod tests {
     #[test]
     fn test_inner_no_account() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////gAAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_no_account());
     }
@@ -933,7 +933,7 @@ mod tests {
     #[test]
     fn test_inner_insufficient_fee() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////cAAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_insufficient_fee());
     }
@@ -941,7 +941,7 @@ mod tests {
     #[test]
     fn test_inner_bad_auth_extra() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////YAAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_bad_auth_extra());
     }
@@ -949,7 +949,7 @@ mod tests {
     #[test]
     fn test_inner_internal_error() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////UAAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_internal_error());
     }
@@ -957,7 +957,7 @@ mod tests {
     #[test]
     fn test_inner_not_supported() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////QAAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_not_supported());
     }
@@ -965,7 +965,7 @@ mod tests {
     #[test]
     fn test_inner_bad_sponsorship() {
         let xdr = "AAAAAAAAA+gAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH0P////IAAAAAAAAAAA==";
-        let result = TransactionResult::from_xdr_base64(&xdr).unwrap();
+        let result = TransactionResult::from_xdr_base64(xdr).unwrap();
         let inner_result = result.as_fee_bump_success().unwrap().result.clone();
         assert!(inner_result.is_bad_sponsorship());
     }

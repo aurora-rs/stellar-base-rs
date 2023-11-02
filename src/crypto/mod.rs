@@ -20,7 +20,7 @@ pub use sodium_oxide::*;
 
 /// Compute sha256 hash of `m`.
 pub fn hash(m: &[u8]) -> Vec<u8> {
-    sha2::Sha256::digest(&m).to_vec()
+    sha2::Sha256::digest(m).to_vec()
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -92,6 +92,6 @@ where
 
     /// Return the signature hint, that is the last 4 bytes of the public key.
     pub fn signature_hint(&self) -> SignatureHint {
-        SignatureHint::from_public_key(&self.verifier.verify_key.as_ref())
+        SignatureHint::from_public_key(self.verifier.verify_key.as_ref())
     }
 }

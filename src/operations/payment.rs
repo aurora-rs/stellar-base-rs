@@ -169,17 +169,17 @@ mod tests {
         let amount = Amount::from_str("12.301").unwrap();
 
         let op = Operation::new_payment()
-            .with_destination(dest.clone())
+            .with_destination(dest)
             .with_amount(amount)
             .unwrap()
             .with_asset(Asset::new_native())
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAABAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAAAAAAAHVPvQAAAAAAAAAAHqLnLFAAAAQFOPIvnhDoRtPKJl7mJGPD69z2riRwZCJJcLRD+QaJ1Wg+yMiDHLiheBZv/BodiTqEvFHFxcmSxo7pjyzoc7mQ8=";
@@ -197,18 +197,18 @@ mod tests {
         let amount = Amount::from_str("12.301").unwrap();
 
         let op = Operation::new_payment()
-            .with_source_account(kp2.public_key().clone())
-            .with_destination(dest.clone())
+            .with_source_account(kp2.public_key())
+            .with_destination(dest)
             .with_amount(amount)
             .unwrap()
             .with_asset(Asset::new_native())
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAABAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAAAAAAAHVPvQAAAAAAAAAAHqLnLFAAAAQE6H/Nqe7xqcdepF+y5PxXJaGn6aG1xzKXDqWQajo3lsPec0puxpaFvOKs2shgjKap4BgzREPyIs9st4IKq9kAo=";

@@ -129,7 +129,7 @@ impl PathPaymentStrictReceiveOperation {
         let send_max = Stroops::from_xdr_int64(&x.send_max)?;
         let destination_asset = Asset::from_xdr(&x.dest_asset)?;
         let destination_amount = Stroops::from_xdr_int64(&x.dest_amount)?;
-        let path_res: Result<Vec<Asset>> = x.path.iter().map(|a| Asset::from_xdr(&a)).collect();
+        let path_res: Result<Vec<Asset>> = x.path.iter().map(Asset::from_xdr).collect();
         let path = path_res?;
         Ok(PathPaymentStrictReceiveOperation {
             source_account,
@@ -282,11 +282,11 @@ mod tests {
         let dest_amount = Amount::from_str("12.301").unwrap();
         let send_max = Amount::from_str("0.333").unwrap();
 
-        let abcd = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
-        let dest_asset = Asset::new_credit("DESTASSET", kp2.public_key().clone()).unwrap();
+        let abcd = Asset::new_credit("ABCD", kp2.public_key()).unwrap();
+        let dest_asset = Asset::new_credit("DESTASSET", kp2.public_key()).unwrap();
 
         let op = Operation::new_path_payment_strict_receive()
-            .with_destination(dest.clone())
+            .with_destination(dest)
             .with_send_asset(Asset::new_native())
             .with_send_max(send_max)
             .unwrap()
@@ -296,11 +296,11 @@ mod tests {
             .add_asset(abcd)
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAACAAAAAAAAAAAAMs/QAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAkRFU1RBU1NFVAAAAAAAAAB+Ecs01jX14asC1KAsPdWlpGbYCM2PEgFZCD3NLhVZmAAAAAAHVPvQAAAAAQAAAAFBQkNEAAAAAH4RyzTWNfXhqwLUoCw91aWkZtgIzY8SAVkIPc0uFVmYAAAAAAAAAAHqLnLFAAAAQLZISKYSR3RXr9Hvxw1tr9P1B4fst/sDuQMGapBvSpLYU6DpDSOFM/vVEuB94HXWI79fSJmfyEl+gR6Zh+o0Yw4=";
@@ -319,12 +319,12 @@ mod tests {
         let dest_amount = Amount::from_str("12.301").unwrap();
         let send_max = Amount::from_str("0.333").unwrap();
 
-        let abcd = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
-        let dest_asset = Asset::new_credit("DESTASSET", kp2.public_key().clone()).unwrap();
+        let abcd = Asset::new_credit("ABCD", kp2.public_key()).unwrap();
+        let dest_asset = Asset::new_credit("DESTASSET", kp2.public_key()).unwrap();
 
         let op = Operation::new_path_payment_strict_receive()
-            .with_source_account(kp1.public_key().clone())
-            .with_destination(dest.clone())
+            .with_source_account(kp1.public_key())
+            .with_destination(dest)
             .with_send_asset(Asset::new_native())
             .with_send_max(send_max)
             .unwrap()
@@ -334,11 +334,11 @@ mod tests {
             .add_asset(abcd)
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAACAAAAAAAAAAAAMs/QAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAkRFU1RBU1NFVAAAAAAAAAB+Ecs01jX14asC1KAsPdWlpGbYCM2PEgFZCD3NLhVZmAAAAAAHVPvQAAAAAQAAAAFBQkNEAAAAAH4RyzTWNfXhqwLUoCw91aWkZtgIzY8SAVkIPc0uFVmYAAAAAAAAAAHqLnLFAAAAQJgKu/fRcqT/SwSy1ejitxV6hGH/CZZtv+Qoe1usuSK2kN0UYz6YQOy0aqMwP1iJrIV5DbiDRymKEdEZAo9a5Q4=";

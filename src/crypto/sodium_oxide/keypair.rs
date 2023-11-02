@@ -45,7 +45,7 @@ impl AsRef<KeyPair<SecretKey, sodium::PublicKey>> for SodiumKeyPair {
 impl SodiumKeyPair {
     /// Create the key pair from the secret seed, e.g. `SDAKFNYEIAORZKKCYRILFQKLLOCNPL5SWJ3YY5NM3ZH6GJSZGXHZEPQS`.
     pub fn from_secret_seed(data: &str) -> Result<SodiumKeyPair> {
-        let bytes = strkey::decode_secret_seed(&data)?;
+        let bytes = strkey::decode_secret_seed(data)?;
         Self::from_seed_bytes(&bytes)
     }
 
@@ -63,7 +63,7 @@ impl SodiumKeyPair {
 
     /// Crete a key pair from raw bytes.
     pub fn from_seed_bytes(data: &[u8]) -> Result<SodiumKeyPair> {
-        let the_seed = sodium::Seed::from_slice(&data).ok_or(Error::InvalidSeed)?;
+        let the_seed = sodium::Seed::from_slice(data).ok_or(Error::InvalidSeed)?;
         let (public, sk) = sodium::keypair_from_seed(&the_seed);
         let secret = SecretKey {
             key: sk,
@@ -94,7 +94,7 @@ impl SodiumKeyPair {
     }
 
     pub fn verify(&self, sig: &Signature, msg: &[u8]) -> bool {
-        self.0.verify(msg, &sig).map_or(false, |_| true)
+        self.0.verify(msg, sig).map_or(false, |_| true)
     }
 }
 
@@ -102,7 +102,7 @@ impl std::str::FromStr for SodiumKeyPair {
     type Err = crate::error::Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let sk = SodiumKeyPair::from_secret_seed(&s)?;
+        let sk = SodiumKeyPair::from_secret_seed(s)?;
         Ok(sk)
     }
 }
@@ -159,8 +159,8 @@ mod tests {
         ];
 
         for &(secret, address) in keypairs.iter() {
-            let keypair = SodiumKeyPair::from_secret_seed(&secret).unwrap();
-            let keypair2 = SodiumKeyPair::from_str(&secret).unwrap();
+            let keypair = SodiumKeyPair::from_secret_seed(secret).unwrap();
+            let keypair2 = SodiumKeyPair::from_str(secret).unwrap();
             assert_eq!(&keypair2.secret_key().secret_seed(), secret);
             let account_id = keypair.public_key().account_id();
             assert_eq!(&account_id, address);
@@ -183,26 +183,25 @@ mod tests {
     #[test]
     fn test_sign_and_verify() {
         let the_secret = "SD7X7LEHBNMUIKQGKPARG5TDJNBHKC346OUARHGZL5ITC6IJPXHILY36";
-        let kp = SodiumKeyPair::from_secret_seed(&the_secret).unwrap();
+        let kp = SodiumKeyPair::from_secret_seed(the_secret).unwrap();
         let message = "test post please ignore".as_bytes();
-        let sign = kp.sign(&message);
-        let expected_sign = vec![
+        let sign = kp.sign(message);
+        let expected_sign = [
             0x19, 0xDB, 0xFD, 0xAF, 0x0A, 0xA8, 0x4D, 0xF9, 0xA7, 0xFF, 0x6F, 0xE3, 0xC1, 0x0E,
             0xBC, 0x1F, 0xE2, 0x14, 0xC5, 0x10, 0xB9, 0x5D, 0xB0, 0xD6, 0x33, 0xBE, 0xD9, 0x3D,
             0xF9, 0x25, 0x6B, 0xA9, 0x92, 0xEF, 0x7D, 0x94, 0xB2, 0xA6, 0xE4, 0x54, 0xDE, 0x8F,
             0x21, 0x9, 0x28, 0xCA, 0x96, 0x11, 0x39, 0x03, 0x29, 0xC8, 0x40, 0xC8, 0xE5, 0x64,
-            0xE7, 0xA0, 0x72, 0x16, 0x02, 0x7A, 0xB4, 0xA,
-        ];
+            0xE7, 0xA0, 0x72, 0x16, 0x02, 0x7A, 0xB4, 0xA];
         assert_eq!(sign.to_bytes(), expected_sign[..]);
-        assert!(kp.verify(&sign, &message));
+        assert!(kp.verify(&sign, message));
     }
 
     #[test]
     fn test_sign_decorated() {
         let the_secret = "SD7X7LEHBNMUIKQGKPARG5TDJNBHKC346OUARHGZL5ITC6IJPXHILY36";
-        let kp = SodiumKeyPair::from_secret_seed(&the_secret).unwrap();
+        let kp = SodiumKeyPair::from_secret_seed(the_secret).unwrap();
         let message = "test post please ignore".as_bytes();
-        let sign = kp.as_ref().sign_decorated(&message);
+        let sign = kp.as_ref().sign_decorated(message);
         assert_eq!(sign.hint().to_vec(), vec![0x0B, 0xFA, 0xD1, 0x34]);
     }
 }

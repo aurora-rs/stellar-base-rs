@@ -22,7 +22,7 @@ pub fn encode_muxed_account(data: &[u8], id: u64) -> String {
     let mut data_to_encode = Vec::new();
     data_to_encode.resize(8 + data.len(), b'0');
     BigEndian::write_u64(&mut data_to_encode[..8], id);
-    data_to_encode[8..].copy_from_slice(&data);
+    data_to_encode[8..].copy_from_slice(data);
     encode_check(MUXED_ACCOUNT_VERSION_BYTE, &data_to_encode)
 }
 
@@ -59,7 +59,7 @@ pub fn decode_sha256_hash(data: &str) -> Result<Vec<u8>> {
 fn encode_check(version: u8, indata: &[u8]) -> String {
     let mut data = Vec::with_capacity(35);
     data.push(version);
-    data.extend_from_slice(&indata);
+    data.extend_from_slice(indata);
     let checksum = calculate_checksum(&data);
     let data_end = data.len();
     data.resize(data_end + 2, 0);
@@ -68,7 +68,7 @@ fn encode_check(version: u8, indata: &[u8]) -> String {
 }
 
 fn decode_unchecked(data: &str) -> Result<(u8, Vec<u8>)> {
-    let decoded = base32::decode(ALPHABET, &data).ok_or(Error::InvalidStrKey)?;
+    let decoded = base32::decode(ALPHABET, data).ok_or(Error::InvalidStrKey)?;
     let decoded_len = decoded.len();
 
     if decoded_len == 0 {
@@ -127,7 +127,7 @@ mod tests {
     #[test]
     fn test_encode_decode_secret_seed() {
         let seed = "SDJHRQF4GCMIIKAAAQ6IHY42X73FQFLHUULAPSKKD4DFDM7UXWWCRHBE";
-        let secret = decode_secret_seed(&seed).unwrap();
+        let secret = decode_secret_seed(seed).unwrap();
         let encoded = encode_secret_seed(&secret);
         assert_eq!(seed, &encoded);
     }
@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn test_encode_decode_account_id() {
         let addr = "GCZHXL5HXQX5ABDM26LHYRCQZ5OJFHLOPLZX47WEBP3V2PF5AVFK2A5D";
-        let accountid = decode_account_id(&addr).unwrap();
+        let accountid = decode_account_id(addr).unwrap();
         let encoded = encode_account_id(&accountid);
         assert_eq!(addr, &encoded);
     }
@@ -143,7 +143,7 @@ mod tests {
     #[test]
     fn test_invalid_version() {
         let addr = "GCZHXL5HXQX5ABDM26LHYRCQZ5OJFHLOPLZX47WEBP3V2PF5AVFK2A5D";
-        let result = decode_secret_seed(&addr);
+        let result = decode_secret_seed(addr);
         assert!(result.is_err());
     }
 
@@ -186,7 +186,7 @@ mod tests {
             "",
         ];
         for addr in addresses {
-            let result = decode_account_id(&addr);
+            let result = decode_account_id(addr);
             assert!(result.is_err());
         }
     }
@@ -203,7 +203,7 @@ mod tests {
         ];
 
         for addr in addresses {
-            let result = decode_muxed_account(&addr);
+            let result = decode_muxed_account(addr);
             assert!(result.is_err());
         }
     }
@@ -222,7 +222,7 @@ mod tests {
     fn test_sha256_hash() {
         let keypair = SodiumKeyPair::from_network(&Network::new_test()).unwrap();
         let pk = keypair.public_key();
-        let encoded = encode_sha256_hash(&pk.as_bytes());
+        let encoded = encode_sha256_hash(pk.as_bytes());
         assert_eq!('X', encoded.chars().next().unwrap());
         let decoded = decode_sha256_hash(&encoded).unwrap();
         assert_eq!(pk.as_bytes(), &decoded[..]);

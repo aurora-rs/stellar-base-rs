@@ -124,7 +124,7 @@ impl RevokeSponsorshipOperation {
     ) -> Result<RevokeSponsorshipOperation> {
         match x {
             xdr::RevokeSponsorshipOp::RevokeSponsorshipLedgerEntry(ref le) => {
-                let ledger_key = LedgerKey::from_xdr(&le)?;
+                let ledger_key = LedgerKey::from_xdr(le)?;
                 let inner = RevokeSponsorshipLedgerEntry {
                     source_account,
                     ledger_key,
@@ -321,14 +321,14 @@ mod tests {
         let kp1 = keypair1();
 
         let op = Operation::new_revoke_sponsorship()
-            .with_ledger_key(LedgerKey::Account(kp1.public_key().clone()))
+            .with_ledger_key(LedgerKey::Account(kp1.public_key()))
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAASAAAAAAAAAAAAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAAAAAAAeoucsUAAABAlhwbGG2OC+ym0bD7G0GsGnbLInIVKzfLdhCl6AsyioseAydDXCVOB2A8Ywv4XfT0nC4BY26UdPBuLWG3cALmAg==";
@@ -343,17 +343,17 @@ mod tests {
         let kp1 = keypair1();
         let kp2 = keypair2();
 
-        let abcd = TrustLineAsset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
+        let abcd = TrustLineAsset::new_credit("ABCD", kp2.public_key()).unwrap();
 
         let op = Operation::new_revoke_sponsorship()
-            .with_ledger_key(LedgerKey::Trustline(kp1.public_key().clone(), abcd))
+            .with_ledger_key(LedgerKey::Trustline(kp1.public_key(), abcd))
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAASAAAAAAAAAAEAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAABQUJDRAAAAAB+Ecs01jX14asC1KAsPdWlpGbYCM2PEgFZCD3NLhVZmAAAAAAAAAAB6i5yxQAAAEA+1KnFKV7vhXjLxRJ+/aWfusVTrV3Az+Iscd13uKG0g6Pi41uTC5nsU07GeC2Os2bwz7r8XlNtxlkwHF89DCcG";
@@ -368,14 +368,14 @@ mod tests {
         let kp1 = keypair1();
 
         let op = Operation::new_revoke_sponsorship()
-            .with_ledger_key(LedgerKey::Offer(kp1.public_key().clone(), 123))
+            .with_ledger_key(LedgerKey::Offer(kp1.public_key(), 123))
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAASAAAAAAAAAAIAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAAAAAAewAAAAAAAAAB6i5yxQAAAECBX+hYvz4LN3DoBmTTabB7aZGCjUqps1DZaMm9jLBsHgIUrfmoVNx2e0a6t1o0nvAKpatd3SCZFWIY0W6TnAYJ";
@@ -391,16 +391,16 @@ mod tests {
 
         let op = Operation::new_revoke_sponsorship()
             .with_ledger_key(LedgerKey::Data(
-                kp1.public_key().clone(),
+                kp1.public_key(),
                 "Test_Data".to_string(),
             ))
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAASAAAAAAAAAAMAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAJVGVzdF9EYXRhAAAAAAAAAAAAAAHqLnLFAAAAQIEt621z4bNoQ9RXuT+bUktPySCRYocLfde5SKO2/94r4K8GBZhVzKBez80hNxfljncOuG4ZkzQ+mWaCGBjnpgE=";
@@ -419,11 +419,11 @@ mod tests {
             .with_ledger_key(LedgerKey::ClaimableBalance(balance_id))
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAASAAAAAAAAAAQAAAAABwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcAAAAAAAAAAeoucsUAAABAAofz60qpHGLrsNmcT9fgAnUOywCE5xDW8OMYpusgis1zODTg3fmsbFmUGB32DrGn+aeVtrLkVVjIY8vey3cVDQ==";
@@ -438,15 +438,15 @@ mod tests {
         let kp1 = keypair1();
 
         let op = Operation::new_revoke_sponsorship()
-            .with_ledger_key(LedgerKey::Account(kp1.public_key().clone()))
-            .with_source_account(kp1.public_key().clone())
+            .with_ledger_key(LedgerKey::Account(kp1.public_key()))
+            .with_source_account(kp1.public_key())
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAASAAAAAAAAAAAAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAAAAAAAeoucsUAAABA0Fd2Pp3NfMLTFGXbb6oks4IiwWQLqzQ71DFgVjv98Cle113hcH2toNlNEF7iT1D+262C4ajIhdAReZBubwTHCg==";
@@ -460,17 +460,17 @@ mod tests {
         let kp = keypair0();
         let kp1 = keypair1();
 
-        let signer_key = SignerKey::new_from_public_key(kp1.public_key().clone());
+        let signer_key = SignerKey::new_from_public_key(kp1.public_key());
 
         let op = Operation::new_revoke_sponsorship()
-            .with_signer(kp1.public_key().clone(), signer_key)
+            .with_signer(kp1.public_key(), signer_key)
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAASAAAAAQAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfgAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfgAAAAAAAAAB6i5yxQAAAECkJuiFk6qWll/g4XtiknA2GktvVLIsQuxSs2SC2NvzrzxF0WSxZjOaKdDqeZ/AfkzgajS6mCo7s9e7sg9DcF8P";
@@ -484,18 +484,18 @@ mod tests {
         let kp = keypair0();
         let kp1 = keypair1();
 
-        let signer_key = SignerKey::new_from_public_key(kp1.public_key().clone());
+        let signer_key = SignerKey::new_from_public_key(kp1.public_key());
 
         let op = Operation::new_revoke_sponsorship()
-            .with_signer(kp1.public_key().clone(), signer_key)
-            .with_source_account(kp1.public_key().clone())
+            .with_signer(kp1.public_key(), signer_key)
+            .with_source_account(kp1.public_key())
             .build()
             .unwrap();
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAASAAAAAQAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfgAAAAAlyvHaD8duz+iEXkJUUbsHkklIlH46oMrMMYrt0odkfgAAAAAAAAAB6i5yxQAAAECe7rfndyOX8KE0jYOH5hH8oTYFF06UOEeQWvtLdxP9s0a/V8kTDclsyPpfCiC4dcNV5CPVifcolty05Qap2TUN";

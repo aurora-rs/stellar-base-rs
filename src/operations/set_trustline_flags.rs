@@ -141,8 +141,8 @@ impl SetTrustLineFlagsOperationBuilder {
             Error::InvalidOperation("missing asset for set trustline flags operation".to_string())
         })?;
 
-        let clear_flags = self.clear_flags.or(Some(TrustLineFlags::empty())).unwrap();
-        let set_flags = self.set_flags.or(Some(TrustLineFlags::empty())).unwrap();
+        let clear_flags = self.clear_flags.unwrap_or_else(TrustLineFlags::empty);
+        let set_flags = self.set_flags.unwrap_or_else(TrustLineFlags::empty);
 
         Ok(Operation::SetTrustLineFlags(SetTrustLineFlagsOperation {
             source_account: self.source_account,
@@ -170,7 +170,7 @@ mod tests {
 
     #[test]
     fn test_set_trustline_flags() {
-        let trustor = keypair1().public_key().clone();
+        let trustor = keypair1().public_key();
         let asset = asset0();
         let clear_flags = TrustLineFlags::AUTHORIZED_TO_MAINTAIN_LIABILITIES;
         let set_flags = TrustLineFlags::TRUSTLINE_CLAWBACK_ENABLED;
@@ -192,8 +192,8 @@ mod tests {
 
     #[test]
     fn test_set_trustline_flags_with_source_account() {
-        let source_account = keypair0().public_key().clone();
-        let trustor = keypair1().public_key().clone();
+        let source_account = keypair0().public_key();
+        let trustor = keypair1().public_key();
         let asset = asset0();
         let clear_flags = TrustLineFlags::AUTHORIZED_TO_MAINTAIN_LIABILITIES;
         let set_flags = TrustLineFlags::TRUSTLINE_CLAWBACK_ENABLED;

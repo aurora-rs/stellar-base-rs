@@ -237,7 +237,7 @@ mod tests {
         let max_price = Price::from_str("25.25").unwrap();
 
         let op = Operation::new_liquidity_pool_deposit()
-            .with_source_account(source_account.public_key().clone())
+            .with_source_account(source_account.public_key())
             .with_liquidity_pool_id(liquidity_pool_id)
             .with_max_amount_a(max_amount_a)
             .unwrap()

@@ -11,7 +11,7 @@ pub struct PublicKey(pub [u8; 32]);
 impl PublicKey {
     /// Create from `account_id`, e.g. `GB3KJPLFUYN5VL6R3GU3EGCGVCKFDSD7BEDX42HWG5BWFKB3KQGJJRMA`.
     pub fn from_account_id(account_id: &str) -> Result<PublicKey> {
-        let bytes = strkey::decode_account_id(&account_id)?;
+        let bytes = strkey::decode_account_id(account_id)?;
         Self::from_slice(&bytes)
     }
 
@@ -33,7 +33,7 @@ impl PublicKey {
     }
 
     pub fn to_muxed_account(&self, id: u64) -> MuxedAccount {
-        self.clone().into_muxed_account(id)
+        (*self).into_muxed_account(id)
     }
 
     pub fn to_xdr_uint256(&self) -> Result<xdr::Uint256> {
@@ -90,13 +90,13 @@ impl MuxedEd25519PublicKey {
     }
 
     pub fn from_account_id(account_id: &str) -> Result<MuxedEd25519PublicKey> {
-        let (bytes, id) = strkey::decode_muxed_account(&account_id)?;
+        let (bytes, id) = strkey::decode_muxed_account(account_id)?;
         Self::from_slice(&bytes, id)
     }
 
     /// Create from raw byte and id.
     pub fn from_slice(data: &[u8], id: u64) -> Result<MuxedEd25519PublicKey> {
-        let key = PublicKey::from_slice(&data)?;
+        let key = PublicKey::from_slice(data)?;
         Ok(MuxedEd25519PublicKey { key, id })
     }
 
@@ -106,7 +106,7 @@ impl MuxedEd25519PublicKey {
     }
 
     pub fn account_id(&self) -> String {
-        strkey::encode_muxed_account(&self.key.as_bytes(), self.id)
+        strkey::encode_muxed_account(self.key.as_bytes(), self.id)
     }
 
     pub fn to_xdr(&self) -> Result<xdr::MuxedAccount> {

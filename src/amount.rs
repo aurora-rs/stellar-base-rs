@@ -79,7 +79,7 @@ impl FromStr for Amount {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Amount> {
-        let mut inner = Decimal::from_str(&s)?;
+        let mut inner = Decimal::from_str(s)?;
         // Check we don't lose precision
         let scale = inner.scale();
         if scale > STELLAR_SCALE {
@@ -266,15 +266,15 @@ impl TryFrom<Stroops> for Amount {
 }
 
 impl XDRSerialize for Price {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr_price = self.to_xdr()?;
-        xdr_price.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr_price.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for Price {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_price, bytes_read) = xdr::Price::read_xdr(&buffer).map_err(Error::XdrError)?;
+        let (xdr_price, bytes_read) = xdr::Price::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = Price::from_xdr(&xdr_price)?;
         Ok((res, bytes_read))
     }

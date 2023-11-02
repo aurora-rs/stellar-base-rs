@@ -87,7 +87,7 @@ impl CreateClaimableBalanceOperation {
         let asset = Asset::from_xdr(&x.asset)?;
         let amount = Stroops::from_xdr_int64(&x.amount)?;
         let claimants_res: Result<Vec<Claimant>> =
-            x.claimants.iter().map(|c| Claimant::from_xdr(&c)).collect();
+            x.claimants.iter().map(Claimant::from_xdr).collect();
         let claimants = claimants_res?;
         Ok(CreateClaimableBalanceOperation {
             source_account,
@@ -184,12 +184,12 @@ mod tests {
         let kp2 = keypair2();
 
         let amount = Amount::from_str("12.0333").unwrap();
-        let asset = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
+        let asset = Asset::new_credit("ABCD", kp2.public_key()).unwrap();
 
         let predicate =
             ClaimPredicate::new_not(ClaimPredicate::new_before_relative_time(Duration::days(7)));
 
-        let claimant = Claimant::new(kp1.public_key().clone(), predicate);
+        let claimant = Claimant::new(kp1.public_key(), predicate);
 
         let op = Operation::new_create_claimable_balance()
             .with_asset(asset)
@@ -199,11 +199,11 @@ mod tests {
             .build()
             .unwrap();
 
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAOAAAAAUFCQ0QAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAABywiyAAAAAEAAAAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAwAAAAEAAAAFAAAAAAAJOoAAAAAAAAAAAeoucsUAAABAUA3iWSLubKZc6r4CL2s9WTr/xMS5zuWgzxvm2hBs9use/2ejCagSPlRBeRCe3Ky4R+tKMk8Qpa2LATvgUQS2BQ==";
@@ -219,15 +219,15 @@ mod tests {
         let kp2 = keypair2();
 
         let amount = Amount::from_str("12.0333").unwrap();
-        let asset = Asset::new_credit("ABCD", kp2.public_key().clone()).unwrap();
+        let asset = Asset::new_credit("ABCD", kp2.public_key()).unwrap();
 
         let predicate =
             ClaimPredicate::new_not(ClaimPredicate::new_before_relative_time(Duration::days(7)));
 
-        let claimant = Claimant::new(kp1.public_key().clone(), predicate);
+        let claimant = Claimant::new(kp1.public_key(), predicate);
 
         let op = Operation::new_create_claimable_balance()
-            .with_source_account(kp.public_key().clone())
+            .with_source_account(kp.public_key())
             .with_asset(asset)
             .with_amount(amount)
             .unwrap()
@@ -235,11 +235,11 @@ mod tests {
             .build()
             .unwrap();
 
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAA4Nxt4XJcrGZRYrUvrOc1sooiQ+QdEk1suS1wo+oucsUAAAAOAAAAAUFCQ0QAAAAAfhHLNNY19eGrAtSgLD3VpaRm2AjNjxIBWQg9zS4VWZgAAAAABywiyAAAAAEAAAAAAAAAACXK8doPx27P6IReQlRRuweSSUiUfjqgyswxiu3Sh2R+AAAAAwAAAAEAAAAFAAAAAAAJOoAAAAAAAAAAAeoucsUAAABAcaaQuqZMwpwVMS9814lZPhjt43B3xwlGNfeyx2wU2EJSDJ0h0d2a7dxngMzq4/abNVCjBKspCU7XroelAhSNCw==";

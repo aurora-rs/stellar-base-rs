@@ -128,7 +128,7 @@ mod tests {
         .unwrap();
 
         let op = Operation::new_clawback_claimable_balance()
-            .with_source_account(source_account.public_key().clone())
+            .with_source_account(source_account.public_key())
             .with_balance_id(balance_id)
             .build()
             .unwrap();

@@ -49,12 +49,12 @@
 //! let payment_amount = Amount::from_str("13.12")?;
 //!
 //! let payment = Operation::new_payment()
-//!     .with_destination(destination.clone())
+//!     .with_destination(destination)
 //!     .with_amount(payment_amount)?
 //!     .with_asset(Asset::new_native())
 //!     .build()?;
 //!
-//! let mut tx = Transaction::builder(source_kp.public_key().clone(), 1234, MIN_BASE_FEE)
+//! let mut tx = Transaction::builder(source_kp.public_key(), 1234, MIN_BASE_FEE)
 //!     .with_memo(Memo::new_id(7483792))
 //!     .add_operation(payment)
 //!     .into_transaction()?;

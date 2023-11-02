@@ -106,7 +106,7 @@ impl DecoratedSignature {
     /// Creates a new `DecoratedSignature` from the pre image.
     pub fn new_from_preimage(preimage: &[u8]) -> Result<DecoratedSignature> {
         let hint = SignatureHint::from_slice(&preimage[preimage.len() - 4..])?;
-        let signature = Signature::from_bytes(&preimage).map_err(|_| Error::InvalidSignature)?;
+        let signature = Signature::from_bytes(preimage).map_err(|_| Error::InvalidSignature)?;
         Ok(DecoratedSignature::new(hint, signature))
     }
 
@@ -172,7 +172,7 @@ impl SignerKey {
         tx: &TransactionEnvelope,
         network: &Network,
     ) -> Result<SignerKey> {
-        let preauthtx = PreAuthTxHash::new_from_transaction_envelope(&tx, &network)?;
+        let preauthtx = PreAuthTxHash::new_from_transaction_envelope(tx, network)?;
         Ok(SignerKey::new_from_pre_authorized_transaction(preauthtx))
     }
 
@@ -334,7 +334,7 @@ impl PreAuthTxHash {
         tx: &TransactionEnvelope,
         network: &Network,
     ) -> Result<PreAuthTxHash> {
-        let hash = tx.hash(&network)?;
+        let hash = tx.hash(network)?;
         PreAuthTxHash::new(hash)
     }
 
@@ -369,31 +369,31 @@ impl HashX {
 }
 
 impl XDRSerialize for SignerKey {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr_signer = self.to_xdr()?;
-        xdr_signer.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr_signer.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for SignerKey {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
         let (xdr_signer, bytes_read) =
-            xdr::SignerKey::read_xdr(&buffer).map_err(Error::XdrError)?;
+            xdr::SignerKey::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = SignerKey::from_xdr(&xdr_signer)?;
         Ok((res, bytes_read))
     }
 }
 
 impl XDRSerialize for Signer {
-    fn write_xdr(&self, mut out: &mut Vec<u8>) -> Result<u64> {
+    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
         let xdr_signer = self.to_xdr()?;
-        xdr_signer.write_xdr(&mut out).map_err(Error::XdrError)
+        xdr_signer.write_xdr(out).map_err(Error::XdrError)
     }
 }
 
 impl XDRDeserialize for Signer {
     fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_signer, bytes_read) = xdr::Signer::read_xdr(&buffer).map_err(Error::XdrError)?;
+        let (xdr_signer, bytes_read) = xdr::Signer::read_xdr(buffer).map_err(Error::XdrError)?;
         let res = Signer::from_xdr(&xdr_signer)?;
         Ok((res, bytes_read))
     }

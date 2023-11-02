@@ -69,7 +69,7 @@ impl ManageDataOperation {
         let data_value = x
             .data_value
             .as_ref()
-            .map(|d| DataValue::from_xdr(d))
+            .map(DataValue::from_xdr)
             .transpose()?;
 
         Ok(ManageDataOperation {
@@ -136,11 +136,11 @@ mod tests {
             .build()
             .unwrap();
 
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAKAAAACVRFU1QgVEVTVAAAAAAAAAEAAAALdmFsdWUgdmFsdWUAAAAAAAAAAAHqLnLFAAAAQLxeb1DkXDTXi/rOffnHpyxuJhl8vN/GDMKLtxFFTGn5b99FNHmWUyUoxb4KTE9bBguIe33SEQ/npj32f2vt/gY=";
@@ -155,17 +155,17 @@ mod tests {
         let kp1 = keypair1();
         let value = DataValue::from_slice("value value".as_bytes()).unwrap();
         let op = Operation::new_manage_data()
-            .with_source_account(kp1.public_key().clone())
+            .with_source_account(kp1.public_key())
             .with_data_name("TEST TEST".to_string())
             .with_data_value(Some(value))
             .build()
             .unwrap();
 
-        let mut tx = Transaction::builder(kp.public_key().clone(), 3556091187167235, MIN_BASE_FEE)
+        let mut tx = Transaction::builder(kp.public_key(), 3556091187167235, MIN_BASE_FEE)
             .add_operation(op)
             .into_transaction()
             .unwrap();
-        tx.sign(&kp.as_ref(), &Network::new_test()).unwrap();
+        tx.sign(kp.as_ref(), &Network::new_test()).unwrap();
         let envelope = tx.to_envelope();
         let xdr = envelope.xdr_base64().unwrap();
         let expected = "AAAAAgAAAADg3G3hclysZlFitS+s5zWyiiJD5B0STWy5LXCj6i5yxQAAAGQADKI/AAAAAwAAAAAAAAAAAAAAAQAAAAEAAAAAJcrx2g/Hbs/ohF5CVFG7B5JJSJR+OqDKzDGK7dKHZH4AAAAKAAAACVRFU1QgVEVTVAAAAAAAAAEAAAALdmFsdWUgdmFsdWUAAAAAAAAAAAHqLnLFAAAAQBQKnwjKQ1RbYg0rk7G9VV1jHwM29YEp1EoOug960nTVWga6aFmPlQ0mDDudEsbSMq+9G8eYX5mcu9EHTjZUBQI=";

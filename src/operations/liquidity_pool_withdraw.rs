@@ -207,7 +207,7 @@ mod tests {
 
     #[test]
     fn test_liquidity_pool_withdraw_with_source_account() {
-        let source_account = keypair0().public_key().clone();
+        let source_account = keypair0().public_key();
         let liquidity_pool_id = LiquidityPoolId::new(vec![7; 32]).unwrap();
         let amount = Amount::from_str("100.09").unwrap();
         let min_amount_a = Amount::from_str("1700.69").unwrap();
