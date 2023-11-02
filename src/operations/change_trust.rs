@@ -168,7 +168,7 @@ impl From<Asset> for ChangeTrustAsset {
         match asset {
             Asset::Native => ChangeTrustAsset::new_native().unwrap(),
             Asset::Credit(credit) => {
-                ChangeTrustAsset::new_credit(credit.code(), credit.issuer().clone()).unwrap()
+                ChangeTrustAsset::new_credit(credit.code(), *credit.issuer()).unwrap()
             }
         }
     }

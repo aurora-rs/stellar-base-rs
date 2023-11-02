@@ -297,7 +297,7 @@ impl From<Asset> for TrustLineAsset {
         match asset {
             Asset::Native => TrustLineAsset::new_native(),
             Asset::Credit(credit) => {
-                TrustLineAsset::new_credit(credit.code(), credit.issuer().clone()).unwrap()
+                TrustLineAsset::new_credit(credit.code(), *credit.issuer()).unwrap()
             }
         }
     }
