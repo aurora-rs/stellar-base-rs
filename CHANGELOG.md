@@ -6,8 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Added
 
+## [0.6.0] - 2023-11-03
+### Added
 - Add tests for `BeginSponsoringFutureReservesOperation`
 - Add `ChangeTrustAsset`
 - Add `ClawbackOperation`
@@ -36,15 +37,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `InnerTransactionResult::FeeBumpInnerFailed`
 
 ### Changed
-
 - BREAKING: Use `ChangeTrustAsset` for `ChangeTrust` operation
 - BREAKING: Use `TrustLineAsset` instead of `Asset` in `LedgerKey::Trustline`
 - BREAKING: Update `xdr_generated.rs` from the current stellar X files.
+- BREAKING: Use traits from the `ed25519` crate to allow using any ed25519
+  backend (libsodium, dalek, etc or even a custom signing implementation). The
+  use of sodiumoxide is now behind the feature `sodium_oxide`, which is enabled
+  by default.
 - Update dependency's versions
 
 ### Fixed
-
 - Fix `ChangeTrustOperationBuilder` to allow explicitly passing limit 0.
+
 
 ## [0.5.0] - 2021-01-15
 ### Added
