@@ -1,9 +1,9 @@
 //! Cryptographic functions.
 
+#[cfg(feature = "dalek")]
+mod dalek;
 mod public_key;
 mod signature;
-#[cfg(feature = "sodium_oxide")]
-mod sodium_oxide;
 mod strkey;
 
 use crate::error::Error;
@@ -13,10 +13,10 @@ use std::convert::TryInto;
 pub use self::public_key::{MuxedAccount, MuxedEd25519PublicKey, PublicKey};
 pub use self::signature::*;
 pub use self::strkey::*;
+#[cfg(feature = "dalek")]
+pub use dalek::*;
 pub use ed25519::signature::{Signer as Ed25519Signer, Verifier as Ed25519Verifier};
 pub use ed25519::Signature;
-#[cfg(feature = "sodium_oxide")]
-pub use sodium_oxide::*;
 
 /// Compute sha256 hash of `m`.
 pub fn hash(m: &[u8]) -> Vec<u8> {

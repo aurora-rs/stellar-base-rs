@@ -736,14 +736,14 @@ fn signatures_from_xdr(
 mod tests {
     use super::Transaction;
     use crate::amount::Stroops;
-    use crate::crypto::SodiumKeyPair;
+    use crate::crypto::DalekKeyPair;
     use crate::memo::Memo;
     use crate::operations::Operation;
     use crate::time_bounds::TimeBounds;
 
     #[test]
     fn test_transaction_builder() {
-        let kp = SodiumKeyPair::random().unwrap();
+        let kp = DalekKeyPair::random().unwrap();
         let tx = Transaction::builder(kp.public_key(), 123, Stroops::new(100))
             .with_memo(Memo::new_id(987))
             .with_time_bounds(TimeBounds::always_valid())

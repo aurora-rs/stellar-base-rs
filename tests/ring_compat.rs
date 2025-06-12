@@ -1,4 +1,4 @@
-//! A custom signer using ring-compat (instead of sodiumoxide)
+//! A custom signer using ring-compat
 
 use rand::rngs::OsRng;
 use rand::RngCore;

@@ -31,15 +31,17 @@ thiserror = "2.0.12"
 xdr-rs-serialize = "0.3.0"
 xdr-rs-serialize-derive = "0.3.0"
 
-[dependencies.sodiumoxide]
-version = "0.2.7"
+[dependencies.ed25519-dalek]
+version = "1.0.1"
+optional = true
+
+[dependencies.rand]
+version = "0.7.3"
 optional = true
 
 [dev-dependencies]
-ed25519-dalek = "1.0.1"
-rand = "0.7.3"
 ring-compat = "0.5.1"
 
 [features]
-default = ["sodium_oxide"]
-sodium_oxide = ["sodiumoxide"]
+default = ["dalek"]
+dalek = ["ed25519-dalek", "rand"]

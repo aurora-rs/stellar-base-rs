@@ -1,19 +1,19 @@
-use crate::crypto::SodiumKeyPair;
+use crate::crypto::DalekKeyPair;
 
-pub fn keypair0() -> SodiumKeyPair {
+pub fn keypair0() -> DalekKeyPair {
     // GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3
-    SodiumKeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
+    DalekKeyPair::from_secret_seed("SBPQUZ6G4FZNWFHKUWC5BEYWF6R52E3SEP7R3GWYSM2XTKGF5LNTWW4R")
         .unwrap()
 }
 
-pub fn keypair1() -> SodiumKeyPair {
+pub fn keypair1() -> DalekKeyPair {
     // GAS4V4O2B7DW5T7IQRPEEVCRXMDZESKISR7DVIGKZQYYV3OSQ5SH5LVP
-    SodiumKeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
+    DalekKeyPair::from_secret_seed("SBMSVD4KKELKGZXHBUQTIROWUAPQASDX7KEJITARP4VMZ6KLUHOGPTYW")
         .unwrap()
 }
 
-pub fn keypair2() -> SodiumKeyPair {
+pub fn keypair2() -> DalekKeyPair {
     // GB7BDSZU2Y27LYNLALKKALB52WS2IZWYBDGY6EQBLEED3TJOCVMZRH7H
-    SodiumKeyPair::from_secret_seed("SBZVMB74Z76QZ3ZOY7UTDFYKMEGKW5XFJEB6PFKBF4UYSSWHG4EDH7PY")
+    DalekKeyPair::from_secret_seed("SBZVMB74Z76QZ3ZOY7UTDFYKMEGKW5XFJEB6PFKBF4UYSSWHG4EDH7PY")
         .unwrap()
 }
