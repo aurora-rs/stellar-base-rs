@@ -61,7 +61,7 @@ impl SodiumKeyPair {
         Self::from_seed_bytes(&bytes)
     }
 
-    /// Crete a key pair from raw bytes.
+    /// Create a key pair from raw bytes.
     pub fn from_seed_bytes(data: &[u8]) -> Result<SodiumKeyPair> {
         let the_seed = sodium::Seed::from_slice(data).ok_or(Error::InvalidSeed)?;
         let (public, sk) = sodium::keypair_from_seed(&the_seed);

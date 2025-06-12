@@ -8,7 +8,7 @@ const SECRET_SEED_VERSION_BYTE: u8 = 18 << 3; // S
 const PRE_AUTH_TX_VERSION_BYTE: u8 = 19 << 3; // T
 const SHA256_HASH_VERSION_BYTE: u8 = 23 << 3; // X
 
-static ALPHABET: base32::Alphabet = base32::Alphabet::RFC4648 { padding: false };
+static ALPHABET: base32::Alphabet = base32::Alphabet::Rfc4648 { padding: false };
 
 pub fn encode_account_id(data: &[u8]) -> String {
     encode_check(ACCOUNT_ID_VERSION_BYTE, data)
