@@ -9,31 +9,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        run: rustup toolchain install stable --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
 
       - name: Cargo login
-        uses: actions-rs/cargo@v1
-        with:
-          command: login
-          args: -- ${{ secrets.CARGO_TOKEN }}
+        run: echo "${{ secrets.CARGO_TOKEN }}" | cargo login
 
       - name: Cargo publish
         run: cargo publish
 
       - name: GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
+          name: Release ${{ github.ref_name }}
+          draft: true
           prerelease: false
