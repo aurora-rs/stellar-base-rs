@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- BREAKING: Replaced feature `sodium_oxide` with `dalek` since sodiumoxide is no longer maintained
+- Update dependency's versions
+
 ## [0.6.0] - 2023-11-03
 ### Added
 - Add tests for `BeginSponsoringFutureReservesOperation`

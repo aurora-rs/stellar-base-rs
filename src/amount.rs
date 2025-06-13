@@ -170,7 +170,7 @@ impl Price {
         Price(inner)
     }
 
-    /// Retrievs the price numerator.
+    /// Retrieves the price numerator.
     pub fn numerator(&self) -> i32 {
         *self.0.numer()
     }

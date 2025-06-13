@@ -154,7 +154,7 @@ fn ensure_valid_timestamp(dt: &DateTime<Utc>) -> Result<()> {
 mod tests {
     use super::TimeBounds;
     use crate::xdr::{XDRDeserialize, XDRSerialize};
-    use chrono::{DateTime, Datelike, Duration, NaiveDateTime, Utc};
+    use chrono::{DateTime, Datelike, Duration, Utc};
 
     #[test]
     fn test_valid_for() {
@@ -241,10 +241,7 @@ mod tests {
 
     #[test]
     fn test_serialize_with_bounds() {
-        let now = DateTime::<Utc>::from_naive_utc_and_offset(
-            NaiveDateTime::from_timestamp_opt(1594305941, 0).unwrap(),
-            Utc,
-        );
+        let now = DateTime::<Utc>::from_timestamp(1594305941, 0).unwrap();
         let before_now = now - Duration::minutes(1);
         let tb = TimeBounds::always_valid()
             .with_lower(before_now)
@@ -264,10 +261,7 @@ mod tests {
 
     #[test]
     fn test_deserialize_with_bounds() {
-        let now = DateTime::<Utc>::from_naive_utc_and_offset(
-            NaiveDateTime::from_timestamp_opt(1594305941, 0).unwrap(),
-            Utc,
-        );
+        let now = DateTime::<Utc>::from_timestamp(1594305941, 0).unwrap();
         let before_now = now - Duration::minutes(1);
         let expected = TimeBounds::always_valid()
             .with_lower(before_now)

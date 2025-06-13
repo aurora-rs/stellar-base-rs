@@ -16,10 +16,10 @@
 //! to sign transactions.
 //!
 //! ```rust
-//! use stellar_base::crypto::{SodiumKeyPair};
+//! use stellar_base::crypto::{DalekKeyPair};
 //!
 //! # fn run() -> stellar_base::error::Result<()> {
-//! let random_kp = SodiumKeyPair::random()?;
+//! let random_kp = DalekKeyPair::random()?;
 //! println!("Account Id = {}", random_kp.public_key().account_id());
 //! # Ok(())
 //! # }
@@ -34,7 +34,7 @@
 //! ```rust
 //! use stellar_base::amount::Amount;
 //! use stellar_base::asset::Asset;
-//! use stellar_base::crypto::{PublicKey, SodiumKeyPair};
+//! use stellar_base::crypto::{PublicKey, DalekKeyPair};
 //! use stellar_base::memo::Memo;
 //! use stellar_base::network::Network;
 //! use stellar_base::operations::Operation;
@@ -43,7 +43,7 @@
 //! use std::str::FromStr;
 //!
 //! # fn run() -> stellar_base::error::Result<()> {
-//! let source_kp = SodiumKeyPair::random()?;
+//! let source_kp = DalekKeyPair::random()?;
 //! let destination = PublicKey::from_account_id("GATTMQEODSDX45WZK2JFIYETXWYCU5GRJ5I3Z7P2UDYD6YFVONDM4CX4")?;
 //!
 //! let payment_amount = Amount::from_str("13.12")?;

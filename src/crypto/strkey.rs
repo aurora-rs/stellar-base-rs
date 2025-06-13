@@ -8,7 +8,7 @@ const SECRET_SEED_VERSION_BYTE: u8 = 18 << 3; // S
 const PRE_AUTH_TX_VERSION_BYTE: u8 = 19 << 3; // T
 const SHA256_HASH_VERSION_BYTE: u8 = 23 << 3; // X
 
-static ALPHABET: base32::Alphabet = base32::Alphabet::RFC4648 { padding: false };
+static ALPHABET: base32::Alphabet = base32::Alphabet::Rfc4648 { padding: false };
 
 pub fn encode_account_id(data: &[u8]) -> String {
     encode_check(ACCOUNT_ID_VERSION_BYTE, data)
@@ -121,7 +121,7 @@ mod tests {
     use super::{decode_pre_auth_tx, encode_pre_auth_tx};
     use super::{decode_secret_seed, encode_secret_seed};
     use super::{decode_sha256_hash, encode_sha256_hash};
-    use crate::crypto::SodiumKeyPair;
+    use crate::crypto::DalekKeyPair;
     use crate::network::Network;
 
     #[test]
@@ -210,7 +210,7 @@ mod tests {
 
     #[test]
     fn test_pre_auth_tx() {
-        let keypair = SodiumKeyPair::from_network(&Network::new_test()).unwrap();
+        let keypair = DalekKeyPair::from_network(&Network::new_test()).unwrap();
         let pk = keypair.public_key();
         let encoded = encode_pre_auth_tx(pk.as_bytes());
         assert_eq!('T', encoded.chars().next().unwrap());
@@ -220,7 +220,7 @@ mod tests {
 
     #[test]
     fn test_sha256_hash() {
-        let keypair = SodiumKeyPair::from_network(&Network::new_test()).unwrap();
+        let keypair = DalekKeyPair::from_network(&Network::new_test()).unwrap();
         let pk = keypair.public_key();
         let encoded = encode_sha256_hash(pk.as_bytes());
         assert_eq!('X', encoded.chars().next().unwrap());

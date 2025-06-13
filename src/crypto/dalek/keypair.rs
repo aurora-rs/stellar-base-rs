@@ -1,75 +1,78 @@
 use std::convert::TryInto;
 
-use crate::crypto::sodium_oxide::random_bytes;
 use crate::crypto::{strkey, KeyPair};
 use crate::crypto::{Ed25519Signer, Signature};
 use crate::error::{Error, Result};
 use crate::network::Network;
 use crate::PublicKey;
-use sodiumoxide::crypto::sign::ed25519 as sodium;
 
 /// The secret key of the account.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct SecretKey {
-    key: sodium::SecretKey,
-    seed: sodium::Seed,
+    signing_key: ed25519_dalek::SigningKey,
 }
 
 impl Ed25519Signer<Signature> for SecretKey {
-    fn try_sign(&self, msg: &[u8]) -> std::result::Result<ed25519::Signature, ed25519::Error> {
-        self.key.try_sign(msg)
+    fn try_sign(
+        &self,
+        msg: &[u8],
+    ) -> std::result::Result<ed25519::Signature, ed25519_dalek::SignatureError> {
+        self.signing_key.try_sign(msg)
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct SodiumKeyPair(KeyPair<SecretKey, sodium::PublicKey>);
+#[derive(Debug)]
+pub struct DalekKeyPair(KeyPair<SecretKey, ed25519_dalek::VerifyingKey>);
 
 impl SecretKey {
-    /// Return the inner key.
-    pub fn inner(&self) -> &sodium::SecretKey {
-        &self.key
+    /// Return the inner keypair.
+    pub fn inner(&self) -> &ed25519_dalek::SigningKey {
+        &self.signing_key
     }
 
     /// Return the secret key as String, starting with `S`.
     pub fn secret_seed(&self) -> String {
-        strkey::encode_secret_seed(&self.seed.0)
+        strkey::encode_secret_seed(self.signing_key.as_bytes())
     }
 }
 
-impl AsRef<KeyPair<SecretKey, sodium::PublicKey>> for SodiumKeyPair {
-    fn as_ref(&self) -> &KeyPair<SecretKey, sodium::PublicKey> {
+impl AsRef<KeyPair<SecretKey, ed25519_dalek::VerifyingKey>> for DalekKeyPair {
+    fn as_ref(&self) -> &KeyPair<SecretKey, ed25519_dalek::VerifyingKey> {
         &self.0
     }
 }
 
-impl SodiumKeyPair {
+impl DalekKeyPair {
     /// Create the key pair from the secret seed, e.g. `SDAKFNYEIAORZKKCYRILFQKLLOCNPL5SWJ3YY5NM3ZH6GJSZGXHZEPQS`.
-    pub fn from_secret_seed(data: &str) -> Result<SodiumKeyPair> {
+    pub fn from_secret_seed(data: &str) -> Result<DalekKeyPair> {
         let bytes = strkey::decode_secret_seed(data)?;
         Self::from_seed_bytes(&bytes)
     }
 
     /// Create a random key pair.
-    pub fn random() -> Result<SodiumKeyPair> {
-        let seed = random_bytes(32);
-        Self::from_seed_bytes(&seed)
+    pub fn random() -> Result<DalekKeyPair> {
+        use rand::rngs::OsRng;
+        let mut rng = OsRng {};
+        let signing_key = ed25519_dalek::SigningKey::generate(&mut rng);
+        let verifier = signing_key.verifying_key();
+        let signer = SecretKey { signing_key };
+        Ok(DalekKeyPair(KeyPair::new(signer, verifier)))
     }
 
     /// Create a key pair from the `network` passphrase.
-    pub fn from_network(network: &Network) -> Result<SodiumKeyPair> {
+    pub fn from_network(network: &Network) -> Result<DalekKeyPair> {
         let bytes = network.network_id();
         Self::from_seed_bytes(&bytes)
     }
 
-    /// Crete a key pair from raw bytes.
-    pub fn from_seed_bytes(data: &[u8]) -> Result<SodiumKeyPair> {
-        let the_seed = sodium::Seed::from_slice(data).ok_or(Error::InvalidSeed)?;
-        let (public, sk) = sodium::keypair_from_seed(&the_seed);
-        let secret = SecretKey {
-            key: sk,
-            seed: the_seed,
-        };
-        Ok(SodiumKeyPair(KeyPair::new(secret, public)))
+    /// Create a key pair from raw bytes.
+    pub fn from_seed_bytes(data: &[u8]) -> Result<DalekKeyPair> {
+        let secret_key: ed25519_dalek::SecretKey =
+            data.try_into().map_err(|_| Error::InvalidSeed)?;
+        let signing_key = ed25519_dalek::SigningKey::from_bytes(&secret_key);
+        let verifier = signing_key.verifying_key();
+        let signer = SecretKey { signing_key };
+        Ok(DalekKeyPair(KeyPair::new(signer, verifier)))
     }
 
     /// Return the secret key.
@@ -79,14 +82,8 @@ impl SodiumKeyPair {
 
     /// Return the public key
     pub fn public_key(&self) -> PublicKey {
-        PublicKey(
-            self.0
-                .verifier
-                .verify_key
-                .as_ref()
-                .try_into()
-                .expect("Ed22519 public key is not 32 bytes"),
-        )
+        PublicKey::from_slice(self.0.verifier.verify_key.as_bytes())
+            .expect("Ed25519 public key is not 32 bytes")
     }
 
     pub fn sign(&self, msg: &[u8]) -> Signature {
@@ -94,22 +91,22 @@ impl SodiumKeyPair {
     }
 
     pub fn verify(&self, sig: &Signature, msg: &[u8]) -> bool {
-        self.0.verify(msg, sig).map_or(false, |_| true)
+        self.0.verify(msg, sig).is_ok_and(|_| true)
     }
 }
 
-impl std::str::FromStr for SodiumKeyPair {
+impl std::str::FromStr for DalekKeyPair {
     type Err = crate::error::Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let sk = SodiumKeyPair::from_secret_seed(s)?;
+        let sk = DalekKeyPair::from_secret_seed(s)?;
         Ok(sk)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{PublicKey, SodiumKeyPair};
+    use super::{DalekKeyPair, PublicKey};
     use crate::network::Network;
     use std::str::FromStr;
 
@@ -159,8 +156,8 @@ mod tests {
         ];
 
         for &(secret, address) in keypairs.iter() {
-            let keypair = SodiumKeyPair::from_secret_seed(secret).unwrap();
-            let keypair2 = SodiumKeyPair::from_str(secret).unwrap();
+            let keypair = DalekKeyPair::from_secret_seed(secret).unwrap();
+            let keypair2 = DalekKeyPair::from_str(secret).unwrap();
             assert_eq!(&keypair2.secret_key().secret_seed(), secret);
             let account_id = keypair.public_key().account_id();
             assert_eq!(&account_id, address);
@@ -172,7 +169,7 @@ mod tests {
     #[test]
     fn test_from_network() {
         let network = Network::new_public();
-        let kp = SodiumKeyPair::from_network(&network).unwrap();
+        let kp = DalekKeyPair::from_network(&network).unwrap();
         let public = kp.public_key().account_id();
         assert_eq!(
             public,
@@ -183,7 +180,7 @@ mod tests {
     #[test]
     fn test_sign_and_verify() {
         let the_secret = "SD7X7LEHBNMUIKQGKPARG5TDJNBHKC346OUARHGZL5ITC6IJPXHILY36";
-        let kp = SodiumKeyPair::from_secret_seed(the_secret).unwrap();
+        let kp = DalekKeyPair::from_secret_seed(the_secret).unwrap();
         let message = "test post please ignore".as_bytes();
         let sign = kp.sign(message);
         let expected_sign = [
@@ -200,7 +197,7 @@ mod tests {
     #[test]
     fn test_sign_decorated() {
         let the_secret = "SD7X7LEHBNMUIKQGKPARG5TDJNBHKC346OUARHGZL5ITC6IJPXHILY36";
-        let kp = SodiumKeyPair::from_secret_seed(the_secret).unwrap();
+        let kp = DalekKeyPair::from_secret_seed(the_secret).unwrap();
         let message = "test post please ignore".as_bytes();
         let sign = kp.as_ref().sign_decorated(message);
         assert_eq!(sign.hint().to_vec(), vec![0x0B, 0xFA, 0xD1, 0x34]);

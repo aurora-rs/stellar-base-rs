@@ -1,4 +1,4 @@
-//! A custom signer using ring-compat (instead of sodiumoxide)
+//! A custom signer using ring-compat
 
 use rand::rngs::OsRng;
 use rand::RngCore;
@@ -11,7 +11,7 @@ pub fn ring_compat_sign_verify() {
     let mut ed25519_seed = [0u8; 32];
     rng.fill_bytes(&mut ed25519_seed);
 
-    let signing_key = SigningKey::from_seed(&ed25519_seed).unwrap();
+    let signing_key = SigningKey::from_slice(&ed25519_seed).unwrap();
     let verify_key = signing_key.verifying_key();
 
     let keys = KeyPair::new(signing_key, verify_key);
