@@ -58,7 +58,7 @@ impl XdrSignature for Signature {
 
     /// Creates from xdr object.
     fn from_xdr(x: &xdr::Signature) -> Result<Signature> {
-        Signature::from_bytes(&x.value).map_err(|_| Error::InvalidSignature)
+        Signature::from_slice(&x.value).map_err(|_| Error::InvalidSignature)
     }
 }
 
@@ -106,7 +106,7 @@ impl DecoratedSignature {
     /// Creates a new `DecoratedSignature` from the pre image.
     pub fn new_from_preimage(preimage: &[u8]) -> Result<DecoratedSignature> {
         let hint = SignatureHint::from_slice(&preimage[preimage.len() - 4..])?;
-        let signature = Signature::from_bytes(preimage).map_err(|_| Error::InvalidSignature)?;
+        let signature = Signature::from_slice(preimage).map_err(|_| Error::InvalidSignature)?;
         Ok(DecoratedSignature::new(hint, signature))
     }
 

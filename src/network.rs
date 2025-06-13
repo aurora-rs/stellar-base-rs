@@ -26,12 +26,12 @@ impl Network {
         Self::new(TEST_PASSPHRASE.to_string())
     }
 
-    /// Retrievs the network passphrase.
+    /// Retrieves the network passphrase.
     pub fn passphrase(&self) -> &str {
         &self.passphrase
     }
 
-    /// Retrievs the network id, which is the hash of the network passphrase.
+    /// Retrieves the network id, which is the hash of the network passphrase.
     pub fn network_id(&self) -> Vec<u8> {
         crypto::hash(self.passphrase.as_bytes())
     }

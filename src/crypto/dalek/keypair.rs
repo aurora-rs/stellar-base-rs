@@ -9,7 +9,7 @@ use crate::PublicKey;
 /// The secret key of the account.
 #[derive(Debug)]
 pub struct SecretKey {
-    keypair: ed25519_dalek::Keypair,
+    signing_key: ed25519_dalek::SigningKey,
 }
 
 impl Ed25519Signer<Signature> for SecretKey {
@@ -17,27 +17,27 @@ impl Ed25519Signer<Signature> for SecretKey {
         &self,
         msg: &[u8],
     ) -> std::result::Result<ed25519::Signature, ed25519_dalek::SignatureError> {
-        self.keypair.try_sign(msg)
+        self.signing_key.try_sign(msg)
     }
 }
 
 #[derive(Debug)]
-pub struct DalekKeyPair(KeyPair<SecretKey, ed25519_dalek::PublicKey>);
+pub struct DalekKeyPair(KeyPair<SecretKey, ed25519_dalek::VerifyingKey>);
 
 impl SecretKey {
     /// Return the inner keypair.
-    pub fn inner(&self) -> &ed25519_dalek::Keypair {
-        &self.keypair
+    pub fn inner(&self) -> &ed25519_dalek::SigningKey {
+        &self.signing_key
     }
 
     /// Return the secret key as String, starting with `S`.
     pub fn secret_seed(&self) -> String {
-        strkey::encode_secret_seed(self.keypair.secret.as_bytes())
+        strkey::encode_secret_seed(self.signing_key.as_bytes())
     }
 }
 
-impl AsRef<KeyPair<SecretKey, ed25519_dalek::PublicKey>> for DalekKeyPair {
-    fn as_ref(&self) -> &KeyPair<SecretKey, ed25519_dalek::PublicKey> {
+impl AsRef<KeyPair<SecretKey, ed25519_dalek::VerifyingKey>> for DalekKeyPair {
+    fn as_ref(&self) -> &KeyPair<SecretKey, ed25519_dalek::VerifyingKey> {
         &self.0
     }
 }
@@ -53,10 +53,10 @@ impl DalekKeyPair {
     pub fn random() -> Result<DalekKeyPair> {
         use rand::rngs::OsRng;
         let mut rng = OsRng {};
-        let keypair = ed25519_dalek::Keypair::generate(&mut rng);
-        let public = keypair.public.clone();
-        let secret = SecretKey { keypair };
-        Ok(DalekKeyPair(KeyPair::new(secret, public)))
+        let signing_key = ed25519_dalek::SigningKey::generate(&mut rng);
+        let verifier = signing_key.verifying_key();
+        let signer = SecretKey { signing_key };
+        Ok(DalekKeyPair(KeyPair::new(signer, verifier)))
     }
 
     /// Create a key pair from the `network` passphrase.
@@ -67,16 +67,12 @@ impl DalekKeyPair {
 
     /// Create a key pair from raw bytes.
     pub fn from_seed_bytes(data: &[u8]) -> Result<DalekKeyPair> {
-        if data.len() != ed25519_dalek::SECRET_KEY_LENGTH {
-            return Err(Error::InvalidSeed);
-        }
-        let seed: [u8; ed25519_dalek::SECRET_KEY_LENGTH] =
+        let secret_key: ed25519_dalek::SecretKey =
             data.try_into().map_err(|_| Error::InvalidSeed)?;
-        let secret = ed25519_dalek::SecretKey::from_bytes(&seed).map_err(|_| Error::InvalidSeed)?;
-        let public = ed25519_dalek::PublicKey::from(&secret);
-        let keypair = ed25519_dalek::Keypair { secret, public };
-        let secret = SecretKey { keypair };
-        Ok(DalekKeyPair(KeyPair::new(secret, public)))
+        let signing_key = ed25519_dalek::SigningKey::from_bytes(&secret_key);
+        let verifier = signing_key.verifying_key();
+        let signer = SecretKey { signing_key };
+        Ok(DalekKeyPair(KeyPair::new(signer, verifier)))
     }
 
     /// Return the secret key.

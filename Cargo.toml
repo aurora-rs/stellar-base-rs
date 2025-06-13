@@ -10,7 +10,6 @@ repository = "https://github.com/aurora-rs/stellar-base-rs"
 readme = "README.md"
 keywords = ["stellar", "blockchain"]
 
-
 [dependencies]
 base32 = "0.5.1"
 base64 = "0.22.1"
@@ -18,7 +17,7 @@ bitflags = "2.4"
 byteorder = "1.4.3"
 chrono = "0.4.19"
 crc16 = "0.4.0"
-ed25519 = "1.5"
+ed25519 = "2.2.3"
 json = "0.12.4"
 num-traits = "0.2.14"
 num-bigint = "0.4.3"
@@ -32,15 +31,16 @@ xdr-rs-serialize = "0.3.0"
 xdr-rs-serialize-derive = "0.3.0"
 
 [dependencies.ed25519-dalek]
-version = "1.0.1"
+version = "2.1.1"
+features = ["rand_core"]
 optional = true
 
 [dependencies.rand]
-version = "0.7.3"
+version = "0.8"
 optional = true
 
 [dev-dependencies]
-ring-compat = "0.5.1"
+ring-compat = "0.8.0"
 
 [features]
 default = ["dalek"]
