@@ -97,7 +97,7 @@ impl CreatePassiveSellOfferOperation {
     ) -> Result<CreatePassiveSellOfferOperation> {
         let selling = Asset::from_xdr(&x.selling)?;
         let buying = Asset::from_xdr(&x.buying)?;
-        let amount = Stroops::from_xdr_int64(&x.amount)?;
+        let amount = Stroops::from_xdr_int64(x.amount)?;
         let price = Price::from_xdr(&x.price)?;
         Ok(CreatePassiveSellOfferOperation {
             source_account,

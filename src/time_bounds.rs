@@ -1,10 +1,9 @@
 //! Represent when a transaction is valid.
+use std::io::{Read, Write};
+
 use crate::error::{Error, Result};
 use crate::xdr;
-use crate::xdr::{XDRDeserialize, XDRSerialize};
 use chrono::{DateTime, Duration, TimeZone, Utc};
-use xdr_rs_serialize::de::XDRIn;
-use xdr_rs_serialize::ser::XDROut;
 
 /// The time window in which a transaction is considered valid.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -86,23 +85,23 @@ impl TimeBounds {
 
     /// Returns the xdr object.
     pub fn to_xdr(&self) -> Result<xdr::TimeBounds> {
-        let min_time = match self.lower {
-            None => xdr::Uint64::new(0),
-            Some(t) => xdr::Uint64::new(t.timestamp() as u64),
+        let min_time: u64 = match self.lower {
+            None => 0,
+            Some(t) => t.timestamp() as u64,
         };
-        let min_time = xdr::TimePoint::new(min_time);
-        let max_time = match self.upper {
-            None => xdr::Uint64::new(0),
-            Some(t) => xdr::Uint64::new(t.timestamp() as u64),
+        let min_time = xdr::TimePoint(min_time);
+        let max_time: u64 = match self.upper {
+            None => 0,
+            Some(t) => t.timestamp() as u64,
         };
-        let max_time = xdr::TimePoint::new(max_time);
+        let max_time = xdr::TimePoint(max_time);
         Ok(xdr::TimeBounds { min_time, max_time })
     }
 
     /// Creates from the xdr object.
     pub fn from_xdr(x: &xdr::TimeBounds) -> Result<TimeBounds> {
-        let min_time_epoch = x.min_time.value.value as i64;
-        let max_time_epoch = x.max_time.value.value as i64;
+        let min_time_epoch = x.min_time.0 as i64;
+        let max_time_epoch = x.max_time.0 as i64;
 
         let mut res = TimeBounds::always_valid();
 
@@ -125,19 +124,17 @@ impl TimeBounds {
     }
 }
 
-impl XDRSerialize for TimeBounds {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr = self.to_xdr()?;
-        xdr.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for TimeBounds {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for TimeBounds {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_timebounds, bytes_read) =
-            xdr::TimeBounds::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = TimeBounds::from_xdr(&xdr_timebounds)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for TimeBounds {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::TimeBounds::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 

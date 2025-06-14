@@ -42,30 +42,13 @@ pub enum InnerOperationResult {
     SetTrustLineFlags(SetTrustLineFlagsResult),
     LiquidityPoolDeposit(LiquidityPoolDepositResult),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawResult),
+    InvokeHostFunction(InvokeHostFunctionResult),
+    ExtendFootprintTtl(ExtendFootprintTtlResult),
+    RestoreFootprint(RestoreFootprintResult),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum CreateAccountResult {
-    Success,
-    Malformed,
-    Underfunded,
-    LowReserve,
-    AlreadyExist,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum PaymentResult {
-    Success,
-    Malformed,
-    Underfunded,
-    SourceNoTrust,
-    SourceNotAuthorized,
-    NoDestination,
-    NoTrust,
-    NotAuthorized,
-    LineFull,
-    NoIssuer,
-}
+pub use xdr::CreateAccountResult;
+pub use xdr::PaymentResult;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PathPaymentStrictReceiveResult {
@@ -101,20 +84,7 @@ pub enum PathPaymentStrictSendResult {
     UnderDestinationMin,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SetOptionsResult {
-    Success,
-    LowReserve,
-    TooManySigners,
-    BadFlags,
-    InvalidInflation,
-    CantChange,
-    UnknownFlag,
-    ThresholdOutOfRange,
-    BadSigner,
-    InvalidHomeDomain,
-    AuthRevocableRequired,
-}
+pub use xdr::SetOptionsResult;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ManageSellOfferResult {
@@ -150,29 +120,8 @@ pub enum ManageBuyOfferResult {
     LowReserve,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ChangeTrustResult {
-    Success,
-    Malformed,
-    NoIssuer,
-    InvalidLimit,
-    LowReserve,
-    SelfNotAllowed,
-    TrustLineMissing,
-    CannotDelete,
-    NotAuthMaintainLiabilities,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AllowTrustResult {
-    Success,
-    Malformed,
-    NoTrustline,
-    TrustNotRequired,
-    CantRevoke,
-    SelfNotAllowed,
-    LowReserve,
-}
+pub use xdr::AllowTrustResult;
+pub use xdr::ChangeTrustResult;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AccountMergeResult {
@@ -192,20 +141,8 @@ pub enum InflationResult {
     NotTime,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ManageDataResult {
-    Success,
-    NotSupportedYet,
-    NameNotFound,
-    LowReserve,
-    InvalidName,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BumpSequenceResult {
-    Success,
-    BadSequence,
-}
+pub use xdr::BumpSequenceResult;
+pub use xdr::ManageDataResult;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CreateClaimableBalanceResult {
@@ -217,88 +154,18 @@ pub enum CreateClaimableBalanceResult {
     Underfunded,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ClaimClaimableBalanceResult {
-    Success,
-    DoesNotExist,
-    CannotClaim,
-    LineFull,
-    NoTrust,
-    NotAuthorized,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BeginSponsoringFutureReservesResult {
-    Success,
-    Malformed,
-    AlreadySponsored,
-    Recursive,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum EndSponsoringFutureReservesResult {
-    Success,
-    NotSponsored,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum RevokeSponsorshipResult {
-    Success,
-    DoesNotExist,
-    NotSponsor,
-    LowReserve,
-    OnlyTransferable,
-    Malformed,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ClawbackResult {
-    Success,
-    Malformed,
-    NotClawbackEnabled,
-    NoTrust,
-    Underfunded,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ClawbackClaimableBalanceResult {
-    Success,
-    DoesNotExist,
-    NotIssuer,
-    NotClawbackEnabled,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SetTrustLineFlagsResult {
-    Success,
-    Malformed,
-    NoTrustLine,
-    CantRevoke,
-    InvalidState,
-    LowReserve,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum LiquidityPoolDepositResult {
-    Success,
-    Malformed,
-    NoTrust,
-    NotAuthorized,
-    Underfunded,
-    LineFull,
-    BadPrice,
-    PoolFull,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum LiquidityPoolWithdrawResult {
-    Success,
-    Malformed,
-    NoTrust,
-    Underfunded,
-    LineFull,
-    UnderMinimum,
-}
+pub use xdr::BeginSponsoringFutureReservesResult;
+pub use xdr::ClaimClaimableBalanceResult;
+pub use xdr::ClawbackClaimableBalanceResult;
+pub use xdr::ClawbackResult;
+pub use xdr::EndSponsoringFutureReservesResult;
+pub use xdr::ExtendFootprintTtlResult;
+pub use xdr::InvokeHostFunctionResult;
+pub use xdr::LiquidityPoolDepositResult;
+pub use xdr::LiquidityPoolWithdrawResult;
+pub use xdr::RestoreFootprintResult;
+pub use xdr::RevokeSponsorshipResult;
+pub use xdr::SetTrustLineFlagsResult;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PathPaymentStrictReceiveResultSuccess {
@@ -381,26 +248,24 @@ impl OperationResult {
                 let inner = InnerOperationResult::from_xdr(xdr_inner)?;
                 Ok(OperationResult::Inner(inner))
             }
-            xdr::OperationResult::OpBadAuth(()) => Ok(OperationResult::BadAuth),
-            xdr::OperationResult::OpNoAccount(()) => Ok(OperationResult::NoAccount),
-            xdr::OperationResult::OpNotSupported(()) => Ok(OperationResult::NotSupported),
-            xdr::OperationResult::OpTooManySubentries(()) => Ok(OperationResult::TooManySubentries),
-            xdr::OperationResult::OpExceededWorkLimit(()) => Ok(OperationResult::ExceededWorkLimit),
-            xdr::OperationResult::OpTooManySponsoring(()) => Ok(OperationResult::TooManySponsoring),
+            xdr::OperationResult::OpBadAuth => Ok(OperationResult::BadAuth),
+            xdr::OperationResult::OpNoAccount => Ok(OperationResult::NoAccount),
+            xdr::OperationResult::OpNotSupported => Ok(OperationResult::NotSupported),
+            xdr::OperationResult::OpTooManySubentries => Ok(OperationResult::TooManySubentries),
+            xdr::OperationResult::OpExceededWorkLimit => Ok(OperationResult::ExceededWorkLimit),
+            xdr::OperationResult::OpTooManySponsoring => Ok(OperationResult::TooManySponsoring),
         }
     }
 }
 
 impl InnerOperationResult {
     pub fn from_xdr(x: &xdr::OperationResultTr) -> Result<InnerOperationResult> {
-        match *x {
-            xdr::OperationResultTr::CreateAccount(ref xdr_inner) => {
-                let inner = CreateAccountResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::CreateAccount(inner))
+        match x {
+            xdr::OperationResultTr::CreateAccount(xdr_inner) => {
+                Ok(InnerOperationResult::CreateAccount(xdr_inner.clone()))
             }
-            xdr::OperationResultTr::Payment(ref xdr_inner) => {
-                let inner = PaymentResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::Payment(inner))
+            xdr::OperationResultTr::Payment(xdr_inner) => {
+                Ok(InnerOperationResult::Payment(xdr_inner.clone()))
             }
             xdr::OperationResultTr::PathPaymentStrictReceive(ref xdr_inner) => {
                 let inner = PathPaymentStrictReceiveResult::from_xdr(xdr_inner)?;
@@ -414,17 +279,14 @@ impl InnerOperationResult {
                 let inner = ManageSellOfferResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::CreatePassiveSellOffer(inner))
             }
-            xdr::OperationResultTr::SetOptions(ref xdr_inner) => {
-                let inner = SetOptionsResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::SetOptions(inner))
+            xdr::OperationResultTr::SetOptions(xdr_inner) => {
+                Ok(InnerOperationResult::SetOptions(xdr_inner.clone()))
             }
-            xdr::OperationResultTr::ChangeTrust(ref xdr_inner) => {
-                let inner = ChangeTrustResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::ChangeTrust(inner))
+            xdr::OperationResultTr::ChangeTrust(xdr_inner) => {
+                Ok(InnerOperationResult::ChangeTrust(xdr_inner.clone()))
             }
-            xdr::OperationResultTr::AllowTrust(ref xdr_inner) => {
-                let inner = AllowTrustResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::AllowTrust(inner))
+            xdr::OperationResultTr::AllowTrust(xdr_inner) => {
+                Ok(InnerOperationResult::AllowTrust(xdr_inner.clone()))
             }
             xdr::OperationResultTr::AccountMerge(ref xdr_inner) => {
                 let inner = AccountMergeResult::from_xdr(xdr_inner)?;
@@ -434,13 +296,11 @@ impl InnerOperationResult {
                 let inner = InflationResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::Inflation(inner))
             }
-            xdr::OperationResultTr::ManageData(ref xdr_inner) => {
-                let inner = ManageDataResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::ManageData(inner))
+            xdr::OperationResultTr::ManageData(xdr_inner) => {
+                Ok(InnerOperationResult::ManageData(xdr_inner.clone()))
             }
-            xdr::OperationResultTr::BumpSequence(ref xdr_inner) => {
-                let inner = BumpSequenceResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::BumpSequence(inner))
+            xdr::OperationResultTr::BumpSequence(xdr_inner) => {
+                Ok(InnerOperationResult::BumpSequence(xdr_inner.clone()))
             }
             xdr::OperationResultTr::ManageBuyOffer(ref xdr_inner) => {
                 let inner = ManageBuyOfferResult::from_xdr(xdr_inner)?;
@@ -454,81 +314,42 @@ impl InnerOperationResult {
                 let inner = CreateClaimableBalanceResult::from_xdr(xdr_inner)?;
                 Ok(InnerOperationResult::CreateClaimableBalance(inner))
             }
-            xdr::OperationResultTr::ClaimClaimableBalance(ref xdr_inner) => {
-                let inner = ClaimClaimableBalanceResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::ClaimClaimableBalance(inner))
+            xdr::OperationResultTr::ClaimClaimableBalance(xdr_inner) => Ok(
+                InnerOperationResult::ClaimClaimableBalance(xdr_inner.clone()),
+            ),
+            xdr::OperationResultTr::BeginSponsoringFutureReserves(xdr_inner) => Ok(
+                InnerOperationResult::BeginSponsoringFutureReserves(xdr_inner.clone()),
+            ),
+            xdr::OperationResultTr::EndSponsoringFutureReserves(xdr_inner) => Ok(
+                InnerOperationResult::EndSponsoringFutureReserves(xdr_inner.clone()),
+            ),
+            xdr::OperationResultTr::RevokeSponsorship(xdr_inner) => {
+                Ok(InnerOperationResult::RevokeSponsorship(xdr_inner.clone()))
             }
-            xdr::OperationResultTr::BeginSponsoringFutureReserves(ref xdr_inner) => {
-                let inner = BeginSponsoringFutureReservesResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::BeginSponsoringFutureReserves(inner))
+            xdr::OperationResultTr::Clawback(xdr_inner) => {
+                Ok(InnerOperationResult::Clawback(xdr_inner.clone()))
             }
-            xdr::OperationResultTr::EndSponsoringFutureReserves(ref xdr_inner) => {
-                let inner = EndSponsoringFutureReservesResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::EndSponsoringFutureReserves(inner))
+            xdr::OperationResultTr::ClawbackClaimableBalance(xdr_inner) => Ok(
+                InnerOperationResult::ClawbackClaimableBalance(xdr_inner.clone()),
+            ),
+            xdr::OperationResultTr::SetTrustLineFlags(xdr_inner) => {
+                Ok(InnerOperationResult::SetTrustLineFlags(xdr_inner.clone()))
             }
-            xdr::OperationResultTr::RevokeSponsorship(ref xdr_inner) => {
-                let inner = RevokeSponsorshipResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::RevokeSponsorship(inner))
+            xdr::OperationResultTr::LiquidityPoolDeposit(xdr_inner) => Ok(
+                InnerOperationResult::LiquidityPoolDeposit(xdr_inner.clone()),
+            ),
+            xdr::OperationResultTr::LiquidityPoolWithdraw(xdr_inner) => Ok(
+                InnerOperationResult::LiquidityPoolWithdraw(xdr_inner.clone()),
+            ),
+            xdr::OperationResultTr::InvokeHostFunction(xdr_inner) => {
+                Ok(InnerOperationResult::InvokeHostFunction(xdr_inner.clone()))
             }
-            xdr::OperationResultTr::Clawback(ref xdr_inner) => {
-                let inner = ClawbackResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::Clawback(inner))
+            xdr::OperationResultTr::ExtendFootprintTtl(xdr_inner) => {
+                Ok(InnerOperationResult::ExtendFootprintTtl(xdr_inner.clone()))
             }
-            xdr::OperationResultTr::ClawbackClaimableBalance(ref xdr_inner) => {
-                let inner = ClawbackClaimableBalanceResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::ClawbackClaimableBalance(inner))
+            xdr::OperationResultTr::RestoreFootprint(xdr_inner) => {
+                Ok(InnerOperationResult::RestoreFootprint(xdr_inner.clone()))
             }
-            xdr::OperationResultTr::SetTrustLineFlags(ref xdr_inner) => {
-                let inner = SetTrustLineFlagsResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::SetTrustLineFlags(inner))
-            }
-            xdr::OperationResultTr::LiquidityPoolDeposit(ref xdr_inner) => {
-                let inner = LiquidityPoolDepositResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::LiquidityPoolDeposit(inner))
-            }
-            xdr::OperationResultTr::LiquidityPoolWithdraw(ref xdr_inner) => {
-                let inner = LiquidityPoolWithdrawResult::from_xdr(xdr_inner)?;
-                Ok(InnerOperationResult::LiquidityPoolWithdraw(inner))
-            }
-        }
-    }
-}
-
-impl CreateAccountResult {
-    pub fn from_xdr(x: &xdr::CreateAccountResult) -> Result<CreateAccountResult> {
-        match *x {
-            xdr::CreateAccountResult::CreateAccountSuccess(()) => Ok(CreateAccountResult::Success),
-            xdr::CreateAccountResult::CreateAccountMalformed(()) => {
-                Ok(CreateAccountResult::Malformed)
-            }
-            xdr::CreateAccountResult::CreateAccountUnderfunded(()) => {
-                Ok(CreateAccountResult::Underfunded)
-            }
-            xdr::CreateAccountResult::CreateAccountLowReserve(()) => {
-                Ok(CreateAccountResult::LowReserve)
-            }
-            xdr::CreateAccountResult::CreateAccountAlreadyExist(()) => {
-                Ok(CreateAccountResult::AlreadyExist)
-            }
-        }
-    }
-}
-
-impl PaymentResult {
-    pub fn from_xdr(x: &xdr::PaymentResult) -> Result<PaymentResult> {
-        match *x {
-            xdr::PaymentResult::PaymentSuccess(()) => Ok(PaymentResult::Success),
-            xdr::PaymentResult::PaymentMalformed(()) => Ok(PaymentResult::Malformed),
-            xdr::PaymentResult::PaymentUnderfunded(()) => Ok(PaymentResult::Underfunded),
-            xdr::PaymentResult::PaymentSrcNoTrust(()) => Ok(PaymentResult::SourceNoTrust),
-            xdr::PaymentResult::PaymentSrcNotAuthorized(()) => {
-                Ok(PaymentResult::SourceNotAuthorized)
-            }
-            xdr::PaymentResult::PaymentNoDestination(()) => Ok(PaymentResult::NoDestination),
-            xdr::PaymentResult::PaymentNoTrust(()) => Ok(PaymentResult::NoTrust),
-            xdr::PaymentResult::PaymentNotAuthorized(()) => Ok(PaymentResult::NotAuthorized),
-            xdr::PaymentResult::PaymentLineFull(()) => Ok(PaymentResult::LineFull),
-            xdr::PaymentResult::PaymentNoIssuer(()) => Ok(PaymentResult::NoIssuer),
         }
     }
 }
@@ -538,47 +359,45 @@ impl PathPaymentStrictReceiveResult {
         x: &xdr::PathPaymentStrictReceiveResult,
     ) -> Result<PathPaymentStrictReceiveResult> {
         match *x {
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveSuccess(ref xdr_inner) => {
+            xdr::PathPaymentStrictReceiveResult::Success(ref xdr_inner) => {
                 let inner = PathPaymentStrictReceiveResultSuccess::from_xdr(xdr_inner)?;
                 Ok(PathPaymentStrictReceiveResult::Success(inner))
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveMalformed(()) => {
+            xdr::PathPaymentStrictReceiveResult::Malformed => {
                 Ok(PathPaymentStrictReceiveResult::Malformed)
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveUnderfunded(()) => {
+            xdr::PathPaymentStrictReceiveResult::Underfunded => {
                 Ok(PathPaymentStrictReceiveResult::Underfunded)
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveSrcNoTrust(()) => {
+            xdr::PathPaymentStrictReceiveResult::SrcNoTrust => {
                 Ok(PathPaymentStrictReceiveResult::SourceNoTrust)
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveSrcNotAuthorized(()) => {
+            xdr::PathPaymentStrictReceiveResult::SrcNotAuthorized => {
                 Ok(PathPaymentStrictReceiveResult::SourceNotAuthorized)
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveNoDestination(()) => {
+            xdr::PathPaymentStrictReceiveResult::NoDestination => {
                 Ok(PathPaymentStrictReceiveResult::NoDestination)
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveNoTrust(()) => {
+            xdr::PathPaymentStrictReceiveResult::NoTrust => {
                 Ok(PathPaymentStrictReceiveResult::NoTrust)
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveNotAuthorized(()) => {
+            xdr::PathPaymentStrictReceiveResult::NotAuthorized => {
                 Ok(PathPaymentStrictReceiveResult::NotAuthorized)
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveNoIssuer(
-                ref xdr_asset,
-            ) => {
+            xdr::PathPaymentStrictReceiveResult::NoIssuer(ref xdr_asset) => {
                 let asset = Asset::from_xdr(xdr_asset)?;
                 Ok(PathPaymentStrictReceiveResult::NoIssuer(asset))
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveLineFull(()) => {
+            xdr::PathPaymentStrictReceiveResult::LineFull => {
                 Ok(PathPaymentStrictReceiveResult::LineFull)
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveTooFewOffers(()) => {
+            xdr::PathPaymentStrictReceiveResult::TooFewOffers => {
                 Ok(PathPaymentStrictReceiveResult::TooFewOffers)
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveOfferCrossSelf(()) => {
+            xdr::PathPaymentStrictReceiveResult::OfferCrossSelf => {
                 Ok(PathPaymentStrictReceiveResult::OfferCrossSelf)
             }
-            xdr::PathPaymentStrictReceiveResult::PathPaymentStrictReceiveOverSendmax(()) => {
+            xdr::PathPaymentStrictReceiveResult::OverSendmax => {
                 Ok(PathPaymentStrictReceiveResult::OverSendMax)
             }
         }
@@ -588,45 +407,41 @@ impl PathPaymentStrictReceiveResult {
 impl PathPaymentStrictSendResult {
     pub fn from_xdr(x: &xdr::PathPaymentStrictSendResult) -> Result<PathPaymentStrictSendResult> {
         match *x {
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendSuccess(ref xdr_inner) => {
+            xdr::PathPaymentStrictSendResult::Success(ref xdr_inner) => {
                 let inner = PathPaymentStrictSendResultSuccess::from_xdr(xdr_inner)?;
                 Ok(PathPaymentStrictSendResult::Success(inner))
             }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendMalformed(()) => {
+            xdr::PathPaymentStrictSendResult::Malformed => {
                 Ok(PathPaymentStrictSendResult::Malformed)
             }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendUnderfunded(()) => {
+            xdr::PathPaymentStrictSendResult::Underfunded => {
                 Ok(PathPaymentStrictSendResult::Underfunded)
             }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendSrcNoTrust(()) => {
+            xdr::PathPaymentStrictSendResult::SrcNoTrust => {
                 Ok(PathPaymentStrictSendResult::SourceNoTrust)
             }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendSrcNotAuthorized(()) => {
+            xdr::PathPaymentStrictSendResult::SrcNotAuthorized => {
                 Ok(PathPaymentStrictSendResult::SourceNotAuthorized)
             }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendNoDestination(()) => {
+            xdr::PathPaymentStrictSendResult::NoDestination => {
                 Ok(PathPaymentStrictSendResult::NoDestination)
             }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendNoTrust(()) => {
-                Ok(PathPaymentStrictSendResult::NoTrust)
-            }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendNotAuthorized(()) => {
+            xdr::PathPaymentStrictSendResult::NoTrust => Ok(PathPaymentStrictSendResult::NoTrust),
+            xdr::PathPaymentStrictSendResult::NotAuthorized => {
                 Ok(PathPaymentStrictSendResult::NotAuthorized)
             }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendLineFull(()) => {
-                Ok(PathPaymentStrictSendResult::LineFull)
-            }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendNoIssuer(ref xdr_asset) => {
+            xdr::PathPaymentStrictSendResult::LineFull => Ok(PathPaymentStrictSendResult::LineFull),
+            xdr::PathPaymentStrictSendResult::NoIssuer(ref xdr_asset) => {
                 let asset = Asset::from_xdr(xdr_asset)?;
                 Ok(PathPaymentStrictSendResult::NoIssuer(asset))
             }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendTooFewOffers(()) => {
+            xdr::PathPaymentStrictSendResult::TooFewOffers => {
                 Ok(PathPaymentStrictSendResult::TooFewOffers)
             }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendOfferCrossSelf(()) => {
+            xdr::PathPaymentStrictSendResult::OfferCrossSelf => {
                 Ok(PathPaymentStrictSendResult::OfferCrossSelf)
             }
-            xdr::PathPaymentStrictSendResult::PathPaymentStrictSendUnderDestmin(()) => {
+            xdr::PathPaymentStrictSendResult::UnderDestmin => {
                 Ok(PathPaymentStrictSendResult::UnderDestinationMin)
             }
         }
@@ -636,46 +451,26 @@ impl PathPaymentStrictSendResult {
 impl ManageSellOfferResult {
     pub fn from_xdr(x: &xdr::ManageSellOfferResult) -> Result<ManageSellOfferResult> {
         match *x {
-            xdr::ManageSellOfferResult::ManageSellOfferSuccess(ref xdr_inner) => {
+            xdr::ManageSellOfferResult::Success(ref xdr_inner) => {
                 let inner = ManageOfferResultSuccess::from_xdr(xdr_inner)?;
                 Ok(ManageSellOfferResult::Success(inner))
             }
-            xdr::ManageSellOfferResult::ManageSellOfferMalformed(()) => {
-                Ok(ManageSellOfferResult::Malformed)
-            }
-            xdr::ManageSellOfferResult::ManageSellOfferSellNoTrust(()) => {
-                Ok(ManageSellOfferResult::SellNoTrust)
-            }
-            xdr::ManageSellOfferResult::ManageSellOfferBuyNoTrust(()) => {
-                Ok(ManageSellOfferResult::BuyNoTrust)
-            }
-            xdr::ManageSellOfferResult::ManageSellOfferSellNotAuthorized(()) => {
+            xdr::ManageSellOfferResult::Malformed => Ok(ManageSellOfferResult::Malformed),
+            xdr::ManageSellOfferResult::SellNoTrust => Ok(ManageSellOfferResult::SellNoTrust),
+            xdr::ManageSellOfferResult::BuyNoTrust => Ok(ManageSellOfferResult::BuyNoTrust),
+            xdr::ManageSellOfferResult::SellNotAuthorized => {
                 Ok(ManageSellOfferResult::SellNotAuthorized)
             }
-            xdr::ManageSellOfferResult::ManageSellOfferBuyNotAuthorized(()) => {
+            xdr::ManageSellOfferResult::BuyNotAuthorized => {
                 Ok(ManageSellOfferResult::BuyNotAuthorized)
             }
-            xdr::ManageSellOfferResult::ManageSellOfferLineFull(()) => {
-                Ok(ManageSellOfferResult::LineFull)
-            }
-            xdr::ManageSellOfferResult::ManageSellOfferUnderfunded(()) => {
-                Ok(ManageSellOfferResult::Underfunded)
-            }
-            xdr::ManageSellOfferResult::ManageSellOfferCrossSelf(()) => {
-                Ok(ManageSellOfferResult::CrossSelf)
-            }
-            xdr::ManageSellOfferResult::ManageSellOfferSellNoIssuer(()) => {
-                Ok(ManageSellOfferResult::SellNoIssuer)
-            }
-            xdr::ManageSellOfferResult::ManageSellOfferBuyNoIssuer(()) => {
-                Ok(ManageSellOfferResult::BuyNoIssuer)
-            }
-            xdr::ManageSellOfferResult::ManageSellOfferNotFound(()) => {
-                Ok(ManageSellOfferResult::NotFound)
-            }
-            xdr::ManageSellOfferResult::ManageSellOfferLowReserve(()) => {
-                Ok(ManageSellOfferResult::LowReserve)
-            }
+            xdr::ManageSellOfferResult::LineFull => Ok(ManageSellOfferResult::LineFull),
+            xdr::ManageSellOfferResult::Underfunded => Ok(ManageSellOfferResult::Underfunded),
+            xdr::ManageSellOfferResult::CrossSelf => Ok(ManageSellOfferResult::CrossSelf),
+            xdr::ManageSellOfferResult::SellNoIssuer => Ok(ManageSellOfferResult::SellNoIssuer),
+            xdr::ManageSellOfferResult::BuyNoIssuer => Ok(ManageSellOfferResult::BuyNoIssuer),
+            xdr::ManageSellOfferResult::NotFound => Ok(ManageSellOfferResult::NotFound),
+            xdr::ManageSellOfferResult::LowReserve => Ok(ManageSellOfferResult::LowReserve),
         }
     }
 }
@@ -683,118 +478,26 @@ impl ManageSellOfferResult {
 impl ManageBuyOfferResult {
     pub fn from_xdr(x: &xdr::ManageBuyOfferResult) -> Result<ManageBuyOfferResult> {
         match *x {
-            xdr::ManageBuyOfferResult::ManageBuyOfferSuccess(ref xdr_inner) => {
+            xdr::ManageBuyOfferResult::Success(ref xdr_inner) => {
                 let inner = ManageOfferResultSuccess::from_xdr(xdr_inner)?;
                 Ok(ManageBuyOfferResult::Success(inner))
             }
-            xdr::ManageBuyOfferResult::ManageBuyOfferMalformed(()) => {
-                Ok(ManageBuyOfferResult::Malformed)
-            }
-            xdr::ManageBuyOfferResult::ManageBuyOfferSellNoTrust(()) => {
-                Ok(ManageBuyOfferResult::SellNoTrust)
-            }
-            xdr::ManageBuyOfferResult::ManageBuyOfferBuyNoTrust(()) => {
-                Ok(ManageBuyOfferResult::BuyNoTrust)
-            }
-            xdr::ManageBuyOfferResult::ManageBuyOfferSellNotAuthorized(()) => {
+            xdr::ManageBuyOfferResult::Malformed => Ok(ManageBuyOfferResult::Malformed),
+            xdr::ManageBuyOfferResult::SellNoTrust => Ok(ManageBuyOfferResult::SellNoTrust),
+            xdr::ManageBuyOfferResult::BuyNoTrust => Ok(ManageBuyOfferResult::BuyNoTrust),
+            xdr::ManageBuyOfferResult::SellNotAuthorized => {
                 Ok(ManageBuyOfferResult::SellNotAuthorized)
             }
-            xdr::ManageBuyOfferResult::ManageBuyOfferBuyNotAuthorized(()) => {
+            xdr::ManageBuyOfferResult::BuyNotAuthorized => {
                 Ok(ManageBuyOfferResult::BuyNotAuthorized)
             }
-            xdr::ManageBuyOfferResult::ManageBuyOfferLineFull(()) => {
-                Ok(ManageBuyOfferResult::LineFull)
-            }
-            xdr::ManageBuyOfferResult::ManageBuyOfferUnderfunded(()) => {
-                Ok(ManageBuyOfferResult::Underfunded)
-            }
-            xdr::ManageBuyOfferResult::ManageBuyOfferCrossSelf(()) => {
-                Ok(ManageBuyOfferResult::CrossSelf)
-            }
-            xdr::ManageBuyOfferResult::ManageBuyOfferBuyNoIssuer(()) => {
-                Ok(ManageBuyOfferResult::BuyNoIssuer)
-            }
-            xdr::ManageBuyOfferResult::ManageBuyOfferSellNoIssuer(()) => {
-                Ok(ManageBuyOfferResult::SellNoIssuer)
-            }
-            xdr::ManageBuyOfferResult::ManageBuyOfferNotFound(()) => {
-                Ok(ManageBuyOfferResult::NotFound)
-            }
-            xdr::ManageBuyOfferResult::ManageBuyOfferLowReserve(()) => {
-                Ok(ManageBuyOfferResult::LowReserve)
-            }
-        }
-    }
-}
-
-impl SetOptionsResult {
-    pub fn from_xdr(x: &xdr::SetOptionsResult) -> Result<SetOptionsResult> {
-        match *x {
-            xdr::SetOptionsResult::SetOptionsSuccess(()) => Ok(SetOptionsResult::Success),
-            xdr::SetOptionsResult::SetOptionsLowReserve(()) => Ok(SetOptionsResult::LowReserve),
-            xdr::SetOptionsResult::SetOptionsTooManySigners(()) => {
-                Ok(SetOptionsResult::TooManySigners)
-            }
-            xdr::SetOptionsResult::SetOptionsBadFlags(()) => Ok(SetOptionsResult::BadFlags),
-            xdr::SetOptionsResult::SetOptionsInvalidInflation(()) => {
-                Ok(SetOptionsResult::InvalidInflation)
-            }
-            xdr::SetOptionsResult::SetOptionsCantChange(()) => Ok(SetOptionsResult::CantChange),
-            xdr::SetOptionsResult::SetOptionsUnknownFlag(()) => Ok(SetOptionsResult::UnknownFlag),
-            xdr::SetOptionsResult::SetOptionsThresholdOutOfRange(()) => {
-                Ok(SetOptionsResult::ThresholdOutOfRange)
-            }
-            xdr::SetOptionsResult::SetOptionsBadSigner(()) => Ok(SetOptionsResult::BadSigner),
-            xdr::SetOptionsResult::SetOptionsInvalidHomeDomain(()) => {
-                Ok(SetOptionsResult::InvalidHomeDomain)
-            }
-            xdr::SetOptionsResult::SetOptionsAuthRevocableRequired(()) => {
-                Ok(SetOptionsResult::AuthRevocableRequired)
-            }
-        }
-    }
-}
-
-impl ChangeTrustResult {
-    pub fn from_xdr(x: &xdr::ChangeTrustResult) -> Result<ChangeTrustResult> {
-        match *x {
-            xdr::ChangeTrustResult::ChangeTrustSuccess(()) => Ok(ChangeTrustResult::Success),
-            xdr::ChangeTrustResult::ChangeTrustMalformed(()) => Ok(ChangeTrustResult::Malformed),
-            xdr::ChangeTrustResult::ChangeTrustNoIssuer(()) => Ok(ChangeTrustResult::NoIssuer),
-            xdr::ChangeTrustResult::ChangeTrustInvalidLimit(()) => {
-                Ok(ChangeTrustResult::InvalidLimit)
-            }
-            xdr::ChangeTrustResult::ChangeTrustLowReserve(()) => Ok(ChangeTrustResult::LowReserve),
-            xdr::ChangeTrustResult::ChangeTrustSelfNotAllowed(()) => {
-                Ok(ChangeTrustResult::SelfNotAllowed)
-            }
-            xdr::ChangeTrustResult::ChangeTrustTrustLineMissing(()) => {
-                Ok(ChangeTrustResult::TrustLineMissing)
-            }
-            xdr::ChangeTrustResult::ChangeTrustCannotDelete(()) => {
-                Ok(ChangeTrustResult::CannotDelete)
-            }
-            xdr::ChangeTrustResult::ChangeTrustNotAuthMaintainLiabilities(()) => {
-                Ok(ChangeTrustResult::NotAuthMaintainLiabilities)
-            }
-        }
-    }
-}
-
-impl AllowTrustResult {
-    pub fn from_xdr(x: &xdr::AllowTrustResult) -> Result<AllowTrustResult> {
-        match *x {
-            xdr::AllowTrustResult::AllowTrustSuccess(()) => Ok(AllowTrustResult::Success),
-            xdr::AllowTrustResult::AllowTrustMalformed(()) => Ok(AllowTrustResult::Malformed),
-            xdr::AllowTrustResult::AllowTrustNoTrustLine(()) => Ok(AllowTrustResult::NoTrustline),
-            xdr::AllowTrustResult::AllowTrustTrustNotRequired(()) => {
-                Ok(AllowTrustResult::TrustNotRequired)
-            }
-            xdr::AllowTrustResult::AllowTrustCantRevoke(()) => Ok(AllowTrustResult::CantRevoke),
-            xdr::AllowTrustResult::AllowTrustSelfNotAllowed(()) => {
-                Ok(AllowTrustResult::SelfNotAllowed)
-            }
-            xdr::AllowTrustResult::AllowTrustLowReserve(()) => Ok(AllowTrustResult::LowReserve),
+            xdr::ManageBuyOfferResult::LineFull => Ok(ManageBuyOfferResult::LineFull),
+            xdr::ManageBuyOfferResult::Underfunded => Ok(ManageBuyOfferResult::Underfunded),
+            xdr::ManageBuyOfferResult::CrossSelf => Ok(ManageBuyOfferResult::CrossSelf),
+            xdr::ManageBuyOfferResult::BuyNoIssuer => Ok(ManageBuyOfferResult::BuyNoIssuer),
+            xdr::ManageBuyOfferResult::SellNoIssuer => Ok(ManageBuyOfferResult::SellNoIssuer),
+            xdr::ManageBuyOfferResult::NotFound => Ok(ManageBuyOfferResult::NotFound),
+            xdr::ManageBuyOfferResult::LowReserve => Ok(ManageBuyOfferResult::LowReserve),
         }
     }
 }
@@ -802,25 +505,17 @@ impl AllowTrustResult {
 impl AccountMergeResult {
     pub fn from_xdr(x: &xdr::AccountMergeResult) -> Result<AccountMergeResult> {
         match *x {
-            xdr::AccountMergeResult::AccountMergeSuccess(ref xdr_balance) => {
+            xdr::AccountMergeResult::Success(xdr_balance) => {
                 let balance = Stroops::from_xdr_int64(xdr_balance)?;
                 Ok(AccountMergeResult::Success(balance))
             }
-            xdr::AccountMergeResult::AccountMergeMalformed(()) => Ok(AccountMergeResult::Malformed),
-            xdr::AccountMergeResult::AccountMergeNoAccount(()) => Ok(AccountMergeResult::NoAccount),
-            xdr::AccountMergeResult::AccountMergeImmutableSet(()) => {
-                Ok(AccountMergeResult::ImmutableSet)
-            }
-            xdr::AccountMergeResult::AccountMergeHasSubEntries(()) => {
-                Ok(AccountMergeResult::HasSubEntries)
-            }
-            xdr::AccountMergeResult::AccountMergeSeqnumTooFar(()) => {
-                Ok(AccountMergeResult::SequenceTooFar)
-            }
-            xdr::AccountMergeResult::AccountMergeDestFull(()) => {
-                Ok(AccountMergeResult::DestinationFull)
-            }
-            xdr::AccountMergeResult::AccountMergeIsSponsor(()) => Ok(AccountMergeResult::IsSponsor),
+            xdr::AccountMergeResult::Malformed => Ok(AccountMergeResult::Malformed),
+            xdr::AccountMergeResult::NoAccount => Ok(AccountMergeResult::NoAccount),
+            xdr::AccountMergeResult::ImmutableSet => Ok(AccountMergeResult::ImmutableSet),
+            xdr::AccountMergeResult::HasSubEntries => Ok(AccountMergeResult::HasSubEntries),
+            xdr::AccountMergeResult::SeqnumTooFar => Ok(AccountMergeResult::SequenceTooFar),
+            xdr::AccountMergeResult::DestFull => Ok(AccountMergeResult::DestinationFull),
+            xdr::AccountMergeResult::IsSponsor => Ok(AccountMergeResult::IsSponsor),
         }
     }
 }
@@ -828,38 +523,15 @@ impl AccountMergeResult {
 impl InflationResult {
     pub fn from_xdr(x: &xdr::InflationResult) -> Result<InflationResult> {
         match *x {
-            xdr::InflationResult::InflationSuccess(ref xdr_payouts) => {
+            xdr::InflationResult::Success(ref xdr_payouts) => {
                 let mut payouts = Vec::new();
-                for xdr_payout in xdr_payouts {
+                for xdr_payout in xdr_payouts.as_slice() {
                     let payout = InflationPayout::from_xdr(xdr_payout)?;
                     payouts.push(payout);
                 }
                 Ok(InflationResult::Success(payouts))
             }
-            xdr::InflationResult::InflationNotTime(()) => Ok(InflationResult::NotTime),
-        }
-    }
-}
-
-impl ManageDataResult {
-    pub fn from_xdr(x: &xdr::ManageDataResult) -> Result<ManageDataResult> {
-        match *x {
-            xdr::ManageDataResult::ManageDataSuccess(()) => Ok(ManageDataResult::Success),
-            xdr::ManageDataResult::ManageDataNotSupportedYet(()) => {
-                Ok(ManageDataResult::NotSupportedYet)
-            }
-            xdr::ManageDataResult::ManageDataNameNotFound(()) => Ok(ManageDataResult::NameNotFound),
-            xdr::ManageDataResult::ManageDataLowReserve(()) => Ok(ManageDataResult::LowReserve),
-            xdr::ManageDataResult::ManageDataInvalidName(()) => Ok(ManageDataResult::InvalidName),
-        }
-    }
-}
-
-impl BumpSequenceResult {
-    pub fn from_xdr(x: &xdr::BumpSequenceResult) -> Result<BumpSequenceResult> {
-        match *x {
-            xdr::BumpSequenceResult::BumpSequenceSuccess(()) => Ok(BumpSequenceResult::Success),
-            xdr::BumpSequenceResult::BumpSequenceBadSeq(()) => Ok(BumpSequenceResult::BadSequence),
+            xdr::InflationResult::NotTime => Ok(InflationResult::NotTime),
         }
     }
 }
@@ -867,194 +539,22 @@ impl BumpSequenceResult {
 impl CreateClaimableBalanceResult {
     pub fn from_xdr(x: &xdr::CreateClaimableBalanceResult) -> Result<CreateClaimableBalanceResult> {
         match *x {
-            xdr::CreateClaimableBalanceResult::CreateClaimableBalanceSuccess(ref xdr_id) => {
+            xdr::CreateClaimableBalanceResult::Success(ref xdr_id) => {
                 let id = ClaimableBalanceId::from_xdr(xdr_id)?;
                 Ok(CreateClaimableBalanceResult::Success(id))
             }
-            xdr::CreateClaimableBalanceResult::CreateClaimableBalanceMalformed(()) => {
+            xdr::CreateClaimableBalanceResult::Malformed => {
                 Ok(CreateClaimableBalanceResult::Malformed)
             }
-            xdr::CreateClaimableBalanceResult::CreateClaimableBalanceLowReserve(()) => {
+            xdr::CreateClaimableBalanceResult::LowReserve => {
                 Ok(CreateClaimableBalanceResult::LowReserve)
             }
-            xdr::CreateClaimableBalanceResult::CreateClaimableBalanceNoTrust(()) => {
-                Ok(CreateClaimableBalanceResult::NoTrust)
-            }
-            xdr::CreateClaimableBalanceResult::CreateClaimableBalanceNotAuthorized(()) => {
+            xdr::CreateClaimableBalanceResult::NoTrust => Ok(CreateClaimableBalanceResult::NoTrust),
+            xdr::CreateClaimableBalanceResult::NotAuthorized => {
                 Ok(CreateClaimableBalanceResult::NotAuthorized)
             }
-            xdr::CreateClaimableBalanceResult::CreateClaimableBalanceUnderfunded(()) => {
+            xdr::CreateClaimableBalanceResult::Underfunded => {
                 Ok(CreateClaimableBalanceResult::Underfunded)
-            }
-        }
-    }
-}
-
-impl ClaimClaimableBalanceResult {
-    pub fn from_xdr(x: &xdr::ClaimClaimableBalanceResult) -> Result<Self> {
-        match *x {
-            xdr::ClaimClaimableBalanceResult::ClaimClaimableBalanceSuccess(()) => Ok(Self::Success),
-            xdr::ClaimClaimableBalanceResult::ClaimClaimableBalanceDoesNotExist(()) => {
-                Ok(Self::DoesNotExist)
-            }
-            xdr::ClaimClaimableBalanceResult::ClaimClaimableBalanceCannotClaim(()) => {
-                Ok(Self::CannotClaim)
-            }
-            xdr::ClaimClaimableBalanceResult::ClaimClaimableBalanceLineFull(()) => {
-                Ok(Self::LineFull)
-            }
-            xdr::ClaimClaimableBalanceResult::ClaimClaimableBalanceNoTrust(()) => Ok(Self::NoTrust),
-            xdr::ClaimClaimableBalanceResult::ClaimClaimableBalanceNotAuthorized(()) => {
-                Ok(Self::NotAuthorized)
-            }
-        }
-    }
-}
-
-impl RevokeSponsorshipResult {
-    pub fn from_xdr(x: &xdr::RevokeSponsorshipResult) -> Result<RevokeSponsorshipResult> {
-        match *x {
-            xdr::RevokeSponsorshipResult::RevokeSponsorshipSuccess(()) => {
-                Ok(RevokeSponsorshipResult::Success)
-            }
-            xdr::RevokeSponsorshipResult::RevokeSponsorshipDoesNotExist(()) => {
-                Ok(RevokeSponsorshipResult::DoesNotExist)
-            }
-            xdr::RevokeSponsorshipResult::RevokeSponsorshipNotSponsor(()) => {
-                Ok(RevokeSponsorshipResult::NotSponsor)
-            }
-            xdr::RevokeSponsorshipResult::RevokeSponsorshipLowReserve(()) => {
-                Ok(RevokeSponsorshipResult::LowReserve)
-            }
-            xdr::RevokeSponsorshipResult::RevokeSponsorshipOnlyTransferable(()) => {
-                Ok(RevokeSponsorshipResult::OnlyTransferable)
-            }
-            xdr::RevokeSponsorshipResult::RevokeSponsorshipMalformed(()) => {
-                Ok(RevokeSponsorshipResult::Malformed)
-            }
-        }
-    }
-}
-
-impl ClawbackResult {
-    pub fn from_xdr(x: &xdr::ClawbackResult) -> Result<Self> {
-        match *x {
-            xdr::ClawbackResult::ClawbackSuccess(()) => Ok(Self::Success),
-            xdr::ClawbackResult::ClawbackMalformed(()) => Ok(Self::Malformed),
-            xdr::ClawbackResult::ClawbackNotClawbackEnabled(()) => Ok(Self::NotClawbackEnabled),
-            xdr::ClawbackResult::ClawbackNoTrust(()) => Ok(Self::NoTrust),
-            xdr::ClawbackResult::ClawbackUnderfunded(()) => Ok(Self::Underfunded),
-        }
-    }
-}
-
-impl ClawbackClaimableBalanceResult {
-    pub fn from_xdr(x: &xdr::ClawbackClaimableBalanceResult) -> Result<Self> {
-        match *x {
-            xdr::ClawbackClaimableBalanceResult::ClawbackClaimableBalanceSuccess(()) => {
-                Ok(Self::Success)
-            }
-            xdr::ClawbackClaimableBalanceResult::ClawbackClaimableBalanceDoesNotExist(()) => {
-                Ok(Self::DoesNotExist)
-            }
-            xdr::ClawbackClaimableBalanceResult::ClawbackClaimableBalanceNotIssuer(()) => {
-                Ok(Self::NotIssuer)
-            }
-            xdr::ClawbackClaimableBalanceResult::ClawbackClaimableBalanceNotClawbackEnabled(()) => {
-                Ok(Self::NotClawbackEnabled)
-            }
-        }
-    }
-}
-
-impl SetTrustLineFlagsResult {
-    pub fn from_xdr(x: &xdr::SetTrustLineFlagsResult) -> Result<Self> {
-        match *x {
-            xdr::SetTrustLineFlagsResult::SetTrustLineFlagsSuccess(()) => Ok(Self::Success),
-            xdr::SetTrustLineFlagsResult::SetTrustLineFlagsMalformed(()) => Ok(Self::Malformed),
-            xdr::SetTrustLineFlagsResult::SetTrustLineFlagsNoTrustLine(()) => Ok(Self::NoTrustLine),
-            xdr::SetTrustLineFlagsResult::SetTrustLineFlagsCantRevoke(()) => Ok(Self::CantRevoke),
-            xdr::SetTrustLineFlagsResult::SetTrustLineFlagsInvalidState(()) => {
-                Ok(Self::InvalidState)
-            }
-            xdr::SetTrustLineFlagsResult::SetTrustLineFlagsLowReserve(()) => Ok(Self::LowReserve),
-        }
-    }
-}
-
-impl LiquidityPoolDepositResult {
-    pub fn from_xdr(x: &xdr::LiquidityPoolDepositResult) -> Result<Self> {
-        match *x {
-            xdr::LiquidityPoolDepositResult::LiquidityPoolDepositSuccess(()) => Ok(Self::Success),
-            xdr::LiquidityPoolDepositResult::LiquidityPoolDepositMalformed(()) => {
-                Ok(Self::Malformed)
-            }
-            xdr::LiquidityPoolDepositResult::LiquidityPoolDepositNoTrust(()) => Ok(Self::NoTrust),
-            xdr::LiquidityPoolDepositResult::LiquidityPoolDepositNotAuthorized(()) => {
-                Ok(Self::NotAuthorized)
-            }
-            xdr::LiquidityPoolDepositResult::LiquidityPoolDepositUnderfunded(()) => {
-                Ok(Self::Underfunded)
-            }
-            xdr::LiquidityPoolDepositResult::LiquidityPoolDepositLineFull(()) => Ok(Self::LineFull),
-            xdr::LiquidityPoolDepositResult::LiquidityPoolDepositBadPrice(()) => Ok(Self::BadPrice),
-            xdr::LiquidityPoolDepositResult::LiquidityPoolDepositPoolFull(()) => Ok(Self::PoolFull),
-        }
-    }
-}
-
-impl LiquidityPoolWithdrawResult {
-    pub fn from_xdr(x: &xdr::LiquidityPoolWithdrawResult) -> Result<Self> {
-        match *x {
-            xdr::LiquidityPoolWithdrawResult::LiquidityPoolWithdrawSuccess(()) => Ok(Self::Success),
-            xdr::LiquidityPoolWithdrawResult::LiquidityPoolWithdrawMalformed(()) => {
-                Ok(Self::Malformed)
-            }
-            xdr::LiquidityPoolWithdrawResult::LiquidityPoolWithdrawNoTrust(()) => Ok(Self::NoTrust),
-            xdr::LiquidityPoolWithdrawResult::LiquidityPoolWithdrawUnderfunded(()) => {
-                Ok(Self::Underfunded)
-            }
-            xdr::LiquidityPoolWithdrawResult::LiquidityPoolWithdrawLineFull(()) => {
-                Ok(Self::LineFull)
-            }
-            xdr::LiquidityPoolWithdrawResult::LiquidityPoolWithdrawUnderMinimum(()) => {
-                Ok(Self::UnderMinimum)
-            }
-        }
-    }
-}
-
-impl BeginSponsoringFutureReservesResult {
-    pub fn from_xdr(
-        x: &xdr::BeginSponsoringFutureReservesResult,
-    ) -> Result<BeginSponsoringFutureReservesResult> {
-        match *x {
-            xdr::BeginSponsoringFutureReservesResult::BeginSponsoringFutureReservesSuccess(()) => {
-                Ok(BeginSponsoringFutureReservesResult::Success)
-            }
-            xdr::BeginSponsoringFutureReservesResult::BeginSponsoringFutureReservesMalformed(()) => {
-                Ok(BeginSponsoringFutureReservesResult::Malformed)
-            }
-            xdr::BeginSponsoringFutureReservesResult::BeginSponsoringFutureReservesAlreadySponsored(()) => {
-                Ok(BeginSponsoringFutureReservesResult::AlreadySponsored)
-            }
-            xdr::BeginSponsoringFutureReservesResult::BeginSponsoringFutureReservesRecursive(()) => {
-                Ok(BeginSponsoringFutureReservesResult::Recursive)
-            }
-        }
-    }
-}
-
-impl EndSponsoringFutureReservesResult {
-    pub fn from_xdr(
-        x: &xdr::EndSponsoringFutureReservesResult,
-    ) -> Result<EndSponsoringFutureReservesResult> {
-        match *x {
-            xdr::EndSponsoringFutureReservesResult::EndSponsoringFutureReservesSuccess(()) => {
-                Ok(EndSponsoringFutureReservesResult::Success)
-            }
-            xdr::EndSponsoringFutureReservesResult::EndSponsoringFutureReservesNotSponsored(()) => {
-                Ok(EndSponsoringFutureReservesResult::NotSponsored)
             }
         }
     }
@@ -1065,7 +565,7 @@ impl PathPaymentStrictReceiveResultSuccess {
         x: &xdr::PathPaymentStrictReceiveResultSuccess,
     ) -> Result<PathPaymentStrictReceiveResultSuccess> {
         let mut offers = Vec::new();
-        for xdr_offer in &x.offers {
+        for xdr_offer in x.offers.as_slice() {
             let offer = ClaimAtom::from_xdr(xdr_offer)?;
             offers.push(offer);
         }
@@ -1079,7 +579,7 @@ impl PathPaymentStrictSendResultSuccess {
         x: &xdr::PathPaymentStrictSendResultSuccess,
     ) -> Result<PathPaymentStrictSendResultSuccess> {
         let mut offers = Vec::new();
-        for xdr_offer in &x.offers {
+        for xdr_offer in x.offers.as_slice() {
             let offer = ClaimAtom::from_xdr(xdr_offer)?;
             offers.push(offer);
         }
@@ -1091,7 +591,7 @@ impl PathPaymentStrictSendResultSuccess {
 impl ManageOfferResultSuccess {
     pub fn from_xdr(x: &xdr::ManageOfferSuccessResult) -> Result<ManageOfferResultSuccess> {
         let mut offers_claimed = Vec::new();
-        for xdr_offer in &x.offers_claimed {
+        for xdr_offer in x.offers_claimed.as_slice() {
             let offer = ClaimAtom::from_xdr(xdr_offer)?;
             offers_claimed.push(offer);
         }
@@ -1107,7 +607,7 @@ impl SimplePaymentResult {
     pub fn from_xdr(x: &xdr::SimplePaymentResult) -> Result<SimplePaymentResult> {
         let destination = PublicKey::from_xdr_account_id(&x.destination)?;
         let asset = Asset::from_xdr(&x.asset)?;
-        let amount = Stroops::from_xdr_int64(&x.amount)?;
+        let amount = Stroops::from_xdr_int64(x.amount)?;
         Ok(SimplePaymentResult {
             destination,
             asset,
@@ -1119,15 +619,15 @@ impl SimplePaymentResult {
 impl ClaimAtom {
     pub fn from_xdr(x: &xdr::ClaimAtom) -> Result<ClaimAtom> {
         Ok(match *x {
-            xdr::ClaimAtom::ClaimAtomTypeV0(ref inner_xdr) => {
+            xdr::ClaimAtom::V0(ref inner_xdr) => {
                 let inner = ClaimOfferAtom::from_xdr_v0(inner_xdr)?;
                 ClaimAtom::OrderBook(inner)
             }
-            xdr::ClaimAtom::ClaimAtomTypeOrderBook(ref inner_xdr) => {
+            xdr::ClaimAtom::OrderBook(ref inner_xdr) => {
                 let inner = ClaimOfferAtom::from_xdr(inner_xdr)?;
                 ClaimAtom::OrderBook(inner)
             }
-            xdr::ClaimAtom::ClaimAtomTypeLiquidityPool(ref inner_xdr) => {
+            xdr::ClaimAtom::LiquidityPool(ref inner_xdr) => {
                 let inner = ClaimLiquidityAtom::from_xdr(inner_xdr)?;
                 ClaimAtom::LiquidityPool(inner)
             }
@@ -1138,11 +638,11 @@ impl ClaimAtom {
 impl ClaimOfferAtom {
     pub fn from_xdr(x: &xdr::ClaimOfferAtom) -> Result<ClaimOfferAtom> {
         let seller_id = PublicKey::from_xdr_account_id(&x.seller_id)?;
-        let offer_id = x.offer_id.value;
+        let offer_id = x.offer_id;
         let asset_sold = Asset::from_xdr(&x.asset_sold)?;
-        let amount_sold = Stroops::from_xdr_int64(&x.amount_sold)?;
+        let amount_sold = Stroops::from_xdr_int64(x.amount_sold)?;
         let asset_bought = Asset::from_xdr(&x.asset_bought)?;
-        let amount_bought = Stroops::from_xdr_int64(&x.amount_bought)?;
+        let amount_bought = Stroops::from_xdr_int64(x.amount_bought)?;
         Ok(ClaimOfferAtom {
             seller_id,
             offer_id,
@@ -1154,12 +654,12 @@ impl ClaimOfferAtom {
     }
 
     pub fn from_xdr_v0(x: &xdr::ClaimOfferAtomV0) -> Result<ClaimOfferAtom> {
-        let seller_id = PublicKey::from_slice(x.seller_ed25519.value.as_slice())?;
-        let offer_id = x.offer_id.value;
+        let seller_id = PublicKey::from_slice(x.seller_ed25519.as_slice())?;
+        let offer_id = x.offer_id;
         let asset_sold = Asset::from_xdr(&x.asset_sold)?;
-        let amount_sold = Stroops::from_xdr_int64(&x.amount_sold)?;
+        let amount_sold = Stroops::from_xdr_int64(x.amount_sold)?;
         let asset_bought = Asset::from_xdr(&x.asset_bought)?;
-        let amount_bought = Stroops::from_xdr_int64(&x.amount_bought)?;
+        let amount_bought = Stroops::from_xdr_int64(x.amount_bought)?;
         Ok(ClaimOfferAtom {
             seller_id,
             offer_id,
@@ -1173,11 +673,11 @@ impl ClaimOfferAtom {
 
 impl ClaimLiquidityAtom {
     pub fn from_xdr(x: &xdr::ClaimLiquidityAtom) -> Result<ClaimLiquidityAtom> {
-        let pool_id = x.liquidity_pool_id.value.value.clone();
+        let pool_id = x.liquidity_pool_id.0 .0.to_vec();
         let asset_sold = Asset::from_xdr(&x.asset_sold)?;
-        let amount_sold = Stroops::from_xdr_int64(&x.amount_sold)?;
+        let amount_sold = Stroops::from_xdr_int64(x.amount_sold)?;
         let asset_bought = Asset::from_xdr(&x.asset_bought)?;
-        let amount_bought = Stroops::from_xdr_int64(&x.amount_bought)?;
+        let amount_bought = Stroops::from_xdr_int64(x.amount_bought)?;
         Ok(ClaimLiquidityAtom {
             pool_id,
             asset_sold,
@@ -1191,15 +691,15 @@ impl ClaimLiquidityAtom {
 impl OfferResult {
     pub fn from_xdr(x: &xdr::ManageOfferSuccessResultOffer) -> Result<OfferResult> {
         match *x {
-            xdr::ManageOfferSuccessResultOffer::ManageOfferCreated(ref xdr_inner) => {
+            xdr::ManageOfferSuccessResultOffer::Created(ref xdr_inner) => {
                 let inner = OfferEntry::from_xdr(xdr_inner)?;
                 Ok(OfferResult::Created(inner))
             }
-            xdr::ManageOfferSuccessResultOffer::ManageOfferUpdated(ref xdr_inner) => {
+            xdr::ManageOfferSuccessResultOffer::Updated(ref xdr_inner) => {
                 let inner = OfferEntry::from_xdr(xdr_inner)?;
                 Ok(OfferResult::Updated(inner))
             }
-            xdr::ManageOfferSuccessResultOffer::ManageOfferDeleted(()) => Ok(OfferResult::Deleted),
+            xdr::ManageOfferSuccessResultOffer::Deleted => Ok(OfferResult::Deleted),
         }
     }
 }
@@ -1207,12 +707,12 @@ impl OfferResult {
 impl OfferEntry {
     pub fn from_xdr(x: &xdr::OfferEntry) -> Result<OfferEntry> {
         let seller_id = PublicKey::from_xdr_account_id(&x.seller_id)?;
-        let offer_id = x.offer_id.value;
+        let offer_id = x.offer_id;
         let selling = Asset::from_xdr(&x.selling)?;
         let buying = Asset::from_xdr(&x.buying)?;
-        let amount = Stroops::from_xdr_int64(&x.amount)?;
+        let amount = Stroops::from_xdr_int64(x.amount)?;
         let price = Price::from_xdr(&x.price)?;
-        let flags = x.flags.value;
+        let flags = x.flags;
         Ok(OfferEntry {
             seller_id,
             offer_id,
@@ -1228,7 +728,7 @@ impl OfferEntry {
 impl InflationPayout {
     pub fn from_xdr(x: &xdr::InflationPayout) -> Result<InflationPayout> {
         let destination = PublicKey::from_xdr_account_id(&x.destination)?;
-        let amount = Stroops::from_xdr_int64(&x.amount)?;
+        let amount = Stroops::from_xdr_int64(x.amount)?;
         Ok(InflationPayout {
             destination,
             amount,
@@ -1239,8 +739,7 @@ impl InflationPayout {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::transaction_result::TransactionResult;
-    use crate::xdr::XDRDeserialize;
+    use crate::{transaction_result::TransactionResult, xdr::XDRDeserialize as _};
 
     macro_rules! impl_inner_op_result_test {
         ($test_name:ident, $xdr_str:tt, $expected_res:pat) => {
@@ -1413,13 +912,13 @@ mod tests {
     impl_inner_op_result_test!(
         test_payment_source_no_trust,
         "AAAAAACYloD/////AAAAAQAAAAAAAAAB/////QAAAAA=",
-        InnerOperationResult::Payment(PaymentResult::SourceNoTrust)
+        InnerOperationResult::Payment(PaymentResult::SrcNoTrust)
     );
 
     impl_inner_op_result_test!(
         test_payment_source_not_authorized,
         "AAAAAACYloD/////AAAAAQAAAAAAAAAB/////AAAAAA=",
-        InnerOperationResult::Payment(PaymentResult::SourceNotAuthorized)
+        InnerOperationResult::Payment(PaymentResult::SrcNotAuthorized)
     );
 
     impl_inner_op_result_test!(
@@ -2057,7 +1556,7 @@ mod tests {
     impl_inner_op_result_test!(
         test_allow_trust_no_trustline,
         "AAAAAACYloD/////AAAAAQAAAAAAAAAH/////gAAAAA=",
-        InnerOperationResult::AllowTrust(AllowTrustResult::NoTrustline)
+        InnerOperationResult::AllowTrust(AllowTrustResult::NoTrustLine)
     );
 
     impl_inner_op_result_test!(
@@ -2193,7 +1692,7 @@ mod tests {
     impl_inner_op_result_test!(
         test_bump_sequence_bad_sequence,
         "AAAAAACYloD/////AAAAAQAAAAAAAAAL/////wAAAAA=",
-        InnerOperationResult::BumpSequence(BumpSequenceResult::BadSequence)
+        InnerOperationResult::BumpSequence(BumpSequenceResult::BadSeq)
     );
 
     //

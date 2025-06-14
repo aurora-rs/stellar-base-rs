@@ -96,8 +96,8 @@ impl LiquidityPoolDepositOperation {
         Ok(Self {
             source_account,
             liquidity_pool_id: LiquidityPoolId::from_xdr(&x.liquidity_pool_id)?,
-            max_amount_a: Stroops::from_xdr_int64(&x.max_amount_a)?,
-            max_amount_b: Stroops::from_xdr_int64(&x.max_amount_b)?,
+            max_amount_a: Stroops::from_xdr_int64(x.max_amount_a)?,
+            max_amount_b: Stroops::from_xdr_int64(x.max_amount_b)?,
             min_price: Price::from_xdr(&x.min_price)?,
             max_price: Price::from_xdr(&x.max_price)?,
         })

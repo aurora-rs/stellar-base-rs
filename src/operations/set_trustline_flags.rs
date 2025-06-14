@@ -69,8 +69,8 @@ impl SetTrustLineFlagsOperation {
         let inner = xdr::SetTrustLineFlagsOp {
             trustor: self.trustor.to_xdr_account_id()?,
             asset: self.asset.to_xdr()?,
-            clear_flags: xdr::Uint32::new(self.clear_flags.bits()),
-            set_flags: xdr::Uint32::new(self.set_flags.bits()),
+            clear_flags: self.clear_flags.bits(),
+            set_flags: self.set_flags.bits(),
         };
         Ok(xdr::OperationBody::SetTrustLineFlags(inner))
     }
@@ -84,9 +84,9 @@ impl SetTrustLineFlagsOperation {
             source_account,
             trustor: PublicKey::from_xdr_account_id(&x.trustor)?,
             asset: Asset::from_xdr(&x.asset)?,
-            clear_flags: TrustLineFlags::from_bits(x.clear_flags.value)
+            clear_flags: TrustLineFlags::from_bits(x.clear_flags)
                 .ok_or(Error::InvalidTrustLineFlags)?,
-            set_flags: TrustLineFlags::from_bits(x.set_flags.value)
+            set_flags: TrustLineFlags::from_bits(x.set_flags)
                 .ok_or(Error::InvalidTrustLineFlags)?,
         })
     }

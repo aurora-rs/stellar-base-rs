@@ -1,15 +1,13 @@
 //! Represent monetary values and prices.
 use crate::error::{Error, Result};
 use crate::xdr;
-use crate::xdr::{XDRDeserialize, XDRSerialize};
 use num_rational::Ratio;
 use num_traits::cast::ToPrimitive;
 use rust_decimal::Decimal;
 use std::convert::TryFrom;
 use std::fmt;
+use std::io::{Read, Write};
 use std::str::FromStr;
-use xdr_rs_serialize::de::XDRIn;
-use xdr_rs_serialize::ser::XDROut;
 
 const STELLAR_SCALE: u32 = 7;
 
@@ -140,26 +138,26 @@ impl Stroops {
 
     /// Returns stroops amount as xdr object.
     pub fn to_xdr_int64(&self) -> Result<xdr::Int64> {
-        Ok(xdr::Int64::new(self.0))
+        Ok(self.0)
     }
 
     /// Returns stroops amount as xdr object.
     pub fn to_xdr_uint32(&self) -> Result<xdr::Uint32> {
         if self.0 >= 0 {
-            Ok(xdr::Uint32::new(self.0 as u32))
+            Ok(self.0 as u32)
         } else {
             Err(Error::NegativeStroops)
         }
     }
 
     /// Creates from xdr object.
-    pub fn from_xdr_int64(x: &xdr::Int64) -> Result<Stroops> {
-        Ok(Stroops::new(x.value))
+    pub fn from_xdr_int64(x: xdr::Int64) -> Result<Stroops> {
+        Ok(Stroops(x))
     }
 
     /// Creates from xdr object.
-    pub fn from_xdr_uint32(x: &xdr::Uint32) -> Result<Stroops> {
-        Ok(Stroops::new(x.value as i64))
+    pub fn from_xdr_uint32(x: xdr::Uint32) -> Result<Stroops> {
+        Ok(Stroops::new(x as i64))
     }
 }
 
@@ -189,14 +187,14 @@ impl Price {
     /// Returns price as xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Price> {
         Ok(xdr::Price {
-            n: xdr::Int32::new(self.numerator()),
-            d: xdr::Int32::new(self.denominator()),
+            n: self.numerator(),
+            d: self.denominator(),
         })
     }
 
     /// Creates price from xdr object.
     pub fn from_xdr(x: &xdr::Price) -> Result<Price> {
-        Ok(Price::new(x.n.value, x.d.value))
+        Ok(Price::new(x.n, x.d))
     }
 }
 
@@ -265,18 +263,17 @@ impl TryFrom<Stroops> for Amount {
     }
 }
 
-impl XDRSerialize for Price {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr_price = self.to_xdr()?;
-        xdr_price.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for Price {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr_price = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr_price.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for Price {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_price, bytes_read) = xdr::Price::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = Price::from_xdr(&xdr_price)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for Price {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::Price::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 

@@ -94,8 +94,8 @@ impl ManageBuyOfferOperation {
         let buy_amount = self.buy_amount.to_xdr_int64()?;
         let price = self.price.to_xdr()?;
         let offer_id = match &self.offer_id {
-            None => xdr::Int64::new(0),
-            Some(id) => xdr::Int64::new(*id),
+            None => 0,
+            Some(id) => *id,
         };
         let inner = xdr::ManageBuyOfferOp {
             selling,
@@ -114,11 +114,11 @@ impl ManageBuyOfferOperation {
     ) -> Result<ManageBuyOfferOperation> {
         let selling = Asset::from_xdr(&x.selling)?;
         let buying = Asset::from_xdr(&x.buying)?;
-        let buy_amount = Stroops::from_xdr_int64(&x.buy_amount)?;
+        let buy_amount = Stroops::from_xdr_int64(x.buy_amount)?;
         let price = Price::from_xdr(&x.price)?;
         // Don't check if it's positive because the library user
         // has no control over the xdr.
-        let offer_id = match &x.offer_id.value {
+        let offer_id = match &x.offer_id {
             0 => None,
             n => Some(*n),
         };

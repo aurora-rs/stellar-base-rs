@@ -26,7 +26,7 @@ impl InflationOperation {
 
     /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
-        Ok(xdr::OperationBody::Inflation(()))
+        Ok(xdr::OperationBody::Inflation)
     }
 
     /// Creates from the xdr operation body.

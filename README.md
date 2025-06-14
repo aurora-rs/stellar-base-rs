@@ -24,19 +24,16 @@ You can join the discussion on our mailing list at
 
 ## Features
 
- * Working XDR definitions for all Stellar types.
- * Seamlessy convert monetary amounts between decimal representation
-   and stroops.
+* Wraps generated XDR definitions from `stellar-xdr` in a nicer API.
+
+* Seamlessy convert monetary amounts between decimal representation
+  and stroops.
 
 
 ## Documentation
 
 You can find the documentation on [docs.rs](https://docs.rs/stellar-base).
 
-
-## Generating XDR types
-
-You can generated XDR types using [our fork of `xdrgen`](https://github.com/aurora-rs/xdrgen).
 
 ## Changelog
 

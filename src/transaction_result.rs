@@ -1,9 +1,9 @@
+use std::io::Read;
+
 use crate::amount::Stroops;
-use crate::error::{Error, Result};
+use crate::error::Result;
 use crate::operation_result::OperationResult;
 use crate::xdr;
-use crate::xdr::{InnerTransactionResultResult, XDRDeserialize};
-use xdr_rs_serialize::de::XDRIn;
 
 /// Result of a transaction.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -24,12 +24,14 @@ pub enum TransactionResult {
     InternalError(TransactionResultInternalError),
     NotSupported(TransactionResultNotSupported),
     BadSponsorship(TransactionResultBadSponsorship),
+    BadMinSeqAgeOrGap(TransactionResultBadMinSeqAgeOrGap),
+    Malformed(TransactionResultMalformed),
+    SorobanInvalid(TransactionResultSorobanInvalid),
 }
 
 /// Result of the inner transaction in a FeeBumpTransaction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InnerTransactionResult {
-    FeeBumpInnerSuccess(TransactionResultFeeBumpInnerSuccess),
     Success(TransactionResultSuccess),
     Failed(TransactionResultFailed),
     TooEarly(TransactionResultTooEarly),
@@ -43,8 +45,10 @@ pub enum InnerTransactionResult {
     BadAuthExtra(TransactionResultBadAuthExtra),
     InternalError(TransactionResultInternalError),
     NotSupported(TransactionResultNotSupported),
-    FeeBumpInnerFailed(TransactionResultFeeBumpInnerFailed),
     BadSponsorship(TransactionResultBadSponsorship),
+    BadMinSeqAgeOrGap(TransactionResultBadMinSeqAgeOrGap),
+    Malformed(TransactionResultMalformed),
+    SorobanInvalid(TransactionResultSorobanInvalid),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -140,6 +144,21 @@ pub struct TransactionResultNotSupported {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TransactionResultBadSponsorship {
+    pub fee_charged: Stroops,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TransactionResultBadMinSeqAgeOrGap {
+    pub fee_charged: Stroops,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TransactionResultMalformed {
+    pub fee_charged: Stroops,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TransactionResultSorobanInvalid {
     pub fee_charged: Stroops,
 }
 
@@ -354,10 +373,10 @@ impl TransactionResult {
 
     /// Creates `TransactionResult` from xdr object.
     pub fn from_xdr(x: &xdr::TransactionResult) -> Result<TransactionResult> {
-        let fee_charged = Stroops::from_xdr_int64(&x.fee_charged)?;
+        let fee_charged = Stroops::from_xdr_int64(x.fee_charged)?;
         match x.result {
             xdr::TransactionResultResult::TxFeeBumpInnerSuccess(ref xdr_inner) => {
-                let transaction_hash = xdr_inner.transaction_hash.value.clone();
+                let transaction_hash = xdr_inner.transaction_hash.0.to_vec();
                 let result = InnerTransactionResult::from_xdr(&xdr_inner.result)?;
                 let inner = TransactionResultFeeBumpSuccess {
                     fee_charged,
@@ -367,7 +386,7 @@ impl TransactionResult {
                 Ok(TransactionResult::FeeBumpSuccess(inner))
             }
             xdr::TransactionResultResult::TxFeeBumpInnerFailed(ref xdr_inner) => {
-                let transaction_hash = xdr_inner.transaction_hash.value.clone();
+                let transaction_hash = xdr_inner.transaction_hash.0.to_vec();
                 let result = InnerTransactionResult::from_xdr(&xdr_inner.result)?;
                 let inner = TransactionResultFeeBumpFailed {
                     fee_charged,
@@ -378,7 +397,7 @@ impl TransactionResult {
             }
             xdr::TransactionResultResult::TxSuccess(ref xdr_results) => {
                 let mut results = Vec::new();
-                for xdr_result in xdr_results {
+                for xdr_result in xdr_results.as_vec() {
                     let result = OperationResult::from_xdr(xdr_result)?;
                     results.push(result);
                 }
@@ -390,7 +409,7 @@ impl TransactionResult {
             }
             xdr::TransactionResultResult::TxFailed(ref xdr_results) => {
                 let mut results = Vec::new();
-                for xdr_result in xdr_results {
+                for xdr_result in xdr_results.as_vec() {
                     let result = OperationResult::from_xdr(xdr_result)?;
                     results.push(result);
                 }
@@ -400,64 +419,74 @@ impl TransactionResult {
                 };
                 Ok(TransactionResult::Failed(inner))
             }
-            xdr::TransactionResultResult::TxTooEarly(()) => {
+            xdr::TransactionResultResult::TxTooEarly => {
                 let inner = TransactionResultTooEarly { fee_charged };
                 Ok(TransactionResult::TooEarly(inner))
             }
-            xdr::TransactionResultResult::TxTooLate(()) => {
+            xdr::TransactionResultResult::TxTooLate => {
                 let inner = TransactionResultTooLate { fee_charged };
                 Ok(TransactionResult::TooLate(inner))
             }
-            xdr::TransactionResultResult::TxMissingOperation(()) => {
+            xdr::TransactionResultResult::TxMissingOperation => {
                 let inner = TransactionResultMissingOperation { fee_charged };
                 Ok(TransactionResult::MissingOperation(inner))
             }
-            xdr::TransactionResultResult::TxBadSeq(()) => {
+            xdr::TransactionResultResult::TxBadSeq => {
                 let inner = TransactionResultBadSequence { fee_charged };
                 Ok(TransactionResult::BadSequence(inner))
             }
-            xdr::TransactionResultResult::TxBadAuth(()) => {
+            xdr::TransactionResultResult::TxBadAuth => {
                 let inner = TransactionResultBadAuth { fee_charged };
                 Ok(TransactionResult::BadAuth(inner))
             }
-            xdr::TransactionResultResult::TxInsufficientBalance(()) => {
+            xdr::TransactionResultResult::TxInsufficientBalance => {
                 let inner = TransactionResultInsufficientBalance { fee_charged };
                 Ok(TransactionResult::InsufficientBalance(inner))
             }
-            xdr::TransactionResultResult::TxNoAccount(()) => {
+            xdr::TransactionResultResult::TxNoAccount => {
                 let inner = TransactionResultNoAccount { fee_charged };
                 Ok(TransactionResult::NoAccount(inner))
             }
-            xdr::TransactionResultResult::TxInsufficientFee(()) => {
+            xdr::TransactionResultResult::TxInsufficientFee => {
                 let inner = TransactionResultInsufficientFee { fee_charged };
                 Ok(TransactionResult::InsufficientFee(inner))
             }
-            xdr::TransactionResultResult::TxBadAuthExtra(()) => {
+            xdr::TransactionResultResult::TxBadAuthExtra => {
                 let inner = TransactionResultBadAuthExtra { fee_charged };
                 Ok(TransactionResult::BadAuthExtra(inner))
             }
-            xdr::TransactionResultResult::TxInternalError(()) => {
+            xdr::TransactionResultResult::TxInternalError => {
                 let inner = TransactionResultInternalError { fee_charged };
                 Ok(TransactionResult::InternalError(inner))
             }
-            xdr::TransactionResultResult::TxNotSupported(()) => {
+            xdr::TransactionResultResult::TxNotSupported => {
                 let inner = TransactionResultNotSupported { fee_charged };
                 Ok(TransactionResult::NotSupported(inner))
             }
-            xdr::TransactionResultResult::TxBadSponsorship(()) => {
+            xdr::TransactionResultResult::TxBadSponsorship => {
                 let inner = TransactionResultBadSponsorship { fee_charged };
                 Ok(TransactionResult::BadSponsorship(inner))
+            }
+            xdr::TransactionResultResult::TxBadMinSeqAgeOrGap => {
+                let inner = TransactionResultBadMinSeqAgeOrGap { fee_charged };
+                Ok(TransactionResult::BadMinSeqAgeOrGap(inner))
+            }
+            xdr::TransactionResultResult::TxMalformed => {
+                let inner = TransactionResultMalformed { fee_charged };
+                Ok(TransactionResult::Malformed(inner))
+            }
+            xdr::TransactionResultResult::TxSorobanInvalid => {
+                let inner = TransactionResultSorobanInvalid { fee_charged };
+                Ok(TransactionResult::SorobanInvalid(inner))
             }
         }
     }
 }
 
-impl XDRDeserialize for TransactionResult {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_result, bytes_read) =
-            xdr::TransactionResult::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = TransactionResult::from_xdr(&xdr_result)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for TransactionResult {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::TransactionResult::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 
@@ -646,15 +675,11 @@ impl InnerTransactionResult {
 
     /// Creates `TransactionResult` from xdr object.
     pub fn from_xdr(x: &xdr::InnerTransactionResult) -> Result<InnerTransactionResult> {
-        let fee_charged = Stroops::from_xdr_int64(&x.fee_charged)?;
+        let fee_charged = Stroops::from_xdr_int64(x.fee_charged)?;
         match x.result {
-            xdr::InnerTransactionResultResult::TxFeeBumpInnerSuccess(()) => {
-                let inner = TransactionResultFeeBumpInnerSuccess { fee_charged };
-                Ok(InnerTransactionResult::FeeBumpInnerSuccess(inner))
-            }
             xdr::InnerTransactionResultResult::TxSuccess(ref xdr_results) => {
                 let mut results = Vec::new();
-                for xdr_result in xdr_results {
+                for xdr_result in xdr_results.as_slice() {
                     let result = OperationResult::from_xdr(xdr_result)?;
                     results.push(result);
                 }
@@ -666,7 +691,7 @@ impl InnerTransactionResult {
             }
             xdr::InnerTransactionResultResult::TxFailed(ref xdr_results) => {
                 let mut results = Vec::new();
-                for xdr_result in xdr_results {
+                for xdr_result in xdr_results.as_slice() {
                     let result = OperationResult::from_xdr(xdr_result)?;
                     results.push(result);
                 }
@@ -676,68 +701,74 @@ impl InnerTransactionResult {
                 };
                 Ok(InnerTransactionResult::Failed(inner))
             }
-            xdr::InnerTransactionResultResult::TxTooEarly(()) => {
+            xdr::InnerTransactionResultResult::TxTooEarly => {
                 let inner = TransactionResultTooEarly { fee_charged };
                 Ok(InnerTransactionResult::TooEarly(inner))
             }
-            xdr::InnerTransactionResultResult::TxTooLate(()) => {
+            xdr::InnerTransactionResultResult::TxTooLate => {
                 let inner = TransactionResultTooLate { fee_charged };
                 Ok(InnerTransactionResult::TooLate(inner))
             }
-            xdr::InnerTransactionResultResult::TxMissingOperation(()) => {
+            xdr::InnerTransactionResultResult::TxMissingOperation => {
                 let inner = TransactionResultMissingOperation { fee_charged };
                 Ok(InnerTransactionResult::MissingOperation(inner))
             }
-            xdr::InnerTransactionResultResult::TxBadSeq(()) => {
+            xdr::InnerTransactionResultResult::TxBadSeq => {
                 let inner = TransactionResultBadSequence { fee_charged };
                 Ok(InnerTransactionResult::BadSequence(inner))
             }
-            xdr::InnerTransactionResultResult::TxBadAuth(()) => {
+            xdr::InnerTransactionResultResult::TxBadAuth => {
                 let inner = TransactionResultBadAuth { fee_charged };
                 Ok(InnerTransactionResult::BadAuth(inner))
             }
-            xdr::InnerTransactionResultResult::TxInsufficientBalance(()) => {
+            xdr::InnerTransactionResultResult::TxInsufficientBalance => {
                 let inner = TransactionResultInsufficientBalance { fee_charged };
                 Ok(InnerTransactionResult::InsufficientBalance(inner))
             }
-            xdr::InnerTransactionResultResult::TxNoAccount(()) => {
+            xdr::InnerTransactionResultResult::TxNoAccount => {
                 let inner = TransactionResultNoAccount { fee_charged };
                 Ok(InnerTransactionResult::NoAccount(inner))
             }
-            xdr::InnerTransactionResultResult::TxInsufficientFee(()) => {
+            xdr::InnerTransactionResultResult::TxInsufficientFee => {
                 let inner = TransactionResultInsufficientFee { fee_charged };
                 Ok(InnerTransactionResult::InsufficientFee(inner))
             }
-            xdr::InnerTransactionResultResult::TxBadAuthExtra(()) => {
+            xdr::InnerTransactionResultResult::TxBadAuthExtra => {
                 let inner = TransactionResultBadAuthExtra { fee_charged };
                 Ok(InnerTransactionResult::BadAuthExtra(inner))
             }
-            xdr::InnerTransactionResultResult::TxInternalError(()) => {
+            xdr::InnerTransactionResultResult::TxInternalError => {
                 let inner = TransactionResultInternalError { fee_charged };
                 Ok(InnerTransactionResult::InternalError(inner))
             }
-            xdr::InnerTransactionResultResult::TxNotSupported(()) => {
+            xdr::InnerTransactionResultResult::TxNotSupported => {
                 let inner = TransactionResultNotSupported { fee_charged };
                 Ok(InnerTransactionResult::NotSupported(inner))
             }
-            InnerTransactionResultResult::TxFeeBumpInnerFailed(()) => {
-                let inner = TransactionResultFeeBumpInnerFailed { fee_charged };
-                Ok(InnerTransactionResult::FeeBumpInnerFailed(inner))
-            }
-            xdr::InnerTransactionResultResult::TxBadSponsorship(()) => {
+            xdr::InnerTransactionResultResult::TxBadSponsorship => {
                 let inner = TransactionResultBadSponsorship { fee_charged };
                 Ok(InnerTransactionResult::BadSponsorship(inner))
+            }
+            xdr::InnerTransactionResultResult::TxBadMinSeqAgeOrGap => {
+                let inner = TransactionResultBadMinSeqAgeOrGap { fee_charged };
+                Ok(InnerTransactionResult::BadMinSeqAgeOrGap(inner))
+            }
+            xdr::InnerTransactionResultResult::TxMalformed => {
+                let inner = TransactionResultMalformed { fee_charged };
+                Ok(InnerTransactionResult::Malformed(inner))
+            }
+            xdr::InnerTransactionResultResult::TxSorobanInvalid => {
+                let inner = TransactionResultSorobanInvalid { fee_charged };
+                Ok(InnerTransactionResult::SorobanInvalid(inner))
             }
         }
     }
 }
 
-impl XDRDeserialize for InnerTransactionResult {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_result, bytes_read) =
-            xdr::InnerTransactionResult::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = InnerTransactionResult::from_xdr(&xdr_result)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for InnerTransactionResult {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::InnerTransactionResult::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 

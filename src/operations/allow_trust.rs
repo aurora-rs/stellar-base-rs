@@ -67,21 +67,17 @@ impl AllowTrustOperation {
         let trustor = self.trustor.to_xdr_account_id()?;
         let asset = match &self.asset {
             CreditAssetType::CreditAlphaNum4(code) => {
-                let code_len = code.len();
-                let mut code_bytes = vec![0; 4];
-                code_bytes[..code_len].copy_from_slice(code.as_bytes());
-                let asset_code = xdr::AssetCode4::new(code_bytes);
-                xdr::AssetCode::AssetTypeCreditAlphanum4(asset_code)
+                let asset_code = xdr::AssetCode4::try_from(code.as_bytes())
+                    .map_err(|_| Error::InvalidAssetCode)?;
+                xdr::AssetCode::CreditAlphanum4(asset_code)
             }
             CreditAssetType::CreditAlphaNum12(code) => {
-                let code_len = code.len();
-                let mut code_bytes = vec![0; 12];
-                code_bytes[..code_len].copy_from_slice(code.as_bytes());
-                let asset_code = xdr::AssetCode12::new(code_bytes);
-                xdr::AssetCode::AssetTypeCreditAlphanum12(asset_code)
+                let asset_code = xdr::AssetCode12::try_from(code.as_bytes())
+                    .map_err(|_| Error::InvalidAssetCode)?;
+                xdr::AssetCode::CreditAlphanum12(asset_code)
             }
         };
-        let authorize = xdr::Uint32::new(self.authorize.bits());
+        let authorize = self.authorize.bits() as u32;
 
         let inner = xdr::AllowTrustOp {
             trustor,
@@ -98,17 +94,17 @@ impl AllowTrustOperation {
     ) -> Result<AllowTrustOperation> {
         let trustor = PublicKey::from_xdr_account_id(&x.trustor)?;
         let asset = match &x.asset {
-            xdr::AssetCode::AssetTypeCreditAlphanum4(code) => {
-                let code = xdr_code_to_string(&code.value);
+            xdr::AssetCode::CreditAlphanum4(code) => {
+                let code = xdr_code_to_string(&code.0);
                 CreditAssetType::CreditAlphaNum4(code)
             }
-            xdr::AssetCode::AssetTypeCreditAlphanum12(code) => {
-                let code = xdr_code_to_string(&code.value);
+            xdr::AssetCode::CreditAlphanum12(code) => {
+                let code = xdr_code_to_string(&code.0);
                 CreditAssetType::CreditAlphaNum12(code)
             }
         };
         let authorize =
-            TrustLineFlags::from_bits(x.authorize.value).ok_or(Error::InvalidTrustLineFlags)?;
+            TrustLineFlags::from_bits(x.authorize).ok_or(Error::InvalidTrustLineFlags)?;
 
         Ok(AllowTrustOperation {
             source_account,

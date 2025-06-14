@@ -1,12 +1,12 @@
 //! Transaction signatures.
+use std::io::{Read, Write};
+
 use crate::crypto::{hash, PublicKey};
 use crate::error::{Error, Result};
 use crate::network::Network;
 use crate::transaction::TransactionEnvelope;
-use crate::xdr::{self, XDRDeserialize, XDRSerialize};
+use crate::xdr;
 use ed25519::Signature;
-use xdr_rs_serialize::de::XDRIn;
-use xdr_rs_serialize::ser::XDROut;
 
 /// Last 4 bytes of a public key.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,12 +27,20 @@ pub struct PreAuthTxHash(Vec<u8>);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HashX(Vec<u8>);
 
+/// Signer key for Ed25519 signed payload.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SignerKeyEd25519SignedPayload {
+    pub ed25519: PublicKey,
+    pub payload: Vec<u8>,
+}
+
 /// A transaction signer key.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SignerKey {
     Ed25519(PublicKey),
     PreAuthTx(PreAuthTxHash),
     HashX(HashX),
+    Ed25519SignedPayload(SignerKeyEd25519SignedPayload),
 }
 
 /// A transaction signer key with its weight.
@@ -53,12 +61,16 @@ pub trait XdrSignature {
 impl XdrSignature for Signature {
     /// Returns xdr object.
     fn to_xdr(&self) -> Result<xdr::Signature> {
-        Ok(xdr::Signature::new(self.to_bytes().to_vec()))
+        Ok(xdr::Signature(
+            self.to_bytes()
+                .try_into()
+                .map_err(|_| Error::InvalidSignature)?,
+        ))
     }
 
     /// Creates from xdr object.
     fn from_xdr(x: &xdr::Signature) -> Result<Signature> {
-        Signature::from_slice(&x.value).map_err(|_| Error::InvalidSignature)
+        Signature::from_slice(&x.0).map_err(|_| Error::InvalidSignature)
     }
 }
 
@@ -88,12 +100,12 @@ impl SignatureHint {
 
     /// Returns xdr object.
     pub fn to_xdr(&self) -> Result<xdr::SignatureHint> {
-        Ok(xdr::SignatureHint::new(self.to_vec()))
+        Ok(xdr::SignatureHint(self.0))
     }
 
     /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::SignatureHint) -> Result<SignatureHint> {
-        SignatureHint::from_slice(&x.value)
+        Ok(SignatureHint(x.0))
     }
 }
 
@@ -242,18 +254,35 @@ impl SignerKey {
     /// Returns the xdr object.
     pub fn to_xdr(&self) -> Result<xdr::SignerKey> {
         match self {
-            SignerKey::Ed25519(pk) => {
-                let key_bytes = pk.as_bytes();
-                let inner = xdr::Uint256::new(key_bytes.to_vec());
-                Ok(xdr::SignerKey::SignerKeyTypeEd25519(inner))
-            }
+            SignerKey::Ed25519(pk) => Ok(xdr::SignerKey::Ed25519(xdr::Uint256(pk.0))),
             SignerKey::PreAuthTx(hash) => {
-                let inner = xdr::Uint256::new(hash.0.to_vec());
-                Ok(xdr::SignerKey::SignerKeyTypePreAuthTx(inner))
+                let inner: xdr::Uint256 = hash
+                    .0
+                    .as_slice()
+                    .try_into()
+                    .map_err(|_| Error::InvalidPreAuthTx)?;
+                Ok(xdr::SignerKey::PreAuthTx(inner))
             }
             SignerKey::HashX(hash) => {
-                let inner = xdr::Uint256::new(hash.0.to_vec());
-                Ok(xdr::SignerKey::SignerKeyTypeHashX(inner))
+                let inner: xdr::Uint256 = hash
+                    .0
+                    .as_slice()
+                    .try_into()
+                    .map_err(|_| Error::InvalidHashX)?;
+                Ok(xdr::SignerKey::HashX(inner))
+            }
+            SignerKey::Ed25519SignedPayload(signed_payload) => {
+                let payload = signed_payload
+                    .payload
+                    .as_slice()
+                    .try_into()
+                    .map_err(|_| Error::InvalidPayload)?;
+                Ok(xdr::SignerKey::Ed25519SignedPayload(
+                    xdr::SignerKeyEd25519SignedPayload {
+                        ed25519: xdr::Uint256(signed_payload.ed25519.0),
+                        payload,
+                    },
+                ))
             }
         }
     }
@@ -261,17 +290,24 @@ impl SignerKey {
     /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::SignerKey) -> Result<SignerKey> {
         match x {
-            xdr::SignerKey::SignerKeyTypeEd25519(bytes) => {
-                let pk = PublicKey::from_slice(&bytes.value)?;
+            xdr::SignerKey::Ed25519(bytes) => {
+                let pk = PublicKey::from_slice(&bytes.0)?;
                 Ok(SignerKey::Ed25519(pk))
             }
-            xdr::SignerKey::SignerKeyTypePreAuthTx(bytes) => {
-                let inner = PreAuthTxHash(bytes.value.to_vec());
+            xdr::SignerKey::PreAuthTx(bytes) => {
+                let inner = PreAuthTxHash(bytes.0.to_vec());
                 Ok(SignerKey::PreAuthTx(inner))
             }
-            xdr::SignerKey::SignerKeyTypeHashX(bytes) => {
-                let inner = HashX(bytes.value.to_vec());
+            xdr::SignerKey::HashX(bytes) => {
+                let inner = HashX(bytes.0.to_vec());
                 Ok(SignerKey::HashX(inner))
+            }
+            xdr::SignerKey::Ed25519SignedPayload(signed_payload) => {
+                let ed25519 = PublicKey::from_slice(&signed_payload.ed25519.0)?;
+                let payload = signed_payload.payload.to_vec();
+                Ok(SignerKey::Ed25519SignedPayload(
+                    SignerKeyEd25519SignedPayload { ed25519, payload },
+                ))
             }
         }
     }
@@ -306,15 +342,19 @@ impl Signer {
     /// Returns xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Signer> {
         let key = self.key.to_xdr()?;
-        let weight = xdr::Uint32::new(self.weight);
-        Ok(xdr::Signer { key, weight })
+        Ok(xdr::Signer {
+            key,
+            weight: self.weight,
+        })
     }
 
     /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::Signer) -> Result<Signer> {
-        let weight = x.weight.value;
         let key = SignerKey::from_xdr(&x.key)?;
-        Ok(Signer { key, weight })
+        Ok(Signer {
+            key,
+            weight: x.weight,
+        })
     }
 }
 
@@ -368,33 +408,31 @@ impl HashX {
     }
 }
 
-impl XDRSerialize for SignerKey {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr_signer = self.to_xdr()?;
-        xdr_signer.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for SignerKey {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for SignerKey {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_signer, bytes_read) = xdr::SignerKey::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = SignerKey::from_xdr(&xdr_signer)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for SignerKey {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::SignerKey::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 
-impl XDRSerialize for Signer {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr_signer = self.to_xdr()?;
-        xdr_signer.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for Signer {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for Signer {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_signer, bytes_read) = xdr::Signer::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = Signer::from_xdr(&xdr_signer)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for Signer {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::Signer::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 
@@ -404,7 +442,7 @@ mod tests {
     use crate::crypto::PublicKey;
     use crate::network::Network;
     use crate::transaction::TransactionEnvelope;
-    use crate::xdr::{XDRDeserialize, XDRSerialize};
+    use crate::xdr::{XDRDeserialize as _, XDRSerialize as _};
 
     #[test]
     fn test_signer_key_from_public_key() {

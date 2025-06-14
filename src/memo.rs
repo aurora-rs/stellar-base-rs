@@ -1,9 +1,8 @@
 //! Transaction memo.
+use std::io::{Read, Write};
+
 use crate::error::{Error, Result};
 use crate::xdr;
-use crate::xdr::{XDRDeserialize, XDRSerialize};
-use xdr_rs_serialize::de::XDRIn;
-use xdr_rs_serialize::ser::XDROut;
 
 /// Maximum length of text memo.
 pub const MAX_MEMO_TEXT_LEN: usize = 28;
@@ -161,28 +160,27 @@ impl Memo {
     /// Returns the memo xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Memo> {
         match self {
-            Memo::None => Ok(xdr::Memo::MemoNone(())),
-            Memo::Text(text) => Ok(xdr::Memo::MemoText(text.clone())),
-            Memo::Id(id) => Ok(xdr::Memo::MemoId(xdr::Uint64::new(*id))),
-            Memo::Hash(hash) => {
-                let hash = xdr::Hash::new(hash.to_vec());
-                Ok(xdr::Memo::MemoHash(hash))
-            }
-            Memo::Return(ret) => {
-                let ret = xdr::Hash::new(ret.to_vec());
-                Ok(xdr::Memo::MemoReturn(ret))
-            }
+            Memo::None => Ok(xdr::Memo::None),
+            Memo::Text(text) => Ok(xdr::Memo::Text(
+                text.try_into().map_err(|_| Error::InvalidMemoText)?,
+            )),
+            Memo::Id(id) => Ok(xdr::Memo::Id(*id)),
+            Memo::Hash(hash) => Ok(xdr::Memo::Hash(hash.clone().into())),
+            Memo::Return(ret) => Ok(xdr::Memo::Return(ret.clone().into())),
         }
     }
 
     /// Creates a new memo from the xdr object.
     pub fn from_xdr(x: &xdr::Memo) -> Result<Memo> {
         match x {
-            xdr::Memo::MemoNone(()) => Ok(Memo::new_none()),
-            xdr::Memo::MemoText(text) => Memo::new_text(text),
-            xdr::Memo::MemoId(id) => Ok(Memo::new_id(id.value)),
-            xdr::Memo::MemoHash(hash) => Memo::new_hash(&hash.value),
-            xdr::Memo::MemoReturn(ret) => Memo::new_return(&ret.value),
+            xdr::Memo::None => Ok(Memo::new_none()),
+            xdr::Memo::Text(text) => {
+                let string: String = text.try_into().map_err(|_| Error::InvalidMemoText)?;
+                Memo::new_text(string)
+            }
+            xdr::Memo::Id(id) => Ok(Memo::new_id(*id)),
+            xdr::Memo::Hash(hash) => Memo::new_hash(&hash.0),
+            xdr::Memo::Return(ret) => Memo::new_return(&ret.0),
         }
     }
 }
@@ -193,18 +191,17 @@ impl Default for Memo {
     }
 }
 
-impl XDRSerialize for Memo {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr_memo = self.to_xdr()?;
-        xdr_memo.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for Memo {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr_memo = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr_memo.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for Memo {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_memo, bytes_read) = xdr::Memo::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = Memo::from_xdr(&xdr_memo)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for Memo {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::Memo::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 

@@ -1,6 +1,4 @@
 //! Error and Result definitions.
-use xdr_rs_serialize::error::Error as XdrError;
-
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(thiserror::Error, Debug)]
@@ -62,6 +60,9 @@ pub enum Error {
     /// Invalid hash(x).
     #[error("invalid hash(x)")]
     InvalidHashX,
+    /// Invalid payload.
+    #[error("invalid payload")]
+    InvalidPayload,
     /// Invalid time bounds.
     #[error("invalid time bounds")]
     InvalidTimeBounds,
@@ -98,16 +99,16 @@ pub enum Error {
     /// Transaction fee overflow.
     #[error("transaction fee overflow")]
     TransactionFeeOverflow,
-    /// Xdr serialization error
-    #[error("xdr serialization error")]
-    XdrError(XdrError),
+    /// Xdr conversion error
+    #[error("xdr conversion error")]
+    XdrError,
+    /// Unsupported feature
+    #[error("unsupported feature")]
+    UnsupportedFeature,
     /// Invalid xdr claim predicate
     #[error("Invalid xdr claim predicate")]
     XdrClaimPredicateError,
     /// Base64 decode error
     #[error("base64 decode error")]
     Base64DecodeError(#[from] base64::DecodeError),
-    /// Sodium init failed.
-    #[error("sodium init failed")]
-    SodiumInitFailed,
 }

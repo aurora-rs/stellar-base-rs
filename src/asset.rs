@@ -1,11 +1,10 @@
 //! Assets on the network.
+use std::io::{Read, Write};
+
 use crate::crypto::PublicKey;
 use crate::error::{Error, Result};
 use crate::liquidity_pool::LiquidityPoolId;
 use crate::xdr;
-use crate::xdr::{XDRDeserialize, XDRSerialize};
-use xdr_rs_serialize::de::XDRIn;
-use xdr_rs_serialize::ser::XDROut;
 
 /// Represent an asset, either the native asset (XLM) or an asset
 /// issued.
@@ -85,25 +84,25 @@ impl Asset {
     /// Returns the asset xdr object.
     pub fn to_xdr(&self) -> Result<xdr::Asset> {
         match self {
-            Asset::Native => Ok(xdr::Asset::AssetTypeNative(())),
+            Asset::Native => Ok(xdr::Asset::Native),
             Asset::Credit(credit) => match credit {
                 CreditAsset::AlphaNum4 { code, issuer } => {
                     let code_len = code.len();
-                    let mut code_bytes = vec![0; 4];
+                    let mut code_bytes = [0u8; 4];
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
-                    let asset_code = xdr::AssetCode4::new(code_bytes);
+                    let asset_code = xdr::AssetCode4(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
                     let asset_alphanum4 = xdr::AlphaNum4 { asset_code, issuer };
-                    Ok(xdr::Asset::AssetTypeCreditAlphanum4(asset_alphanum4))
+                    Ok(xdr::Asset::CreditAlphanum4(asset_alphanum4))
                 }
                 CreditAsset::AlphaNum12 { code, issuer } => {
                     let code_len = code.len();
-                    let mut code_bytes = vec![0; 12];
+                    let mut code_bytes = [0u8; 12];
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
-                    let asset_code = xdr::AssetCode12::new(code_bytes);
+                    let asset_code = xdr::AssetCode12(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
                     let asset_alphanum12 = xdr::AlphaNum12 { asset_code, issuer };
-                    Ok(xdr::Asset::AssetTypeCreditAlphanum12(asset_alphanum12))
+                    Ok(xdr::Asset::CreditAlphanum12(asset_alphanum12))
                 }
             },
         }
@@ -112,15 +111,15 @@ impl Asset {
     /// Creates an asset from the xdr object.
     pub fn from_xdr(x: &xdr::Asset) -> Result<Asset> {
         match x {
-            xdr::Asset::AssetTypeNative(()) => Ok(Asset::new_native()),
-            xdr::Asset::AssetTypeCreditAlphanum4(credit) => {
+            xdr::Asset::Native => Ok(Asset::new_native()),
+            xdr::Asset::CreditAlphanum4(credit) => {
                 let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
-                let code = xdr_code_to_string(&credit.asset_code.value);
+                let code = xdr_code_to_string(&credit.asset_code.0);
                 Asset::new_credit(code, issuer)
             }
-            xdr::Asset::AssetTypeCreditAlphanum12(credit) => {
+            xdr::Asset::CreditAlphanum12(credit) => {
                 let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
-                let code = xdr_code_to_string(&credit.asset_code.value);
+                let code = xdr_code_to_string(&credit.asset_code.0);
                 Asset::new_credit(code, issuer)
             }
         }
@@ -239,52 +238,46 @@ impl TrustLineAsset {
     /// Returns the trustline asset xdr object.
     pub fn to_xdr(&self) -> Result<xdr::TrustLineAsset> {
         match self {
-            Self::Native => Ok(xdr::TrustLineAsset::AssetTypeNative(())),
+            Self::Native => Ok(xdr::TrustLineAsset::Native),
             Self::Credit(credit) => match credit {
                 CreditAsset::AlphaNum4 { code, issuer } => {
                     let code_len = code.len();
-                    let mut code_bytes = vec![0; 4];
+                    let mut code_bytes = [0u8; 4];
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
-                    let asset_code = xdr::AssetCode4::new(code_bytes);
+                    let asset_code = xdr::AssetCode4(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
                     let asset_alphanum4 = xdr::AlphaNum4 { asset_code, issuer };
-                    Ok(xdr::TrustLineAsset::AssetTypeCreditAlphanum4(
-                        asset_alphanum4,
-                    ))
+                    Ok(xdr::TrustLineAsset::CreditAlphanum4(asset_alphanum4))
                 }
                 CreditAsset::AlphaNum12 { code, issuer } => {
                     let code_len = code.len();
-                    let mut code_bytes = vec![0; 12];
+                    let mut code_bytes = [0u8; 12];
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
-                    let asset_code = xdr::AssetCode12::new(code_bytes);
+                    let asset_code = xdr::AssetCode12(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
                     let asset_alphanum12 = xdr::AlphaNum12 { asset_code, issuer };
-                    Ok(xdr::TrustLineAsset::AssetTypeCreditAlphanum12(
-                        asset_alphanum12,
-                    ))
+                    Ok(xdr::TrustLineAsset::CreditAlphanum12(asset_alphanum12))
                 }
             },
-            Self::PoolShare(pool_id) => {
-                Ok(xdr::TrustLineAsset::AssetTypePoolShare(pool_id.to_xdr()))
-            }
+            Self::PoolShare(pool_id) => Ok(xdr::TrustLineAsset::PoolShare(pool_id.to_xdr())),
         }
     }
 
     /// Creates an asset from the xdr object.
     pub fn from_xdr(x: &xdr::TrustLineAsset) -> Result<Self> {
         match x {
-            xdr::TrustLineAsset::AssetTypeNative(()) => Ok(Self::new_native()),
-            xdr::TrustLineAsset::AssetTypeCreditAlphanum4(credit) => {
+            xdr::TrustLineAsset::Native => Ok(Self::new_native()),
+            xdr::TrustLineAsset::CreditAlphanum4(credit) => {
                 let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
-                let code = xdr_code_to_string(&credit.asset_code.value);
+                let code = xdr_code_to_string(&credit.asset_code.0);
                 Ok(Self::new_credit(code, issuer)?)
             }
-            xdr::TrustLineAsset::AssetTypeCreditAlphanum12(credit) => {
+            xdr::TrustLineAsset::CreditAlphanum12(credit) => {
                 let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
-                let code = xdr_code_to_string(&credit.asset_code.value);
+                let code = xdr_code_to_string(&credit.asset_code.0);
                 Ok(Self::new_credit(code, issuer)?)
             }
-            xdr::TrustLineAsset::AssetTypePoolShare(pool_id) => {
+            xdr::TrustLineAsset::PoolShare(pool_id) => {
                 let liquidity_pool_id = LiquidityPoolId::from_xdr(pool_id)?;
                 Ok(Self::new_pool_share(liquidity_pool_id)?)
             }
@@ -303,34 +296,31 @@ impl From<Asset> for TrustLineAsset {
     }
 }
 
-impl XDRSerialize for TrustLineAsset {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr_asset = self.to_xdr()?;
-        xdr_asset.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for TrustLineAsset {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr_asset = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr_asset.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for TrustLineAsset {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_asset, bytes_read) =
-            xdr::TrustLineAsset::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = TrustLineAsset::from_xdr(&xdr_asset)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for TrustLineAsset {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::TrustLineAsset::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 
-impl XDRSerialize for Asset {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr_asset = self.to_xdr()?;
-        xdr_asset.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for Asset {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr_asset = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr_asset.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for Asset {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_asset, bytes_read) = xdr::Asset::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = Asset::from_xdr(&xdr_asset)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for Asset {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::Asset::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 
