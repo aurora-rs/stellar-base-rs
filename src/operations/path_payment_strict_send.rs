@@ -114,7 +114,7 @@ impl PathPaymentStrictSendOperation {
             send_amount,
             dest_asset,
             dest_min,
-            path,
+            path: path.try_into().map_err(|_| Error::XdrError)?,
         };
         Ok(xdr::OperationBody::PathPaymentStrictSend(inner))
     }
@@ -126,9 +126,9 @@ impl PathPaymentStrictSendOperation {
     ) -> Result<PathPaymentStrictSendOperation> {
         let destination = MuxedAccount::from_xdr(&x.destination)?;
         let send_asset = Asset::from_xdr(&x.send_asset)?;
-        let send_amount = Stroops::from_xdr_int64(&x.send_amount)?;
+        let send_amount = Stroops::from_xdr_int64(x.send_amount)?;
         let destination_asset = Asset::from_xdr(&x.dest_asset)?;
-        let destination_min = Stroops::from_xdr_int64(&x.dest_min)?;
+        let destination_min = Stroops::from_xdr_int64(x.dest_min)?;
         let path_res: Result<Vec<Asset>> = x.path.iter().map(Asset::from_xdr).collect();
         let path = path_res?;
         Ok(PathPaymentStrictSendOperation {

@@ -83,7 +83,7 @@ impl PaymentOperation {
     ) -> Result<PaymentOperation> {
         let destination = MuxedAccount::from_xdr(&x.destination)?;
         let asset = Asset::from_xdr(&x.asset)?;
-        let amount = Stroops::from_xdr_int64(&x.amount)?;
+        let amount = Stroops::from_xdr_int64(x.amount)?;
         Ok(PaymentOperation {
             source_account,
             destination,

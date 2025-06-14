@@ -1,10 +1,9 @@
 //! Operations that mutate the ledger state.
+use std::io::{Read, Write};
+
 use crate::crypto::MuxedAccount;
 use crate::error::{Error, Result};
 use crate::xdr;
-use crate::xdr::{OperationBody, XDRDeserialize, XDRSerialize};
-use xdr_rs_serialize::de::XDRIn;
-use xdr_rs_serialize::ser::XDROut;
 
 mod account_merge;
 mod allow_trust;
@@ -900,7 +899,7 @@ impl Operation {
                 let inner = AccountMergeOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::AccountMerge(inner))
             }
-            xdr::OperationBody::Inflation(()) => {
+            xdr::OperationBody::Inflation => {
                 let inner = InflationOperation::from_xdr_operation_body(source_account)?;
                 Ok(Operation::Inflation(inner))
             }
@@ -938,7 +937,7 @@ impl Operation {
                 )?;
                 Ok(Operation::BeginSponsoringFutureReserves(inner))
             }
-            xdr::OperationBody::EndSponsoringFutureReserves(()) => {
+            xdr::OperationBody::EndSponsoringFutureReserves => {
                 let inner =
                     EndSponsoringFutureReservesOperation::from_xdr_operation_body(source_account)?;
                 Ok(Operation::EndSponsoringFutureReserves(inner))
@@ -967,7 +966,7 @@ impl Operation {
                     LiquidityPoolDepositOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::LiquidityPoolDeposit(inner))
             }
-            OperationBody::LiquidityPoolWithdraw(op) => {
+            xdr::OperationBody::LiquidityPoolWithdraw(op) => {
                 let inner =
                     LiquidityPoolWithdrawOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::LiquidityPoolWithdraw(inner))
@@ -976,18 +975,16 @@ impl Operation {
     }
 }
 
-impl XDRSerialize for Operation {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr_operation = self.to_xdr()?;
-        xdr_operation.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for Operation {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr_operation = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr_operation.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for Operation {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_operation, bytes_read) =
-            xdr::Operation::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = Operation::from_xdr(&xdr_operation)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for Operation {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::Operation::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
