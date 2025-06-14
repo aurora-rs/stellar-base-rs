@@ -37,8 +37,7 @@ impl PublicKey {
     }
 
     pub fn to_xdr_uint256(&self) -> Result<xdr::Uint256> {
-        let bytes = self.as_bytes().to_vec();
-        Ok(xdr::Uint256::new(bytes))
+        Ok(xdr::Uint256(self.0))
     }
 
     pub fn to_xdr_public_key(&self) -> Result<xdr::PublicKey> {
@@ -48,17 +47,17 @@ impl PublicKey {
 
     pub fn to_xdr_account_id(&self) -> Result<xdr::AccountId> {
         let public_key = self.to_xdr_public_key()?;
-        Ok(xdr::AccountId::new(public_key))
+        Ok(xdr::AccountId(public_key))
     }
 
     pub fn from_xdr_public_key(x: &xdr::PublicKey) -> Result<PublicKey> {
         match x {
-            xdr::PublicKey::PublicKeyTypeEd25519(inner) => Self::from_slice(&inner.value),
+            xdr::PublicKey::PublicKeyTypeEd25519(inner) => Self::from_slice(&inner.0),
         }
     }
 
     pub fn from_xdr_account_id(x: &xdr::AccountId) -> Result<PublicKey> {
-        Self::from_xdr_public_key(&x.value)
+        Self::from_xdr_public_key(&x.0)
     }
 
     pub fn as_bytes(&self) -> &[u8] {
@@ -67,7 +66,7 @@ impl PublicKey {
 
     pub fn to_xdr(&self) -> Result<xdr::MuxedAccount> {
         let uint256 = self.to_xdr_uint256()?;
-        Ok(xdr::MuxedAccount::KeyTypeEd25519(uint256))
+        Ok(xdr::MuxedAccount::Ed25519(uint256))
     }
 }
 
@@ -110,13 +109,12 @@ impl MuxedEd25519PublicKey {
     }
 
     pub fn to_xdr(&self) -> Result<xdr::MuxedAccount> {
-        let uint64 = xdr::Uint64::new(self.id);
         let uint256 = self.key.to_xdr_uint256()?;
         let muxed = xdr::MuxedAccountMed25519 {
-            id: uint64,
+            id: self.id,
             ed25519: uint256,
         };
-        Ok(xdr::MuxedAccount::KeyTypeMuxedEd25519(muxed))
+        Ok(xdr::MuxedAccount::MuxedEd25519(muxed))
     }
 }
 
@@ -137,12 +135,12 @@ impl MuxedAccount {
 
     pub fn from_xdr(x: &xdr::MuxedAccount) -> Result<MuxedAccount> {
         match x {
-            xdr::MuxedAccount::KeyTypeEd25519(buf) => {
-                let inner = PublicKey::from_slice(&buf.value)?;
+            xdr::MuxedAccount::Ed25519(buf) => {
+                let inner = PublicKey::from_slice(&buf.0)?;
                 Ok(MuxedAccount::Ed25519(inner))
             }
-            xdr::MuxedAccount::KeyTypeMuxedEd25519(mx) => {
-                let inner = MuxedEd25519PublicKey::from_slice(&mx.ed25519.value, mx.id.value)?;
+            xdr::MuxedAccount::MuxedEd25519(mx) => {
+                let inner = MuxedEd25519PublicKey::from_slice(&mx.ed25519.0, mx.id)?;
                 Ok(MuxedAccount::MuxedEd25519(inner))
             }
         }

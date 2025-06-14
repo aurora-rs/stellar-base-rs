@@ -85,9 +85,9 @@ impl LiquidityPoolWithdrawOperation {
         Ok(Self {
             source_account,
             liquidity_pool_id: LiquidityPoolId::from_xdr(&x.liquidity_pool_id)?,
-            amount: Stroops::from_xdr_int64(&x.amount)?,
-            min_amount_a: Stroops::from_xdr_int64(&x.min_amount_a)?,
-            min_amount_b: Stroops::from_xdr_int64(&x.min_amount_b)?,
+            amount: Stroops::from_xdr_int64(x.amount)?,
+            min_amount_a: Stroops::from_xdr_int64(x.min_amount_a)?,
+            min_amount_b: Stroops::from_xdr_int64(x.min_amount_b)?,
         })
     }
 }

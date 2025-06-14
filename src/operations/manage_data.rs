@@ -51,7 +51,7 @@ impl ManageDataOperation {
 
     /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
-        let data_name = xdr::String64::new(self.data_name.to_string());
+        let data_name = self.data_name.as_bytes().to_vec().try_into().map_err(|_| Error::XdrError)?;
         let data_value = self.data_value.as_ref().map(|d| d.to_xdr()).transpose()?;
         let inner = xdr::ManageDataOp {
             data_name,
@@ -65,7 +65,7 @@ impl ManageDataOperation {
         source_account: Option<MuxedAccount>,
         x: &xdr::ManageDataOp,
     ) -> Result<ManageDataOperation> {
-        let data_name = x.data_name.value.to_string();
+        let data_name = x.data_name.to_string();
         let data_value = x.data_value.as_ref().map(DataValue::from_xdr).transpose()?;
 
         Ok(ManageDataOperation {

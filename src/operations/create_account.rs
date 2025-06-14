@@ -67,7 +67,7 @@ impl CreateAccountOperation {
         x: &xdr::CreateAccountOp,
     ) -> Result<CreateAccountOperation> {
         let destination = PublicKey::from_xdr_account_id(&x.destination)?;
-        let starting_balance = Stroops::from_xdr_int64(&x.starting_balance)?;
+        let starting_balance = Stroops::from_xdr_int64(x.starting_balance)?;
         Ok(CreateAccountOperation {
             source_account,
             destination,

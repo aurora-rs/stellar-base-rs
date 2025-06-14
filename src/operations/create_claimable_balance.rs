@@ -74,7 +74,7 @@ impl CreateClaimableBalanceOperation {
         let inner = xdr::CreateClaimableBalanceOp {
             asset,
             amount,
-            claimants,
+            claimants: claimants.try_into().map_err(|_| Error::XdrError)?,
         };
         Ok(xdr::OperationBody::CreateClaimableBalance(inner))
     }
@@ -85,7 +85,7 @@ impl CreateClaimableBalanceOperation {
         x: &xdr::CreateClaimableBalanceOp,
     ) -> Result<CreateClaimableBalanceOperation> {
         let asset = Asset::from_xdr(&x.asset)?;
-        let amount = Stroops::from_xdr_int64(&x.amount)?;
+        let amount = Stroops::from_xdr_int64(x.amount)?;
         let claimants_res: Result<Vec<Claimant>> =
             x.claimants.iter().map(Claimant::from_xdr).collect();
         let claimants = claimants_res?;

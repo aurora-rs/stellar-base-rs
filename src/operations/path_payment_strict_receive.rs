@@ -114,7 +114,7 @@ impl PathPaymentStrictReceiveOperation {
             send_max,
             dest_asset,
             dest_amount,
-            path,
+            path: path.try_into().map_err(|_| Error::XdrError)?,
         };
         Ok(xdr::OperationBody::PathPaymentStrictReceive(inner))
     }
@@ -126,9 +126,9 @@ impl PathPaymentStrictReceiveOperation {
     ) -> Result<PathPaymentStrictReceiveOperation> {
         let destination = MuxedAccount::from_xdr(&x.destination)?;
         let send_asset = Asset::from_xdr(&x.send_asset)?;
-        let send_max = Stroops::from_xdr_int64(&x.send_max)?;
+        let send_max = Stroops::from_xdr_int64(x.send_max)?;
         let destination_asset = Asset::from_xdr(&x.dest_asset)?;
-        let destination_amount = Stroops::from_xdr_int64(&x.dest_amount)?;
+        let destination_amount = Stroops::from_xdr_int64(x.dest_amount)?;
         let path_res: Result<Vec<Asset>> = x.path.iter().map(Asset::from_xdr).collect();
         let path = path_res?;
         Ok(PathPaymentStrictReceiveOperation {
