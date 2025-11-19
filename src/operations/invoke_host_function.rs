@@ -207,13 +207,13 @@ mod tests {
     use super::*;
     use crate::operations::Operation;
 
-    use crate::xdr::{ScAddress, ScSymbol, XDRDeserialize, XDRSerialize};
+    use crate::xdr::{ContractId, Hash, ScAddress, ScSymbol, XDRDeserialize, XDRSerialize};
 
     #[test]
     fn test_invoke_host_function_invoke_contract_roundtrip() {
         // Build a simple InvokeContract host function.
         let contract_hash: [u8; 32] = [1u8; 32];
-        let addr = ScAddress::Contract(contract_hash.into());
+        let addr = ScAddress::Contract(ContractId(Hash(contract_hash)));
         // For simplicity, construct a symbol from a short ascii name. ScSymbol in current XDR is a
         // length-limited opaque or string-like type; we rely on From<String> or TryFrom<Vec<u8>>.
         let symbol: ScSymbol = "ping".to_string().try_into().unwrap();
