@@ -5,11 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.0] - 2025-11-19
+### Added
+- Add `InvokeHostFunctionOperation` and related types and enum values
+- Add `ExtendFootprintTtlOperation` and related types and enum values
+- Add `RestoreFootprintOperation` and related types and enum values
+- Add `ContractData`, `ContractCode`, `ConfigSetting` and `Ttl` to the `LedgerKey` enum
+- Add `Error` variants: `InvalidPayload`, `UnsupportedFeature`
+- Add `DalekKeyPair` (feature `dalek`)
 
 ### Changed
 - BREAKING: Replaced feature `sodium_oxide` with `dalek` since sodiumoxide is no longer maintained
+- BREAKING: Replaced generated code with `stellar-xdr` crate
 - Update dependency's versions
+
+### Removed
+- Remove `SodiumKeyPair` (use `DalekKeyPair`)
+- Remove `Error::SodiumInitFailed`
 
 ## [0.6.0] - 2023-11-03
 ### Added
