@@ -140,33 +140,28 @@ impl SetOptionsOperation {
             .as_ref()
             .map(|d| d.to_xdr_account_id())
             .transpose()?;
-        let clear_flags = self.clear_flags.map(|f| xdr::Uint32::new(f.bits()));
-        let set_flags = self.set_flags.map(|f| xdr::Uint32::new(f.bits()));
-        let master_weight = self.master_weight.map(xdr::Uint32::new);
-        let low_threshold = self.low_threshold.map(xdr::Uint32::new);
-        let med_threshold = self.medium_threshold.map(xdr::Uint32::new);
-        let high_threshold = self.high_threshold.map(xdr::Uint32::new);
+        let clear_flags = self.clear_flags.map(|f| f.bits());
+        let set_flags = self.set_flags.map(|f| f.bits());
         let signer = self.signer.as_ref().map(|s| s.to_xdr()).transpose()?;
 
-        if let Some(home_domain) = &self.home_domain {
-            if home_domain.len() > 32 {
-                return Err(Error::HomeDomainTooLong);
+        let home_domain: Option<xdr::String32> = match &self.home_domain {
+            Some(home_domain) => {
+                if home_domain.len() > 32 {
+                    return Err(Error::HomeDomainTooLong);
+                }
+                Some(home_domain.as_bytes().to_vec().try_into().unwrap())
             }
-        }
-
-        let home_domain = self
-            .home_domain
-            .as_ref()
-            .map(|h| xdr::String32::new(h.to_string()));
+            None => None,
+        };
 
         let inner = xdr::SetOptionsOp {
             inflation_dest,
             clear_flags,
             set_flags,
-            master_weight,
-            low_threshold,
-            med_threshold,
-            high_threshold,
+            master_weight: self.master_weight,
+            low_threshold: self.low_threshold,
+            med_threshold: self.medium_threshold,
+            high_threshold: self.high_threshold,
             home_domain,
             signer,
         };
@@ -186,29 +181,23 @@ impl SetOptionsOperation {
             .transpose()?;
         let clear_flags = x
             .clear_flags
-            .as_ref()
-            .map(|f| AccountFlags::from_bits(f.value).ok_or(Error::InvalidAccountFlags))
+            .map(|f| AccountFlags::from_bits(f).ok_or(Error::InvalidAccountFlags))
             .transpose()?;
         let set_flags = x
             .set_flags
-            .as_ref()
-            .map(|f| AccountFlags::from_bits(f.value).ok_or(Error::InvalidAccountFlags))
+            .map(|f| AccountFlags::from_bits(f).ok_or(Error::InvalidAccountFlags))
             .transpose()?;
-        let master_weight = x.master_weight.as_ref().map(|w| w.value);
-        let low_threshold = x.low_threshold.as_ref().map(|w| w.value);
-        let medium_threshold = x.med_threshold.as_ref().map(|w| w.value);
-        let high_threshold = x.high_threshold.as_ref().map(|w| w.value);
-        let home_domain = x.home_domain.as_ref().map(|h| h.value.clone());
+        let home_domain = x.home_domain.as_ref().map(|h| h.to_string());
         let signer = x.signer.as_ref().map(Signer::from_xdr).transpose()?;
         Ok(SetOptionsOperation {
             source_account,
             inflation_destination,
             clear_flags,
             set_flags,
-            master_weight,
-            low_threshold,
-            medium_threshold,
-            high_threshold,
+            master_weight: x.master_weight,
+            low_threshold: x.low_threshold,
+            medium_threshold: x.med_threshold,
+            high_threshold: x.high_threshold,
             home_domain,
             signer,
         })

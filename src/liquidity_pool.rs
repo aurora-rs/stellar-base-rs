@@ -47,13 +47,12 @@ impl LiquidityPoolId {
 
     /// Returns the xdr object.
     pub fn to_xdr(&self) -> xdr::PoolId {
-        let hash = xdr::Hash::new(self.0.clone());
-        xdr::PoolId::new(hash)
+        xdr::PoolId(self.0.as_slice().try_into().unwrap())
     }
 
     /// Creates from the xdr object.
     pub fn from_xdr(x: &xdr::PoolId) -> Result<Self> {
-        Ok(Self(x.value.value.clone()))
+        Ok(Self(x.0 .0.to_vec()))
     }
 }
 
@@ -63,17 +62,16 @@ impl LiquidityPoolConstantFeeParameters {
         Ok(xdr::LiquidityPoolConstantProductParameters {
             asset_a: self.assets.0.to_xdr()?,
             asset_b: self.assets.1.to_xdr()?,
-            fee: xdr::Int32::new(self.fee),
+            fee: self.fee,
         })
     }
 
     pub fn from_xdr(x: &xdr::LiquidityPoolConstantProductParameters) -> Result<Self> {
         let asset_a = Asset::from_xdr(&x.asset_a)?;
         let asset_b = Asset::from_xdr(&x.asset_b)?;
-        let fee = x.fee.value;
         Ok(Self {
             assets: (asset_a, asset_b),
-            fee,
+            fee: x.fee,
         })
     }
 }

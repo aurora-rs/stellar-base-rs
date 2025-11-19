@@ -26,7 +26,7 @@ impl EndSponsoringFutureReservesOperation {
 
     /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
-        Ok(xdr::OperationBody::EndSponsoringFutureReserves(()))
+        Ok(xdr::OperationBody::EndSponsoringFutureReserves)
     }
 
     /// Creates from the xdr operation body.

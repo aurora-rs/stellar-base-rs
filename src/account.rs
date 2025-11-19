@@ -6,10 +6,10 @@ bitflags! {
     /// Account flags.
     #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
     pub struct AccountFlags: u32 {
-        const AUTH_REQUIRED = xdr::AccountFlags::AuthRequiredFlag as u32;
-        const AUTH_REVOCABLE = xdr::AccountFlags::AuthRevocableFlag as u32;
-        const AUTH_IMMUTABLE = xdr::AccountFlags::AuthImmutableFlag as u32;
-        const AUTH_CLAWBACK_ENABLED = xdr::AccountFlags::AuthClawbackEnabledFlag as u32;
+        const AUTH_REQUIRED = xdr::AccountFlags::RequiredFlag as u32;
+        const AUTH_REVOCABLE = xdr::AccountFlags::RevocableFlag as u32;
+        const AUTH_IMMUTABLE = xdr::AccountFlags::ImmutableFlag as u32;
+        const AUTH_CLAWBACK_ENABLED = xdr::AccountFlags::ClawbackEnabledFlag as u32;
     }
 }
 
@@ -53,12 +53,14 @@ impl DataValue {
 
     /// Returns the DataValue xdr object.
     pub fn to_xdr(&self) -> Result<xdr::DataValue> {
-        let inner = self.as_bytes().to_vec();
-        Ok(xdr::DataValue::new(inner))
+        let inner = self.as_bytes();
+        Ok(xdr::DataValue(
+            inner.try_into().map_err(|_| Error::XdrError)?,
+        ))
     }
 
     /// Creates a DataValue from xdr object.
     pub fn from_xdr(x: &xdr::DataValue) -> Result<DataValue> {
-        DataValue::from_slice(&x.value)
+        DataValue::from_slice(&x)
     }
 }

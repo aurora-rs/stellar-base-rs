@@ -63,7 +63,7 @@ impl ChangeTrustOperation {
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
         let line = self.asset.to_xdr()?;
         let limit = match &self.limit {
-            None => xdr::Int64::new(0),
+            None => 0,
             Some(limit) => limit.to_xdr_int64()?,
         };
         let inner = xdr::ChangeTrustOp { line, limit };
@@ -78,7 +78,7 @@ impl ChangeTrustOperation {
         let asset = ChangeTrustAsset::from_xdr(&x.line)?;
         // Don't check if limit is positive because the library sure
         // has no control over the xdr.
-        let limit = match &x.limit.value {
+        let limit = match &x.limit {
             0 => None,
             n => Some(Stroops::new(*n)),
         };
@@ -110,52 +110,48 @@ impl ChangeTrustAsset {
 
     pub fn to_xdr(&self) -> Result<xdr::ChangeTrustAsset> {
         match self {
-            Self::Native => Ok(xdr::ChangeTrustAsset::AssetTypeNative(())),
+            Self::Native => Ok(xdr::ChangeTrustAsset::Native),
             Self::Credit(ref credit) => match credit {
                 CreditAsset::AlphaNum4 { code, issuer } => {
                     let code_len = code.len();
-                    let mut code_bytes = vec![0; 4];
+                    let mut code_bytes = [0u8; 4];
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
-                    let asset_code = xdr::AssetCode4::new(code_bytes);
+                    let asset_code = xdr::AssetCode4(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
                     let asset_alphanum4 = xdr::AlphaNum4 { asset_code, issuer };
-                    Ok(xdr::ChangeTrustAsset::AssetTypeCreditAlphanum4(
-                        asset_alphanum4,
-                    ))
+                    Ok(xdr::ChangeTrustAsset::CreditAlphanum4(asset_alphanum4))
                 }
                 CreditAsset::AlphaNum12 { code, issuer } => {
                     let code_len = code.len();
-                    let mut code_bytes = vec![0; 12];
+                    let mut code_bytes = [0u8; 12];
                     code_bytes[..code_len].copy_from_slice(code.as_bytes());
-                    let asset_code = xdr::AssetCode12::new(code_bytes);
+                    let asset_code = xdr::AssetCode12(code_bytes);
                     let issuer = issuer.to_xdr_account_id()?;
                     let asset_alphanum12 = xdr::AlphaNum12 { asset_code, issuer };
-                    Ok(xdr::ChangeTrustAsset::AssetTypeCreditAlphanum12(
-                        asset_alphanum12,
-                    ))
+                    Ok(xdr::ChangeTrustAsset::CreditAlphanum12(asset_alphanum12))
                 }
             },
             Self::PoolShare(ref pool_params) => {
                 let inner_xdr = pool_params.to_xdr()?;
-                Ok(xdr::ChangeTrustAsset::AssetTypePoolShare(inner_xdr))
+                Ok(xdr::ChangeTrustAsset::PoolShare(inner_xdr))
             }
         }
     }
 
     pub fn from_xdr(x: &xdr::ChangeTrustAsset) -> Result<Self> {
         match *x {
-            xdr::ChangeTrustAsset::AssetTypeNative(()) => Self::new_native(),
-            xdr::ChangeTrustAsset::AssetTypeCreditAlphanum4(ref credit) => {
+            xdr::ChangeTrustAsset::Native => Self::new_native(),
+            xdr::ChangeTrustAsset::CreditAlphanum4(ref credit) => {
                 let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
-                let code = xdr_code_to_string(&credit.asset_code.value);
+                let code = xdr_code_to_string(&credit.asset_code.0);
                 Self::new_credit(code, issuer)
             }
-            xdr::ChangeTrustAsset::AssetTypeCreditAlphanum12(ref credit) => {
+            xdr::ChangeTrustAsset::CreditAlphanum12(ref credit) => {
                 let issuer = PublicKey::from_xdr_account_id(&credit.issuer)?;
-                let code = xdr_code_to_string(&credit.asset_code.value);
+                let code = xdr_code_to_string(&credit.asset_code.0);
                 Self::new_credit(code, issuer)
             }
-            xdr::ChangeTrustAsset::AssetTypePoolShare(ref pool_params_xdr) => {
+            xdr::ChangeTrustAsset::PoolShare(ref pool_params_xdr) => {
                 let pool_params = LiquidityPoolParameters::from_xdr(pool_params_xdr)?;
                 Self::new_pool_share(pool_params)
             }

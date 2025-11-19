@@ -102,7 +102,7 @@ impl RevokeSponsorshipOperation {
         let inner = match *self {
             RevokeSponsorshipOperation::LedgerEntry(ref le) => {
                 let ledger_key = le.ledger_key.to_xdr()?;
-                xdr::RevokeSponsorshipOp::RevokeSponsorshipLedgerEntry(ledger_key)
+                xdr::RevokeSponsorshipOp::LedgerEntry(ledger_key)
             }
             RevokeSponsorshipOperation::Signer(ref s) => {
                 let account_id = s.account_id.to_xdr_account_id()?;
@@ -111,7 +111,7 @@ impl RevokeSponsorshipOperation {
                     account_id,
                     signer_key,
                 };
-                xdr::RevokeSponsorshipOp::RevokeSponsorshipSigner(inner)
+                xdr::RevokeSponsorshipOp::Signer(inner)
             }
         };
         Ok(xdr::OperationBody::RevokeSponsorship(inner))
@@ -123,7 +123,7 @@ impl RevokeSponsorshipOperation {
         x: &xdr::RevokeSponsorshipOp,
     ) -> Result<RevokeSponsorshipOperation> {
         match x {
-            xdr::RevokeSponsorshipOp::RevokeSponsorshipLedgerEntry(ref le) => {
+            xdr::RevokeSponsorshipOp::LedgerEntry(ref le) => {
                 let ledger_key = LedgerKey::from_xdr(le)?;
                 let inner = RevokeSponsorshipLedgerEntry {
                     source_account,
@@ -131,7 +131,7 @@ impl RevokeSponsorshipOperation {
                 };
                 Ok(RevokeSponsorshipOperation::LedgerEntry(inner))
             }
-            xdr::RevokeSponsorshipOp::RevokeSponsorshipSigner(ref s) => {
+            xdr::RevokeSponsorshipOp::Signer(ref s) => {
                 let account_id = PublicKey::from_xdr_account_id(&s.account_id)?;
                 let signer_key = SignerKey::from_xdr(&s.signer_key)?;
                 let inner = RevokeSponsorshipSigner {
@@ -186,16 +186,19 @@ impl LedgerKey {
             }
             LedgerKey::Offer(ref seller_id, ref offer_id) => {
                 let seller_id = seller_id.to_xdr_account_id()?;
-                let offer_id = xdr::Int64::new(*offer_id);
                 let inner = xdr::LedgerKeyOffer {
                     seller_id,
-                    offer_id,
+                    offer_id: *offer_id,
                 };
                 Ok(xdr::LedgerKey::Offer(inner))
             }
             LedgerKey::Data(ref account_id, ref data_name) => {
                 let account_id = account_id.to_xdr_account_id()?;
-                let data_name = xdr::String64::new(data_name.to_string());
+                let data_name = data_name
+                    .as_bytes()
+                    .to_vec()
+                    .try_into()
+                    .map_err(|_| Error::XdrError)?;
                 let inner = xdr::LedgerKeyData {
                     account_id,
                     data_name,
@@ -212,6 +215,16 @@ impl LedgerKey {
                 let inner = xdr::LedgerKeyLiquidityPool { liquidity_pool_id };
                 Ok(xdr::LedgerKey::LiquidityPool(inner))
             }
+            LedgerKey::ContractData(ref contract_data) => {
+                Ok(xdr::LedgerKey::ContractData(contract_data.clone()))
+            }
+            LedgerKey::ContractCode(ref contract_code) => {
+                Ok(xdr::LedgerKey::ContractCode(contract_code.clone()))
+            }
+            LedgerKey::ConfigSetting(ref config_setting) => {
+                Ok(xdr::LedgerKey::ConfigSetting(config_setting.clone()))
+            }
+            LedgerKey::Ttl(ref ttl) => Ok(xdr::LedgerKey::Ttl(ttl.clone())),
         }
     }
 
@@ -229,12 +242,12 @@ impl LedgerKey {
             }
             xdr::LedgerKey::Offer(ref offer) => {
                 let seller_id = PublicKey::from_xdr_account_id(&offer.seller_id)?;
-                let offer_id = offer.offer_id.value;
+                let offer_id = offer.offer_id;
                 Ok(LedgerKey::Offer(seller_id, offer_id))
             }
             xdr::LedgerKey::Data(ref data) => {
                 let account_id = PublicKey::from_xdr_account_id(&data.account_id)?;
-                let data_name = data.data_name.value.to_string();
+                let data_name = data.data_name.to_string();
                 Ok(LedgerKey::Data(account_id, data_name))
             }
             xdr::LedgerKey::ClaimableBalance(ref claimable_balance) => {
@@ -246,6 +259,16 @@ impl LedgerKey {
                     LiquidityPoolId::from_xdr(&liquidity_pool.liquidity_pool_id)?;
                 Ok(LedgerKey::LiquidityPool(liquidity_pool_id))
             }
+            xdr::LedgerKey::ContractData(ref contract_data) => {
+                Ok(LedgerKey::ContractData(contract_data.to_owned()))
+            }
+            xdr::LedgerKey::ContractCode(ref contract_code) => {
+                Ok(LedgerKey::ContractCode(contract_code.to_owned()))
+            }
+            xdr::LedgerKey::ConfigSetting(ref config_setting) => {
+                Ok(LedgerKey::ConfigSetting(config_setting.to_owned()))
+            }
+            xdr::LedgerKey::Ttl(ref ttl) => Ok(LedgerKey::Ttl(ttl.to_owned())),
         }
     }
 }

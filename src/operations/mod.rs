@@ -1,10 +1,9 @@
 //! Operations that mutate the ledger state.
+use std::io::{Read, Write};
+
 use crate::crypto::MuxedAccount;
-use crate::error::{Error, Result};
+use crate::error::Result;
 use crate::xdr;
-use crate::xdr::{OperationBody, XDRDeserialize, XDRSerialize};
-use xdr_rs_serialize::de::XDRIn;
-use xdr_rs_serialize::ser::XDROut;
 
 mod account_merge;
 mod allow_trust;
@@ -18,7 +17,9 @@ mod create_account;
 mod create_claimable_balance;
 mod create_passive_sell_offer;
 mod end_sponsoring_future_reserves;
+mod extend_footprint_ttl;
 mod inflation;
+mod invoke_host_function;
 mod liquidity_pool_deposit;
 mod liquidity_pool_withdraw;
 mod manage_buy_offer;
@@ -27,6 +28,7 @@ mod manage_sell_offer;
 mod path_payment_strict_receive;
 mod path_payment_strict_send;
 mod payment;
+mod restore_footprint;
 mod revoke_sponsorship;
 mod set_options;
 mod set_trustline_flags;
@@ -67,7 +69,9 @@ pub use create_passive_sell_offer::{
 pub use end_sponsoring_future_reserves::{
     EndSponsoringFutureReservesOperation, EndSponsoringFutureReservesOperationBuilder,
 };
+pub use extend_footprint_ttl::{ExtendFootprintTtlOperation, ExtendFootprintTtlOperationBuilder};
 pub use inflation::{InflationOperation, InflationOperationBuilder};
+pub use invoke_host_function::{InvokeHostFunctionOperation, InvokeHostFunctionOperationBuilder};
 pub use manage_buy_offer::{ManageBuyOfferOperation, ManageBuyOfferOperationBuilder};
 pub use manage_data::{ManageDataOperation, ManageDataOperationBuilder};
 pub use manage_sell_offer::{ManageSellOfferOperation, ManageSellOfferOperationBuilder};
@@ -78,6 +82,7 @@ pub use path_payment_strict_send::{
     PathPaymentStrictSendOperation, PathPaymentStrictSendOperationBuilder,
 };
 pub use payment::{PaymentOperation, PaymentOperationBuilder};
+pub use restore_footprint::{RestoreFootprintOperation, RestoreFootprintOperationBuilder};
 pub use revoke_sponsorship::{RevokeSponsorshipOperation, RevokeSponsorshipOperationBuilder};
 pub use set_options::{SetOptionsOperation, SetOptionsOperationBuilder};
 
@@ -128,6 +133,9 @@ pub enum Operation {
     SetTrustLineFlags(SetTrustLineFlagsOperation),
     LiquidityPoolDeposit(LiquidityPoolDepositOperation),
     LiquidityPoolWithdraw(LiquidityPoolWithdrawOperation),
+    InvokeHostFunction(InvokeHostFunctionOperation),
+    ExtendFootprintTtl(ExtendFootprintTtlOperation),
+    RestoreFootprint(RestoreFootprintOperation),
 }
 
 impl Operation {
@@ -244,6 +252,19 @@ impl Operation {
 
     pub fn new_liquidity_pool_withdraw() -> LiquidityPoolWithdrawOperationBuilder {
         LiquidityPoolWithdrawOperationBuilder::new()
+    }
+
+    pub fn new_invoke_host_function() -> InvokeHostFunctionOperationBuilder {
+        InvokeHostFunctionOperationBuilder::new()
+    }
+
+    /// Creates a new extend footprint ttl operation builder.
+    pub fn new_extend_footprint_ttl() -> ExtendFootprintTtlOperationBuilder {
+        ExtendFootprintTtlOperationBuilder::new()
+    }
+
+    pub fn new_restore_footprint() -> RestoreFootprintOperationBuilder {
+        RestoreFootprintOperationBuilder::new()
     }
 
     /// If the operation is a CreateAccount, returns its value. Returns None otherwise.
@@ -784,6 +805,9 @@ impl Operation {
             Operation::SetTrustLineFlags(op) => op.source_account(),
             Operation::LiquidityPoolDeposit(op) => op.source_account(),
             Operation::LiquidityPoolWithdraw(op) => op.source_account(),
+            Operation::InvokeHostFunction(op) => op.source_account(),
+            Operation::ExtendFootprintTtl(op) => op.source_account(),
+            Operation::RestoreFootprint(op) => op.source_account(),
         }
     }
 
@@ -814,6 +838,9 @@ impl Operation {
             Operation::SetTrustLineFlags(op) => op.source_account_mut(),
             Operation::LiquidityPoolDeposit(op) => op.source_account_mut(),
             Operation::LiquidityPoolWithdraw(op) => op.source_account_mut(),
+            Operation::InvokeHostFunction(op) => op.source_account_mut(),
+            Operation::ExtendFootprintTtl(op) => op.source_account_mut(),
+            Operation::RestoreFootprint(op) => op.source_account_mut(),
         }
     }
 
@@ -848,6 +875,9 @@ impl Operation {
             Operation::SetTrustLineFlags(op) => op.to_xdr_operation_body()?,
             Operation::LiquidityPoolDeposit(op) => op.to_xdr_operation_body()?,
             Operation::LiquidityPoolWithdraw(op) => op.to_xdr_operation_body()?,
+            Operation::InvokeHostFunction(op) => op.to_xdr_operation_body()?,
+            Operation::ExtendFootprintTtl(op) => op.to_xdr_operation_body()?,
+            Operation::RestoreFootprint(op) => op.to_xdr_operation_body()?,
         };
         Ok(xdr::Operation {
             source_account,
@@ -900,7 +930,7 @@ impl Operation {
                 let inner = AccountMergeOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::AccountMerge(inner))
             }
-            xdr::OperationBody::Inflation(()) => {
+            xdr::OperationBody::Inflation => {
                 let inner = InflationOperation::from_xdr_operation_body(source_account)?;
                 Ok(Operation::Inflation(inner))
             }
@@ -938,7 +968,7 @@ impl Operation {
                 )?;
                 Ok(Operation::BeginSponsoringFutureReserves(inner))
             }
-            xdr::OperationBody::EndSponsoringFutureReserves(()) => {
+            xdr::OperationBody::EndSponsoringFutureReserves => {
                 let inner =
                     EndSponsoringFutureReservesOperation::from_xdr_operation_body(source_account)?;
                 Ok(Operation::EndSponsoringFutureReserves(inner))
@@ -967,27 +997,39 @@ impl Operation {
                     LiquidityPoolDepositOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::LiquidityPoolDeposit(inner))
             }
-            OperationBody::LiquidityPoolWithdraw(op) => {
+            xdr::OperationBody::LiquidityPoolWithdraw(op) => {
                 let inner =
                     LiquidityPoolWithdrawOperation::from_xdr_operation_body(source_account, op)?;
                 Ok(Operation::LiquidityPoolWithdraw(inner))
+            }
+            xdr::OperationBody::InvokeHostFunction(op) => {
+                let inner =
+                    InvokeHostFunctionOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::InvokeHostFunction(inner))
+            }
+            xdr::OperationBody::ExtendFootprintTtl(op) => {
+                let inner =
+                    ExtendFootprintTtlOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::ExtendFootprintTtl(inner))
+            }
+            xdr::OperationBody::RestoreFootprint(op) => {
+                let inner = RestoreFootprintOperation::from_xdr_operation_body(source_account, op)?;
+                Ok(Operation::RestoreFootprint(inner))
             }
         }
     }
 }
 
-impl XDRSerialize for Operation {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr_operation = self.to_xdr()?;
-        xdr_operation.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for Operation {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr_operation = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr_operation.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for Operation {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_operation, bytes_read) =
-            xdr::Operation::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = Operation::from_xdr(&xdr_operation)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for Operation {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::Operation::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }

@@ -67,12 +67,9 @@
 //! ```
 //!
 #[macro_use]
-extern crate xdr_rs_serialize_derive;
-#[macro_use]
 extern crate bitflags;
 extern crate chrono;
 extern crate json;
-extern crate xdr_rs_serialize;
 
 pub mod account;
 pub mod amount;
@@ -90,7 +87,6 @@ pub mod time_bounds;
 pub mod transaction;
 pub mod transaction_result;
 pub mod xdr;
-mod xdr_generated;
 
 pub use self::asset::Asset;
 pub use self::crypto::PublicKey;

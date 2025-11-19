@@ -1,11 +1,10 @@
 //! Represent an account claim.
+use std::io::{Read, Write};
+
 use crate::crypto::PublicKey;
 use crate::error::{Error, Result};
 use crate::xdr;
-use crate::xdr::{XDRDeserialize, XDRSerialize};
 use chrono::{DateTime, Duration, TimeZone, Utc};
-use xdr_rs_serialize::de::XDRIn;
-use xdr_rs_serialize::ser::XDROut;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ClaimableBalanceId(Vec<u8>);
@@ -43,7 +42,7 @@ impl ClaimableBalanceId {
 
     /// Returns the xdr object.
     pub fn to_xdr(&self) -> xdr::ClaimableBalanceId {
-        let hash = xdr::Hash::new(self.0.clone());
+        let hash = xdr::Hash(self.0.as_slice().try_into().unwrap());
         xdr::ClaimableBalanceId::ClaimableBalanceIdTypeV0(hash)
     }
 
@@ -51,7 +50,7 @@ impl ClaimableBalanceId {
     pub fn from_xdr(x: &xdr::ClaimableBalanceId) -> Result<ClaimableBalanceId> {
         match x {
             xdr::ClaimableBalanceId::ClaimableBalanceIdTypeV0(hash) => {
-                ClaimableBalanceId::new(hash.value.clone())
+                ClaimableBalanceId::new(hash.0.to_vec())
             }
         }
     }
@@ -124,33 +123,31 @@ impl ClaimPredicate {
     /// Returns the xdr object.
     pub fn to_xdr(&self) -> Result<xdr::ClaimPredicate> {
         match self {
-            ClaimPredicate::Unconditional => {
-                Ok(xdr::ClaimPredicate::ClaimPredicateUnconditional(()))
-            }
+            ClaimPredicate::Unconditional => Ok(xdr::ClaimPredicate::Unconditional),
             ClaimPredicate::And(p1, p2) => {
                 let p1_xdr = p1.to_xdr()?;
                 let p2_xdr = p2.to_xdr()?;
-                let predicates = vec![Box::new(p1_xdr), Box::new(p2_xdr)];
-                Ok(xdr::ClaimPredicate::ClaimPredicateAnd(predicates))
+                let predicates = vec![p1_xdr, p2_xdr];
+                Ok(xdr::ClaimPredicate::And(predicates.try_into().unwrap()))
             }
             ClaimPredicate::Or(p1, p2) => {
                 let p1_xdr = p1.to_xdr()?;
                 let p2_xdr = p2.to_xdr()?;
-                let predicates = vec![Box::new(p1_xdr), Box::new(p2_xdr)];
-                Ok(xdr::ClaimPredicate::ClaimPredicateOr(predicates))
+                let predicates = vec![p1_xdr, p2_xdr];
+                Ok(xdr::ClaimPredicate::Or(predicates.try_into().unwrap()))
             }
             ClaimPredicate::Not(p) => {
                 let p_xdr = p.to_xdr()?;
                 let predicate = Some(Box::new(p_xdr));
-                Ok(xdr::ClaimPredicate::ClaimPredicateNot(predicate))
+                Ok(xdr::ClaimPredicate::Not(predicate))
             }
             ClaimPredicate::BeforeAbsoluteTime(datetime) => {
-                let time = xdr::Int64::new(datetime.timestamp());
-                Ok(xdr::ClaimPredicate::ClaimPredicateBeforeAbsoluteTime(time))
+                let time = datetime.timestamp();
+                Ok(xdr::ClaimPredicate::BeforeAbsoluteTime(time))
             }
             ClaimPredicate::BeforeRelativeTime(duration) => {
-                let time = xdr::Int64::new(duration.num_seconds());
-                Ok(xdr::ClaimPredicate::ClaimPredicateBeforeRelativeTime(time))
+                let time = duration.num_seconds();
+                Ok(xdr::ClaimPredicate::BeforeRelativeTime(time))
             }
         }
     }
@@ -163,10 +160,8 @@ impl ClaimPredicate {
         // We perform a check and return an error if the XDR is valid
         // but the claim predicate is not.
         match x {
-            xdr::ClaimPredicate::ClaimPredicateUnconditional(()) => {
-                Ok(ClaimPredicate::new_unconditional())
-            }
-            xdr::ClaimPredicate::ClaimPredicateAnd(predicates) => {
+            xdr::ClaimPredicate::Unconditional => Ok(ClaimPredicate::new_unconditional()),
+            xdr::ClaimPredicate::And(predicates) => {
                 let mut p = predicates.iter();
                 match (p.next(), p.next()) {
                     (Some(p1), Some(p2)) => {
@@ -177,7 +172,7 @@ impl ClaimPredicate {
                     _ => Err(Error::XdrClaimPredicateError),
                 }
             }
-            xdr::ClaimPredicate::ClaimPredicateOr(predicates) => {
+            xdr::ClaimPredicate::Or(predicates) => {
                 let mut p = predicates.iter();
                 match (p.next(), p.next()) {
                     (Some(p1), Some(p2)) => {
@@ -188,7 +183,7 @@ impl ClaimPredicate {
                     _ => Err(Error::XdrClaimPredicateError),
                 }
             }
-            xdr::ClaimPredicate::ClaimPredicateNot(predicate) => {
+            xdr::ClaimPredicate::Not(predicate) => {
                 if let Some(predicate) = predicate {
                     let p = ClaimPredicate::from_xdr(predicate)?;
                     Ok(ClaimPredicate::new_not(p))
@@ -196,48 +191,44 @@ impl ClaimPredicate {
                     Err(Error::XdrClaimPredicateError)
                 }
             }
-            xdr::ClaimPredicate::ClaimPredicateBeforeAbsoluteTime(time) => {
-                let datetime = Utc.timestamp_opt(time.value, 0).single();
+            xdr::ClaimPredicate::BeforeAbsoluteTime(time) => {
+                let datetime = Utc.timestamp_opt(*time, 0).single();
                 datetime
                     .map(ClaimPredicate::new_before_absolute_time)
                     .ok_or(Error::XdrClaimPredicateError)
             }
-            xdr::ClaimPredicate::ClaimPredicateBeforeRelativeTime(time) => {
-                let duration = Duration::seconds(time.value);
+            xdr::ClaimPredicate::BeforeRelativeTime(time) => {
+                let duration = Duration::seconds(*time);
                 Ok(ClaimPredicate::new_before_relative_time(duration))
             }
         }
     }
 }
 
-impl XDRSerialize for Claimant {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr = self.to_xdr()?;
-        xdr.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for Claimant {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for Claimant {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_claimant, bytes_read) =
-            xdr::Claimant::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = Claimant::from_xdr(&xdr_claimant)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for Claimant {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::Claimant::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 
-impl XDRSerialize for ClaimPredicate {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr = self.to_xdr()?;
-        xdr.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for ClaimPredicate {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for ClaimPredicate {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_claim, bytes_read) =
-            xdr::ClaimPredicate::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = ClaimPredicate::from_xdr(&xdr_claim)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for ClaimPredicate {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::ClaimPredicate::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }

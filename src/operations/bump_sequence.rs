@@ -38,7 +38,7 @@ impl BumpSequenceOperation {
 
     /// Returns the xdr operation body.
     pub fn to_xdr_operation_body(&self) -> Result<xdr::OperationBody> {
-        let bump_to = xdr::SequenceNumber::new(xdr::Int64::new(self.bump_to));
+        let bump_to = xdr::SequenceNumber(self.bump_to);
         let inner = xdr::BumpSequenceOp { bump_to };
         Ok(xdr::OperationBody::BumpSequence(inner))
     }
@@ -48,7 +48,7 @@ impl BumpSequenceOperation {
         source_account: Option<MuxedAccount>,
         x: &xdr::BumpSequenceOp,
     ) -> Result<BumpSequenceOperation> {
-        let bump_to = x.bump_to.value.value;
+        let bump_to = x.bump_to.0;
         Ok(BumpSequenceOperation {
             source_account,
             bump_to,

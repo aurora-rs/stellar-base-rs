@@ -1,4 +1,6 @@
 //! Transaction that changes the ledger state.
+use std::io::{Read, Write};
+
 use crate::amount::Stroops;
 use crate::crypto::{
     hash, DecoratedSignature, Ed25519Signer, Ed25519Verifier, KeyPair, MuxedAccount,
@@ -8,11 +10,8 @@ use crate::memo::Memo;
 use crate::network::Network;
 use crate::operations::Operation;
 use crate::time_bounds::TimeBounds;
-use crate::xdr;
-use crate::xdr::{XDRDeserialize, XDRSerialize};
+use crate::{xdr, PublicKey};
 use ed25519::Signature;
-use xdr_rs_serialize::de::XDRIn;
-use xdr_rs_serialize::ser::XDROut;
 
 /// Minimum base fee.
 pub const MIN_BASE_FEE: Stroops = Stroops(100);
@@ -196,9 +195,7 @@ impl Transaction {
     pub fn signature_data(&self, network: &Network) -> Result<Vec<u8>> {
         let mut base = Vec::new();
         let tx_signature_payload = self.to_xdr_transaction_signature_payload(network)?;
-        tx_signature_payload
-            .write_xdr(&mut base)
-            .map_err(Error::XdrError)?;
+        xdr::XDRSerialize::write_xdr(&tx_signature_payload, &mut base)?;
         Ok(base)
     }
 
@@ -206,10 +203,10 @@ impl Transaction {
     pub fn to_xdr(&self) -> Result<xdr::Transaction> {
         let source_account = self.source_account.to_xdr()?;
         let fee = self.fee.to_xdr_uint32()?;
-        let seq_num = xdr::SequenceNumber::new(xdr::Int64::new(self.sequence));
-        let time_bounds = match &self.time_bounds {
-            None => None,
-            Some(tb) => Some(tb.to_xdr()?),
+        let seq_num = xdr::SequenceNumber(self.sequence);
+        let cond = match &self.time_bounds {
+            None => xdr::Preconditions::None,
+            Some(tb) => xdr::Preconditions::Time(tb.to_xdr()?),
         };
         let memo = self.memo.to_xdr()?;
         let mut operations = Vec::new();
@@ -217,14 +214,14 @@ impl Transaction {
             let xdr_operation = operation.to_xdr()?;
             operations.push(xdr_operation);
         }
-        let ext = xdr::TransactionExt::V0(());
+        let ext = xdr::TransactionExt::V0;
         Ok(xdr::Transaction {
             source_account,
             fee,
             seq_num,
-            time_bounds,
+            cond,
             memo,
-            operations,
+            operations: operations.try_into().map_err(|_| Error::XdrError)?,
             ext,
         })
     }
@@ -241,28 +238,31 @@ impl Transaction {
         &self,
         network: &Network,
     ) -> Result<xdr::TransactionSignaturePayload> {
-        let network_id = xdr::Hash::new(network.network_id());
+        let network_id = network
+            .network_id()
+            .try_into()
+            .map_err(|_| Error::XdrError)?;
         let inner = self.to_xdr()?;
-        let tagged_transaction =
-            xdr::TransactionSignaturePayloadTaggedTransaction::EnvelopeTypeTx(inner);
+        let tagged_transaction = xdr::TransactionSignaturePayloadTaggedTransaction::Tx(inner);
         Ok(xdr::TransactionSignaturePayload {
             network_id,
             tagged_transaction,
         })
     }
 
-    /// Creates from xdr object.
-    pub fn from_xdr(x: &xdr::Transaction) -> Result<Transaction> {
-        let source_account = MuxedAccount::from_xdr(&x.source_account)?;
-        let fee = Stroops::from_xdr_uint32(&x.fee)?;
-        let sequence = x.seq_num.value.value;
+    /// Creates from v0 xdr object.
+    pub fn from_xdr_v0(x: &xdr::TransactionV0) -> Result<Transaction> {
+        let source_account =
+            MuxedAccount::Ed25519(PublicKey::from_slice(&x.source_account_ed25519.0)?);
+        let fee = Stroops::from_xdr_uint32(x.fee)?;
+        let sequence = x.seq_num.0;
         let time_bounds = match &x.time_bounds {
             None => None,
             Some(tb) => Some(TimeBounds::from_xdr(tb)?),
         };
         let memo = Memo::from_xdr(&x.memo)?;
         let mut operations = Vec::new();
-        for operation in &x.operations {
+        for operation in x.operations.as_slice() {
             let xdr_operation = Operation::from_xdr(operation)?;
             operations.push(xdr_operation);
         }
@@ -275,6 +275,45 @@ impl Transaction {
             operations,
             signatures: Vec::new(),
         })
+    }
+
+    /// Creates from xdr object.
+    pub fn from_xdr(x: &xdr::Transaction) -> Result<Transaction> {
+        let source_account = MuxedAccount::from_xdr(&x.source_account)?;
+        let fee = Stroops::from_xdr_uint32(x.fee)?;
+        let sequence = x.seq_num.0;
+        let time_bounds = match &x.cond {
+            xdr::Preconditions::None => None,
+            xdr::Preconditions::Time(tb) => Some(TimeBounds::from_xdr(tb)?),
+            xdr::Preconditions::V2(_) => return Err(Error::UnsupportedFeature),
+        };
+        let memo = Memo::from_xdr(&x.memo)?;
+        let mut operations = Vec::new();
+        for operation in x.operations.as_slice() {
+            let xdr_operation = Operation::from_xdr(operation)?;
+            operations.push(xdr_operation);
+        }
+        match &x.ext {
+            xdr::TransactionExt::V0 => {}
+            xdr::TransactionExt::V1(_) => return Err(Error::UnsupportedFeature),
+        }
+        Ok(Transaction {
+            source_account,
+            fee,
+            sequence,
+            time_bounds,
+            memo,
+            operations,
+            signatures: Vec::new(),
+        })
+    }
+
+    /// Creates from xdr v0 envelope object.
+    pub fn from_xdr_v0_envelope(x: &xdr::TransactionV0Envelope) -> Result<Transaction> {
+        let mut tx = Self::from_xdr_v0(&x.tx)?;
+        let signatures = signatures_from_xdr(&x.signatures)?;
+        tx.signatures = signatures;
+        Ok(tx)
     }
 
     /// Creates from xdr envelope object.
@@ -402,9 +441,7 @@ impl FeeBumpTransaction {
     pub fn signature_data(&self, network: &Network) -> Result<Vec<u8>> {
         let mut base = Vec::new();
         let tx_signature_payload = self.to_xdr_transaction_signature_payload(network)?;
-        tx_signature_payload
-            .write_xdr(&mut base)
-            .map_err(Error::XdrError)?;
+        xdr::XDRSerialize::write_xdr(&tx_signature_payload, &mut base)?;
         Ok(base)
     }
 
@@ -413,8 +450,8 @@ impl FeeBumpTransaction {
         let fee_source = self.fee_source.to_xdr()?;
         let fee = self.fee.to_xdr_int64()?;
         let tx_envelope = self.inner_tx.to_xdr_envelope()?;
-        let inner_tx = xdr::FeeBumpTransactionInnerTx::EnvelopeTypeTx(tx_envelope);
-        let ext = xdr::FeeBumpTransactionExt::V0(());
+        let inner_tx = xdr::FeeBumpTransactionInnerTx::Tx(tx_envelope);
+        let ext = xdr::FeeBumpTransactionExt::V0;
         Ok(xdr::FeeBumpTransaction {
             fee_source,
             fee,
@@ -433,9 +470,9 @@ impl FeeBumpTransaction {
     /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::FeeBumpTransaction) -> Result<FeeBumpTransaction> {
         let fee_source = MuxedAccount::from_xdr(&x.fee_source)?;
-        let fee = Stroops::new(x.fee.value);
+        let fee = Stroops::new(x.fee);
         let inner_tx = match &x.inner_tx {
-            xdr::FeeBumpTransactionInnerTx::EnvelopeTypeTx(inner_tx) => {
+            xdr::FeeBumpTransactionInnerTx::Tx(inner_tx) => {
                 Transaction::from_xdr_envelope(inner_tx)?
             }
         };
@@ -460,10 +497,13 @@ impl FeeBumpTransaction {
         &self,
         network: &Network,
     ) -> Result<xdr::TransactionSignaturePayload> {
-        let network_id = xdr::Hash::new(network.network_id());
+        let network_id = network
+            .network_id()
+            .try_into()
+            .map_err(|_| Error::XdrError)?;
         let inner = self.to_xdr()?;
         let tagged_transaction =
-            xdr::TransactionSignaturePayloadTaggedTransaction::EnvelopeTypeTxFeeBump(inner);
+            xdr::TransactionSignaturePayloadTaggedTransaction::TxFeeBump(inner);
         Ok(xdr::TransactionSignaturePayload {
             network_id,
             tagged_transaction,
@@ -583,11 +623,11 @@ impl TransactionEnvelope {
         match self {
             TransactionEnvelope::Transaction(tx) => {
                 let inner = tx.to_xdr_envelope()?;
-                Ok(xdr::TransactionEnvelope::EnvelopeTypeTx(inner))
+                Ok(xdr::TransactionEnvelope::Tx(inner))
             }
             TransactionEnvelope::FeeBumpTransaction(tx) => {
                 let inner = tx.to_xdr_envelope()?;
-                Ok(xdr::TransactionEnvelope::EnvelopeTypeTxFeeBump(inner))
+                Ok(xdr::TransactionEnvelope::TxFeeBump(inner))
             }
         }
     }
@@ -595,12 +635,15 @@ impl TransactionEnvelope {
     /// Creates from xdr object.
     pub fn from_xdr(x: &xdr::TransactionEnvelope) -> Result<TransactionEnvelope> {
         match x {
-            xdr::TransactionEnvelope::EnvelopeTypeTx(inner) => {
+            xdr::TransactionEnvelope::Tx(inner) => {
                 let tx = Transaction::from_xdr_envelope(inner)?;
                 Ok(TransactionEnvelope::Transaction(tx))
             }
-            xdr::TransactionEnvelope::EnvelopeTypeTxV0(_) => todo!(),
-            xdr::TransactionEnvelope::EnvelopeTypeTxFeeBump(inner) => {
+            xdr::TransactionEnvelope::TxV0(inner) => {
+                let tx = Transaction::from_xdr_v0_envelope(inner)?;
+                Ok(TransactionEnvelope::Transaction(tx))
+            }
+            xdr::TransactionEnvelope::TxFeeBump(inner) => {
                 let tx = FeeBumpTransaction::from_xdr_envelope(inner)?;
                 Ok(TransactionEnvelope::FeeBumpTransaction(tx))
             }
@@ -696,29 +739,29 @@ impl TransactionBuilder {
     }
 }
 
-impl XDRSerialize for TransactionEnvelope {
-    fn write_xdr(&self, out: &mut Vec<u8>) -> Result<u64> {
-        let xdr_tx = self.to_xdr()?;
-        xdr_tx.write_xdr(out).map_err(Error::XdrError)
+impl xdr::WriteXdr for TransactionEnvelope {
+    fn write_xdr<W: Write>(&self, w: &mut xdr::Limited<W>) -> xdr::Result<()> {
+        let xdr_tx = self.to_xdr().map_err(|_| xdr::Error::Invalid)?;
+        xdr_tx.write_xdr(w)
     }
 }
 
-impl XDRDeserialize for TransactionEnvelope {
-    fn from_xdr_bytes(buffer: &[u8]) -> Result<(Self, u64)> {
-        let (xdr_tx, bytes_read) =
-            xdr::TransactionEnvelope::read_xdr(buffer).map_err(Error::XdrError)?;
-        let res = TransactionEnvelope::from_xdr(&xdr_tx)?;
-        Ok((res, bytes_read))
+impl xdr::ReadXdr for TransactionEnvelope {
+    fn read_xdr<R: Read>(r: &mut xdr::Limited<R>) -> xdr::Result<Self> {
+        let xdr_result = xdr::TransactionEnvelope::read_xdr(r)?;
+        Self::from_xdr(&xdr_result).map_err(|_| xdr::Error::Invalid)
     }
 }
 
-fn signatures_to_xdr(signatures: &[DecoratedSignature]) -> Result<Vec<xdr::DecoratedSignature>> {
+fn signatures_to_xdr(
+    signatures: &[DecoratedSignature],
+) -> Result<xdr::VecM<xdr::DecoratedSignature, 20>> {
     let mut xdr_signatures = Vec::new();
     for signature in signatures {
         let xdr_signature = signature.to_xdr()?;
         xdr_signatures.push(xdr_signature);
     }
-    Ok(xdr_signatures)
+    xdr_signatures.try_into().map_err(|_| Error::XdrError)
 }
 
 fn signatures_from_xdr(

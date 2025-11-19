@@ -74,7 +74,7 @@ impl ClawbackOperation {
             source_account,
             asset: Asset::from_xdr(&x.asset)?,
             from: MuxedAccount::from_xdr(&x.from)?,
-            amount: Stroops::from_xdr_int64(&x.amount)?,
+            amount: Stroops::from_xdr_int64(x.amount)?,
         })
     }
 }
