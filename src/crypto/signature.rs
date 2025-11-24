@@ -117,7 +117,8 @@ impl DecoratedSignature {
 
     /// Creates a new `DecoratedSignature` from the pre image.
     pub fn new_from_preimage(preimage: &[u8]) -> Result<DecoratedSignature> {
-        let hint = SignatureHint::from_slice(&preimage[preimage.len() - 4..])?;
+        let hash = hash(preimage);
+        let hint = SignatureHint::from_slice(&hash[hash.len() - 4..])?;
         let signature = Signature::from_slice(preimage).map_err(|_| Error::InvalidSignature)?;
         Ok(DecoratedSignature::new(hint, signature))
     }
